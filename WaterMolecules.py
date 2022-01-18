@@ -1,16 +1,8 @@
 # This Python script calculates the volume of a user defined simulation cell, and the number of whole water molecules that would occupy that volume
 # If the number of water molecules is a decimal, the math.floor() function is used to round down to the nearest whole number 
 
-import subprocess
 import numpy as np
-import seaborn as sns
 import math
-import scipy as sp
-
-import matplotlib.pylab as plt
-from matplotlib import rcParams
-import matplotlib.colors as colors
-import matplotlib.cbook as cbook
 
 # Define known variables
 
