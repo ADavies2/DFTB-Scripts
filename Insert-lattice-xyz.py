@@ -4,6 +4,7 @@ import csv
 
 XYZ_Filename = 'COF-out.xyz'
 Gen_Filename = 'COF-out.gen'
+No_rows = 176 # Number of atoms plus 2 to account for the other labels
 
 GenData = [] # Make an array with the data from the .gen file, which has the cell parameters
 
@@ -29,7 +30,7 @@ lines = File.readlines()
 
 replacement = 'Lattice="' + str(SimCell[1][0]) + ' ' + str(SimCell[1][1]) + ' ' + str(SimCell[1][2]) + ' ' + str(SimCell[2][0]) + ' ' + str(SimCell[2][1]) + ' ' + str(SimCell[2][2]) + ' ' + str(SimCell[3][0]) + ' ' + str(SimCell[3][1]) + ' ' + str(SimCell[3][2]) + '" Origin="' + str(SimCell[0][0]) + ' ' + str(SimCell[0][1]) + ' ' + str(SimCell[0][2]) + '" Properties=species:S:1:pos:R:3\n'
 
-for i in range(1,len(lines),170):
+for i in range(1,len(lines),No_rows):
     lines[i] = replacement
 
 File = open(XYZ_Filename, 'w')
