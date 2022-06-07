@@ -1,5 +1,6 @@
 import numpy as np
 import csv
+from itertools import islice
 
 filename = 'md.out'
 xyz_filename = 'test.xyz'
