@@ -221,5 +221,7 @@ do
               printf "SCC did NOT converge after forces\nUser trouble-shoot required\n"
             fi
         fi
-      elif grep -q "SCC = No" dftb_in.hsd # This is a forces only calculation from the previous SCC 1e-2
-        
+      elif grep -q "SCC = No" dftb_in.hsd; then # This is a forces only calculation from the previous SCC 1e-2
+        TOL='1e-2'
+        # If suceeds, start scc 1e-2 calculation
+        # If fails, error message
