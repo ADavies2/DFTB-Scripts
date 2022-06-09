@@ -70,7 +70,7 @@ do
     fi
 done
         
-submit_dftb_hybrid 8 1 $JOBNAME # This will either submit an SCC calculation or a Forces only calculation, depending on the if statement activated previously
+submit_dftb_hybrid 8 1 $JOBNAME # This will either submit an SCC calculation or a forces only calculation
 
 while :
 do
@@ -93,7 +93,6 @@ do
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
             sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd # New output file prefix
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
-            sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd # Read in charge files
             JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next SCC iteration
             echo "The simulation has completed."
             break
@@ -107,7 +106,6 @@ do
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
             sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd # New output file prefix
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
-            sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd # Read in charge files
             JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next scc iteration
             echo "The simulation has completed."
             break
@@ -115,6 +113,7 @@ do
         elif grep -q "SCC is NOT converged" $JOBNAME.log; then # If the SCC does not converge, first run a forces only simulation
           sed -i 's/.*SCC = Yes.*/SCC = No/g' dftb_in.hsd # No SCC iterations as converging forces only
           sed -i '/^\s*SCCTolerance.*-0.1623 }$/ s|^|#|; /^\s*SCCTolerance/, /-0.1623 }$/ s|^|#|' dftb_in.hsd # Comment out the range of lines used in an SCC calculation 
+          sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Forces-Out"/g" dftb_in.hsd
           JOBNAME="$COF-forces-$TOL" # Change the jobname to reflect a forces only calculation
           echo "SCC did NOT converge. Attempting forces only..."
           break
@@ -127,14 +126,100 @@ do
           sed -i 's/.*SCC = No.*/SCC = Yes/g' dftb_in.hsd # Initialize an SCC run next, but this must read-in the newly generated geometry 
           sed -i "s/.*<<<.*/  <<< ""$TOL-Forces-Out.gen""/g" dftb_in.hsd # Use previously generated geometry from forces-only calculation
           sed -i 's/^#//' dftb_in.hsd # Remove all commented lines that are necessary for SCC calculation
+          sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd
           JOBNAME="$COF-scc-$TOL"
-          echo "Forces only converged. Attempting SCC at $TOL..."
+          echo "Forces converged. Attempting SCC at $TOL..."
           break
         elif grep -q "Geometry did NOT converge" detailed.out && grep -q "Geometry did NOT converge" $JOBNAME.log; then # If the Geometry does not converge with a forces only calculation, then exit and prompt for user troubleshoot. 
-          printf "SCC did NOT converge\nForces only did NOT converge\nUser trouble-shoot required\n"
+          printf "SCC did NOT converge\nForces did NOT converge\nUser trouble-shoot required\n"
           exit
         fi
       fi
     fi
 done
 
+submit_dftb_hybrid 8 1 $JOBNAME # This is either submitting an SCC continuation, a forces only from the previous SCC, or an SCC from the forces only.
+
+while :
+do
+  stat="$(squeue -n $JOBNAME)"
+  string=($stat)
+  jobstat=(${string[12]}) # Check the status of the submitted job
+    if [ "$jobstat" == "PD" ]; then # If the job is pending
+      echo "The simulation is pending..."
+      sleep 5s
+    else 
+      if grep -q "SCC = Yes" dftb_in.hsd; then # If SCC = Yes, this is either an SCC continuation or an SCC from the previous forces only
+        if grep -q "ReadInitialCharges = Yes" dftb_in.hsd; then # If initial charges are read, this is a continuation of the SCC 
+          TOL='1e-3' # SCC continuation tolerance
+          if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then # If the SCC continuation is successful
+            if [ -d "./$TOL-Outputs" ]; then
+              cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
+              rm *out *log *xyz
+              sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
+              TOL='1e-4' # Define the next tolerance continuation
+              sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
+              sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd # New output file prefix
+              sed -i "s/.*SCCTolerance.*/SCCTolerance = 1e-5/g" dftb_in.hsd # New scc tolerance
+              JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next SCC iteration
+              echo "The simulation has completed."
+              break
+            else
+              mkdir $TOL-Outputs
+              cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
+              rm *out *log *xyz
+              sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
+              TOL='1e-4' # Define the next tolerance
+              sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
+              sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd # New output file prefix
+              sed -i "s/.*SCCTolerance.*/SCCTolerance = 1e-5/g" dftb_in.hsd # New scc tolerance
+              JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next scc iteration
+              echo "The simulation has completed."
+              break
+            fi
+          elif grep -q "SCC is NOT converged" $JOBNAME.log; then # If the SCC does not converge, first run a forces only simulation
+            sed -i 's/.*SCC = Yes.*/SCC = No/g' dftb_in.hsd # No SCC iterations as converging forces only
+            sed -i '/^\s*SCCTolerance.*-0.1623 }$/ s|^|#|; /^\s*SCCTolerance/, /-0.1623 }$/ s|^|#|' dftb_in.hsd # Comment out the range of lines used in an SCC calculation 
+            sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Forces-Out"/g" dftb_in.hsd
+            JOBNAME="$COF-forces-$TOL" # Change the jobname to reflect a forces only calculation
+            echo "SCC did NOT converge. Attempting forces only..."
+            break
+          else
+            echo "The simulation is running..."
+            sleep 5s
+          fi
+        elif grep -q "ReadInitialCharges = No" dftb_in.hsd # This is the first SCC of a prevoiusly successful forces only calculation
+          TOL='1e-1'
+            if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then # If the SCC is successful
+              if [ -d "./$TOL-Outputs" ]; then
+                cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
+                rm *out *log *xyz
+                sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
+                TOL='1e-2' # Define the next tolerance continuation
+                sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
+                sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd # New output file prefix
+                sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
+                sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd # Since this was the first SCC of a forces calculation, the next iteration will have charges to read
+                JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next SCC iteration
+                echo "The simulation has completed."
+                break
+              else
+                mkdir $TOL-Outputs
+                cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
+                rm *out *log *xyz
+                sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
+                TOL='1e-2' # Define the next tolerance
+                sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
+                sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd # New output file prefix
+                sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
+                sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd
+                JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next scc iteration
+                echo "The simulation has completed."
+                break
+              fi
+            elif grep -q "SCC is NOT converged" $JOBNAME.log; then # If the SCC does not converge, first run a forces only simulation
+              printf "SCC did NOT converge after forces\nUser trouble-shoot required\n"
+            fi
+        fi
+      elif grep -q "SCC = No" dftb_in.hsd # This is a forces only calculation from the previous SCC 1e-2
+        
