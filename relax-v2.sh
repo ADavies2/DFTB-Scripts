@@ -292,12 +292,14 @@ do
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
             echo "$COF has been fully relaxed!" 
+            rm *out *log *xyz *gen *bin # delete all duplicate output files
             exit
           else
             mkdir 1e-4-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
             echo "$COF has been fully relaxed!"
+            rm *out *log *xyz *gen *bin
             exit
           fi
         elif grep -q "SCC is NOT converged" $JOBNAME.log; then # If the SCC does not converge, first run a forces only simulation
@@ -529,12 +531,14 @@ do
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
             echo "$COF has been fully relaxed!" 
+            rm *out *log *xyz *gen *bin
             exit
           else
             mkdir 1e-4-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
             echo "$COF has been fully relaxed!"
+            rm *out *log *xyz *gen *bin
             exit
           fi
         elif grep -q "SCC is NOT converged" $JOBNAME.log; then # If the SCC does not converge, first run a forces only simulation
@@ -554,12 +558,14 @@ do
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
             echo "$COF has been fully relaxed!" 
+            rm *out *log *xyz *gen *bin
             exit
           else
             mkdir 1e-4-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
             echo "$COF has been fully relaxed!" 
+            rm *out *log *xyz *gen *bin
           fi
         elif grep -q "SCC is NOT converged" $JOBNAME.log; then # If the SCC does not converge, first run a forces only simulation
           printf "SCC at $TOL did NOT converge after forces\nUser trouble-shoot required\n"
@@ -749,12 +755,14 @@ do
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
             echo "$COF has been fully relaxed!" 
+            rm *out *log *xyz *gen *bin
             exit
           else
             mkdir 1e-4-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
             echo "$COF has been fully relaxed!"
+            rm *out *log *xyz *gen *bin
             exit
           fi
         elif grep -q "SCC is NOT converged" $JOBNAME.log; then # If the SCC does not converge, first run a forces only simulation
@@ -770,12 +778,14 @@ do
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
             echo "$COF has been fully relaxed!" 
+            rm *out *log *xyz *gen *bin
             exit
           else
             mkdir 1e-4-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
             echo "$COF has been fully relaxed!"
+            rm *out *log *xyz *gen *bin
             exit
           fi
         elif grep -q "SCC is NOT converged" $JOBNAME.log; then # If the SCC does not converge, first run a forces only simulation
@@ -898,12 +908,14 @@ do
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
             echo "$COF has been fully relaxed!" 
+            rm *out *log *xyz *gen *bin
             exit
           else
             mkdir 1e-4-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
             echo "$COF has been fully relaxed!"
+            rm *out *log *xyz *gen *bin
             exit
           fi
         elif grep -q "SCC is NOT converged" $JOBNAME.log; then # If the SCC does not converge, first run a forces only simulation
@@ -919,12 +931,14 @@ do
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
             echo "$COF has been fully relaxed!" 
+            rm *out *log *xyz *gen *bin
             exit
           else
             mkdir 1e-4-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
             echo "$COF has been fully relaxed!"
+            rm *out *log *xyz *gen *bin
             exit
           fi
         elif grep -q "SCC is NOT converged" $JOBNAME.log; then # If the SCC does not converge, first run a forces only simulation
@@ -995,12 +1009,14 @@ do
           cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
           rm *out *log *xyz
           echo "$COF has been fully relaxed!" 
+          rm *out *log *xyz *gen *bin
           exit
         else
           mkdir 1e-4-Outputs
           cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
           rm *out *log *xyz
           echo "$COF has been fully relaxed!"
+          rm *out *log *xyz *gen *bin
           exit
         fi
       elif grep -q "SCC is NOT converged" $JOBNAME.log; then # If the SCC does not converge, first run a forces only simulation
