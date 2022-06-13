@@ -16,6 +16,8 @@ sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = No/g' dftb_in.hsd
 
 submit_dftb_hybrid 8 1 $JOBNAME # submit the first relaxation job
 
+# LOOP 1
+# This first loop will be calculating the first SCC at 1e-1 tolerance. If the SCC succeeds, it will set-up the next calculation to be an SCC 1e-2. If the SCC fails, then the next calculation will be set-up to be forces 1e-1 only.
 while :
 do
   stat="$(squeue -n $JOBNAME)"
@@ -72,6 +74,9 @@ done
         
 submit_dftb_hybrid 8 1 $JOBNAME # This will either submit an SCC calculation or a forces only calculation
 
+# LOOP 2
+# This next loop will either be running an SCC or a forces only. In the previous loop, if the SCC was successful, it set-up the next calculation to be an SCC at 1e-2. If this 1e-2 iteration succeeds, it will set-up a 1e-3 SCC calculation for the next loop. If it fails, then it will set-up a forces only calculation at 1e-2. 
+# If the previous SCC calculation failed, then this loop will be running a forces only at 1e-1. If that forces only calculation here is successful, it will set the next calculation up to be an SCC only at 1e-1. If the forces only here fails, then an error message will be displayed indicating that both an SCC and forces only calculation at this tolerance failed. 
 while :
 do
   stat="$(squeue -n $JOBNAME)"
@@ -131,7 +136,7 @@ do
           echo "Forces converged. Attempting SCC at $TOL..."
           break
         elif grep -q "Geometry did NOT converge" detailed.out && grep -q "Geometry did NOT converge" $JOBNAME.log; then # If the Geometry does not converge with a forces only calculation, then exit and prompt for user troubleshoot. 
-          printf "SCC did NOT converge\nForces did NOT converge\nUser trouble-shoot required\n"
+          printf "SCC did NOT converge at 1e-1\nForces did NOT converge at 1e-1\nUser trouble-shoot required\n"
           exit
         fi
       fi
@@ -140,6 +145,11 @@ done
 
 submit_dftb_hybrid 8 1 $JOBNAME # This is either submitting an SCC continuation, a forces only from the previous SCC, or an SCC from the forces only.
 
+# LOOP 3
+# From the previous loop, loop 3 will either be running an SCC from a previously successful SCC, and SCC from a previously successful forces only, or a forces only from a previously failed SCC.
+# If the last SCC at 1e-2 was successful, this loop will be running an SCC calculation at 1e-3 tolerance. If this is successful, it will set-up the final SCC calculation with forces at 1e-4 and SCC at 1e-5. If this fails, it will set-up a forces only at 1e-3.
+# If the las SCC failed and a forces only calculation was set-up here, that would be a forces only at 1e-2 tolerance. If this forces only succeeds, it will set-up an SCC at 1e-2. If the forces only fails, it will display an error message that SCC 1e-2 failed and forces only at 1e-2 failed.
+# Finally, if the previous calculation was a forces only and was successful, this calculation would be an SCC at the same tolerance (1e-1). 
 while :
 do
   stat="$(squeue -n $JOBNAME)"
