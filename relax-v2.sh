@@ -19,7 +19,7 @@ sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = No/g' dftb_in.hsd
 ## Submit the first job
 submit_dftb_hybrid 8 1 $JOBNAME # submit the first relaxation job
 
-## LOOP 1 (Pink)
+## LOOP 1 (Light Blue)
 ## SCC 1e-1. Results are either SCC 1e-2 or Forces 1e-1
 while :
 do
@@ -78,7 +78,7 @@ done
 ## Submit the second job
 submit_dftb_hybrid 8 1 $JOBNAME
 
-## LOOP 2 (Sky Blue)
+## LOOP 2 (Light Green)
 ## Either running SCC 1e-2 or Forces 1e-1. Results are either SCC 1e-3, Forces 1e-2, a repeat SCC 1e-1, or an error message.
 while :
 do
@@ -151,8 +151,8 @@ done
 ## submit the third job
 submit_dftb_hybrid 8 1 $JOBNAME
 
-## LOOP 3 (Emerald Green)
-## Either running SCC 1e-3, Forces 1e-2, or SCC 1e-1. 
+## LOOP 3 (Light Yellow)
+## Either running SCC 1e-3, Forces 1e-2, or SCC2 1e-1. 
 ## The results will either be SCC 1e-5, Forces 1e-3, SCC2 1e-2, SCC 1e-2, or an error message.
 while :
 do
@@ -164,7 +164,7 @@ do
       sleep 5s
     else 
       if [ $JOBNAME == "$COF-scc-1e-3" ]; then # If $JOBNAME has been rewritten to continue a successful SCC iteration
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then # If the SCC continuation is successful
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC continuation is successful
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
             rm *out *log *xyz
@@ -201,7 +201,7 @@ do
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-forces-1e-2" ]; then # If $JOBNAME has be rewritten to run a forces calculation from a previously failed SCC 1e-2
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then # If the SCC is successful
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC is successful
           sed -i 's/.*SCC = No.*/SCC = Yes/g' dftb_in.hsd # Initialize an SCC run next, but this must read-in the newly generated geometry
           sed -i "s/.*<<<.*/  <<< ""$TOL-Forces-Out.gen""/g" dftb_in.hsd # Use previously generated geometry from forces-only calculation
           sed -i 's/^#//' dftb_in.hsd # Remove all commented lines that are necessary for SCC calculation
@@ -217,7 +217,7 @@ do
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc2-1e-1" ]; then # If $JOBNAME has been rewritten for an SCC calculation from the previously successful forces
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then # If the SCC is successful
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC is successful
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
             rm *out *log *xyz
@@ -258,9 +258,9 @@ done
 ## Submit the fourth job
 submit_dftb_hybrid 8 1 $JOBNAME 
 
-## LOOP 4 (Royal Blue)
-## Either running Forces 1e-3, SCC 1e-5, SCC2 1e-2, or SCC 1e-2
-## The results are either SCC2 1e-3, Forces 1e-4, SCC 1e-3, Forces 1e-2, complete, or an error message.
+## LOOP 4 (Light Red)
+## Either running SCC 1e-5, Forces 1e-3, SCC2 1e-2, or SCC 1e-2
+## The results are either Fores 1e-4, SCC2 1e-3, SCC 1e-3, Forces 1e-2, an error message, or complete.
 while :
 do
   stat="$(squeue -n $JOBNAME)"
@@ -271,7 +271,7 @@ do
       sleep 5s
     else 
       if [ $JOBNAME == "$COF-forces-1e-3" ]; then 
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then # If the SCC continuation is successful
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC continuation is successful
           sed -i 's/.*SCC = No.*/SCC = Yes/g' dftb_in.hsd # Initialize an SCC run next, but this must read-in the newly generated geometry 
           sed -i "s/.*<<<.*/  <<< ""$TOL-Forces-Out.gen""/g" dftb_in.hsd # Use previously generated geometry from forces-only calculation
           sed -i 's/^#//' dftb_in.hsd # Remove all commented lines that are necessary for SCC calculation
@@ -287,7 +287,7 @@ do
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc-1e-5" ]; then 
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./1e-4-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
@@ -314,7 +314,7 @@ do
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc2-1e-2" ]; then
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then # If the SCC is successful
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC is successful
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
             rm *out *log *xyz
@@ -347,7 +347,7 @@ do
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc-1e-2" ]; then 
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then # If the SCC continuation is successful
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC continuation is successful
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
             rm *out *log *xyz
@@ -390,9 +390,9 @@ done
 ## Submit the fifth job
 submit_dftb_hybrid 8 1 $JOBNAME 
 
-## LOOP 5 (Orange)
-## Either running SCC2 1e-3, Forces 1e-4, SCC 1e-3, or Forces 1e-2.
-## The results are either SCC 1e-5, SCC2 1e-5, Forces 1e-3, SCC2 1e-2, or an error message.
+## LOOP 5 (Light Purple)
+## Either running Forces 1e-4, SCC2 1e-3, SCC 1e-3, or Forces 1e-2
+## The results are either SCC2 1e-5, SCC 1e-5, Forces 1e-3, SCC2 1e-2, or error message.
 while :
 do
   stat="$(squeue -n $JOBNAME)"
@@ -403,7 +403,7 @@ do
       sleep 5s
     else 
       if [ $JOBNAME == "$COF-scc2-1e-3" ]; then 
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then # If the SCC is successful
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC is successful
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
             rm *out *log *xyz
@@ -513,9 +513,9 @@ done
 ## Submit the sixth job
 submit_dftb_hybrid 8 1 $JOBNAME
 
-## LOOP 6 (Eggplant)
-## Either running SCC 1e-5, SCC2 1e-5, Forces 1e-3, or SCC2 1e-2. 
-## The results are either Forces 1e-4, SCC2 1e-3, SCC 1e-3, complete, or an error message.
+## LOOP 6 (Kelly Green)
+## Either running SCC2 1e-5, SCC 1e-5, Forces 1e-3, or SCC2 1e-2
+## The results are either Forces 1e-4, SCC2 1e-3, SCC 1e-3, complete, or an error message
 while :
 do
   stat="$(squeue -n $JOBNAME)"
@@ -526,7 +526,7 @@ do
       sleep 5s
     else 
       if [ $JOBNAME == "$COF-scc-1e-5" ]; then
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./1e-4-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
@@ -553,7 +553,7 @@ do
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc2-1e-5" ]; then
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then # If the SCC is successful
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC is successful
           if [ -d "./1e-4-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
@@ -591,7 +591,7 @@ do
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc2-1e-2" ]; then
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then # If the SCC is successful
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC is successful
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
             rm *out *log *xyz
@@ -630,9 +630,9 @@ done
 ## submit the seventh job 
 submit_dftb_hybrid 8 1 $JOBNAME
 
-## LOOP 7 (Mustard Yellow)
+## LOOP 7 (Sky Blue)
 ## Either running Forces 1e-4, SCC2 1e-3, or SCC 1e-3
-## The results are either SCC2 1e-5, SCC 1e-5, Forces 1e-3, complete or error message. 
+## The results are either SCC2 1e-5, SCC 1e-5, Forces 1e-3, or an error message
 while :
 do
   stat="$(squeue -n $JOBNAME)"
@@ -659,7 +659,7 @@ do
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc2-1e-3" ]; then
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then # If the SCC is successful
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC is successful
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
             rm *out *log *xyz
@@ -737,8 +737,9 @@ done
 ## submit the eigth job 
 submit_dftb_hybrid 8 1 $JOBNAME
 
-## LOOP 8 (Red)
+## LOOP 8 (Purple)
 ## Either running SCC2 1e-5, SCC 1e-5, or Forces 1e-3
+## The results are either Forces 1e-4, SCC2 1e-3, complete, or an error message
 ## The results are either Forces 1e-4, SCC2 1e-3, complete, or error message
 while :
 do
@@ -750,7 +751,7 @@ do
       sleep 5s
     else
       if [ $JOBNAME == "$COF-scc2-1e-5" ]; then
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./1e-4-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
@@ -773,7 +774,7 @@ do
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc-1e-5" ]; then
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./1e-4-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
@@ -822,9 +823,9 @@ done
 ## submit the ninth job 
 submit_dftb_hybrid 8 1 $JOBNAME
 
-## LOOP 9 (Light Red)
+## LOOP 9 (Magenta)
 ## Either running Forces 1e-4 or SCC2 1e-3
-## The results are either SCC2 1e-5, SCC 1e-5, or error message
+## The results are either SCC2 1e-5, SCC 1e-5, or an error message
 while :
 do
   stat="$(squeue -n $JOBNAME)"
@@ -835,7 +836,7 @@ do
       sleep 5s
     else
       if [ $JOBNAME == "$COF-scc2-1e-3" ]; then
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then # If the SCC is successful
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC is successful
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
             rm *out *log *xyz
@@ -890,7 +891,7 @@ done
 ## submit the tenth job
 submit_dftb_hybrid 8 1 $JOBNAME
 
-## LOOP 10 (Light Teal)
+## LOOP 10 (Orange)
 ## Either running SCC2 1e-5 or SCC 1e-5
 ## The results are either complete, error message, or Forces 1e-4
 while :
@@ -903,7 +904,7 @@ do
       sleep 5s
     else
       if [ $JOBNAME == "$COF-scc2-1e-5" ]; then
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./1e-4-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
@@ -926,7 +927,7 @@ do
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc-1e-5" ]; then
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./1e-4-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
             rm *out *log *xyz
@@ -959,9 +960,9 @@ done
 ## submit the eleventh job
 submit_dftb_hybrid 8 1 $JOBNAME
 
-## LOOP 11 (Peach)
+## LOOP 11 (Mustard Yellow)
 ## Only running forces 1e-4
-## The results are either error message or scc2 1e-5
+## The results are either error message or SCC2 1e-5
 while :
 do
   stat="$(squeue -n $JOBNAME)"
@@ -992,7 +993,7 @@ done
 ## submit the twelfth job
 submit_dftb_hybrid 8 1 $JOBNAME
 
-## LOOP 12 (Magenta Gradient)
+## LOOP 12 (Eggplant)
 ## This loop is only running the outcome of SCC2 1e-5
 ## The result is either complete or error message
 while :
@@ -1004,7 +1005,7 @@ do
       echo "The simulation is pending..."
       sleep 5s
     else
-      if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log: then
+      if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
         if [ -d "./1e-4-Outputs" ]; then
           cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
           rm *out *log *xyz
