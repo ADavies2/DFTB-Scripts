@@ -142,7 +142,7 @@ do
           printf "$COF at $TOL SCC did NOT converge\n$COF at $TOL Forces did NOT converge\nUser trouble-shoot required\n"
           exit
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       fi
@@ -268,7 +268,7 @@ do
   string=($stat)
   jobstat=(${string[12]}) # Check the status of the submitted job
     if [ "$jobstat" == "PD" ]; then # If the job is pending
-      echo "The simulation is pending..."
+      echo "$JOBNAME is pending..."
       sleep 5s
     else 
       if [ $JOBNAME == "$COF-forces-1e-3" ]; then 
@@ -277,14 +277,14 @@ do
           sed -i "s/.*<<<.*/  <<< ""$TOL-Forces-Out.gen""/g" dftb_in.hsd # Use previously generated geometry from forces-only calculation
           sed -i 's/^#//' dftb_in.hsd # Remove all commented lines that are necessary for SCC calculation
           sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd
-          echo "Forces converged. Attempting SCC at $TOL..."
+          echo "$JOBNAME converged. Attempting SCC at $TOL..."
           JOBNAME="$COF-scc2-$TOL"
           break
         elif grep -q "Geometry did NOT converge" detailed.out && grep -q "Geometry did NOT converge" $JOBNAME.log; then # If the Geometry does not converge with a forces only calculation, then exit and prompt for user troubleshoot.
-          printf "SCC did NOT converge at $TOL\nForces did NOT converge at $TOL\nUser trouble-shoot required\n"
+          printf "$COF at $TOL SCC did NOT converge\n$COF at $TOL Forces did NOT converge\nUser trouble-shoot required\n"
           exit
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc-1e-5" ]; then 
@@ -305,11 +305,11 @@ do
           sed -i 's/.*SCC = Yes.*/SCC = No/g' dftb_in.hsd # No SCC iterations as converging forces only
           sed -i '/^\s*SCCTolerance.*-0.1623 }$/ s|^|#|; /^\s*SCCTolerance/, /-0.1623 }$/ s|^|#|' dftb_in.hsd # Comment out the range of lines used in an SCC calculation 
           sed -i "s/.*OutputPrefix.*/  OutputPrefix = "1e-4-Forces-Out"/g" dftb_in.hsd
-          echo "SCC did NOT converge. Attempting forces only..."
+          echo "$JOBNAME did NOT converge. Attempting forces only..."
           JOBNAME="$COF-forces-1e-4" # Change the jobname to reflect a forces only calculation
           break
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc2-1e-2" ]; then
@@ -322,7 +322,7 @@ do
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
             sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd # New output file prefix
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
-            echo "The simulation has completed."
+            echo "$JOBNAME has completed."
             JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next SCC iteration. The 'scc2' is to indicate that it is the second SCC iteration at this same tolerance
             break
           else
@@ -334,7 +334,7 @@ do
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
             sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd # New output file prefix
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
-            echo "The simulation has completed."
+            echo "$JOBNAME has completed."
             JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next scc iteration
             break
           fi
@@ -342,7 +342,7 @@ do
           printf "SCC at $TOL did NOT converge after forces\nUser trouble-shoot required\n"
           exit
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc-1e-2" ]; then 
@@ -355,7 +355,7 @@ do
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
             sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd # New output file prefix
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
-            echo "The simulation has completed."
+            echo "$JOBNAME has completed."
             JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next SCC iteration
             break
           else
@@ -367,7 +367,7 @@ do
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
             sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL"/g" dftb_in.hsd # New output file prefix
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
-            echo "The simulation has completed."
+            echo "$JOBNAME has completed."
             JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next scc iteration
             break
           fi
@@ -375,11 +375,11 @@ do
           sed -i 's/.*SCC = Yes.*/SCC = No/g' dftb_in.hsd # No SCC iterations as converging forces only
           sed -i '/^\s*SCCTolerance.*-0.1623 }$/ s|^|#|; /^\s*SCCTolerance/, /-0.1623 }$/ s|^|#|' dftb_in.hsd # Comment out the range of lines used in an SCC calculation 
           sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Forces-Out"/g" dftb_in.hsd
-          echo "SCC did NOT converge. Attempting forces only..."
+          echo "$JOBNAME did NOT converge. Attempting forces only..."
           JOBNAME="$COF-forces-$TOL" # Change the jobname to reflect a forces only calculation
           break
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi 
       fi
@@ -398,7 +398,7 @@ do
   string=($stat)
   jobstat=(${string[12]}) # Check the status of the submitted job
     if [ "$jobstat" == "PD" ]; then # If the job is pending
-      echo "The simulation is pending..."
+      echo "$JOBNAME is pending..."
       sleep 5s
     else 
       if [ $JOBNAME == "$COF-scc2-1e-3" ]; then 
@@ -411,7 +411,7 @@ do
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g" dftb_in.hsd # New force tolerance
             sed -i "s/.*OutputPrefix.*/  OutputPrefix = "1e-4-Out"/g" dftb_in.hsd # New output file prefix
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
-            echo "The simulation has completed."
+            echo "$JOBNAME has completed."
             JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next SCC iteration. The 'scc2' is to indicate that it is the second SCC iteration at this same tolerance
             break
           else
@@ -423,7 +423,7 @@ do
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g" dftb_in.hsd # New force tolerance
             sed -i "s/.*OutputPrefix.*/  OutputPrefix = "1e-4-Out"/g" dftb_in.hsd # New output file prefix
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
-            echo "The simulation has completed."
+            echo "$JOBNAME has completed."
             JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next scc iteration
             break
           fi
@@ -431,7 +431,7 @@ do
           printf "SCC at $TOL did NOT converge after forces\nUser trouble-shoot required\n"
           exit
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-forces-1e-4" ]; then 
@@ -440,14 +440,14 @@ do
           sed -i "s/.*<<<.*/  <<< ""1e-4-Forces-Out.gen""/g" dftb_in.hsd # Use previously generated geometry from forces-only calculation
           sed -i 's/^#//' dftb_in.hsd # Remove all commented lines that are necessary for SCC calculation
           sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd
-          echo "Forces converged. Attempting SCC at $TOL..."
+          echo "$JOBNAME converged. Attempting SCC at $TOL..."
           JOBNAME="$COF-scc2-$TOL"
           break
         elif grep -q "Geometry did NOT converge" detailed.out && grep -q "Geometry did NOT converge" $JOBNAME.log; then # If the Geometry does not converge with a forces only calculation, then exit and prompt for user troubleshoot.
-          printf "SCC did NOT converge at $TOL\nForces did NOT converge at $TOL\nUser trouble-shoot required\n"
+          printf "$COF at $TOL SCC did NOT converge\n$COF at $TOL Forces did NOT converge\nUser trouble-shoot required\n"
           exit
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc-1e-3" ]; then
@@ -461,7 +461,7 @@ do
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g" dftb_in.hsd # New force tolerance
             sed -i "s/.*OutputPrefix.*/  OutputPrefix = "1e-4-Out"/g" dftb_in.hsd # New output file prefix
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
-            echo "The simulation has completed."
+            echo "$JOBNAME has completed."
             JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next SCC iteration
             break
           else 
@@ -474,7 +474,7 @@ do
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g" dftb_in.hsd # New force tolerance
             sed -i "s/.*OutputPrefix.*/  OutputPrefix = "1e-4-Out"/g" dftb_in.hsd # New output file prefix
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
-            echo "The simulation has completed."
+            echo "$JOBNAME has completed."
             JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next scc iteration
             break
           fi
@@ -482,11 +482,11 @@ do
           sed -i 's/.*SCC = Yes.*/SCC = No/g' dftb_in.hsd # No SCC iterations as converging forces only
           sed -i '/^\s*SCCTolerance.*-0.1623 }$/ s|^|#|; /^\s*SCCTolerance/, /-0.1623 }$/ s|^|#|' dftb_in.hsd # Comment out the range of lines used in an SCC calculation 
           sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Forces-Out"/g" dftb_in.hsd
-          echo "SCC did NOT converge. Attempting forces only..."
+          echo "$JOBNAME did NOT converge. Attempting forces only..."
           JOBNAME="$COF-forces-$TOL" # Change the jobname to reflect a forces only calculation
           break
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-forces-1e-2" ]; then
@@ -495,14 +495,14 @@ do
           sed -i "s/.*<<<.*/  <<< ""$TOL-Forces-Out.gen""/g" dftb_in.hsd # Use previously generated geometry from forces-only calculation
           sed -i 's/^#//' dftb_in.hsd # Remove all commented lines that are necessary for SCC calculation
           sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd
-          echo "Forces converged. Attempting SCC at $TOL..."
+          echo "$JOBNAME converged. Attempting SCC at $TOL..."
           JOBNAME="$COF-scc2-$TOL"
           break
         elif grep -q "Geometry did NOT converge" detailed.out && grep -q "Geometry did NOT converge" $JOBNAME.log; then # If the Geometry does not converge with a forces only calculation, then exit and prompt for user troubleshoot.
-          printf "SCC did NOT converge at $TOL\nForces did NOT converge at $TOL\nUser trouble-shoot required\n"
+          printf "$COF at $TOL SCC did NOT converge\n$COF at $TOL Forces did NOT converge\nUser trouble-shoot required\n"
           exit
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       fi
@@ -521,7 +521,7 @@ do
   string=($stat)
   jobstat=(${string[12]}) # Check the status of the submitted job
     if [ "$jobstat" == "PD" ]; then # If the job is pending
-      echo "The simulation is pending..."
+      echo "$JOBNAME is pending..."
       sleep 5s
     else 
       if [ $JOBNAME == "$COF-scc-1e-5" ]; then
@@ -542,11 +542,11 @@ do
           sed -i 's/.*SCC = Yes.*/SCC = No/g' dftb_in.hsd # No SCC iterations as converging forces only
           sed -i '/^\s*SCCTolerance.*-0.1623 }$/ s|^|#|; /^\s*SCCTolerance/, /-0.1623 }$/ s|^|#|' dftb_in.hsd # Comment out the range of lines used in an SCC calculation 
           sed -i "s/.*OutputPrefix.*/  OutputPrefix = "1e-4-Forces-Out"/g" dftb_in.hsd
-          echo "SCC did NOT converge. Attempting forces only..."
+          echo "$JOBNAME did NOT converge. Attempting forces only..."
           JOBNAME="$COF-forces-1e-4" # Change the jobname to reflect a forces only calculation
           break
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc2-1e-5" ]; then
@@ -566,7 +566,7 @@ do
           printf "SCC at $TOL did NOT converge after forces\nUser trouble-shoot required\n"
           exit
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-forces-1e-3" ]; then 
@@ -575,14 +575,14 @@ do
           sed -i "s/.*<<<.*/  <<< ""$TOL-Forces-Out.gen""/g" dftb_in.hsd # Use previously generated geometry from forces-only calculation
           sed -i 's/^#//' dftb_in.hsd # Remove all commented lines that are necessary for SCC calculation
           sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd
-          echo "Forces converged. Attempting SCC at $TOL..."
+          echo "$JOBNAME converged. Attempting SCC at $TOL..."
           JOBNAME="$COF-scc2-$TOL"
           break
         elif grep -q "Geometry did NOT converge" detailed.out && grep -q "Geometry did NOT converge" $JOBNAME.log; then # If the Geometry does not converge with a forces only calculation, then exit and prompt for user troubleshoot.
-          printf "SCC did NOT converge at $TOL\nForces did NOT converge at $TOL\nUser trouble-shoot required\n"
+          printf "$COF at $TOL SCC did NOT converge\n$COF at $TOL Forces did NOT converge\nUser trouble-shoot required\n"
           exit
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc2-1e-2" ]; then
@@ -595,7 +595,7 @@ do
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
             sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd # New output file prefix
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
-            echo "The simulation has completed."
+            echo "$JOBNAME has completed."
             JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next SCC iteration. The 'scc2' is to indicate that it is the second SCC iteration at this same tolerance
             break
           else
@@ -607,7 +607,7 @@ do
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
             sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd # New output file prefix
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
-            echo "The simulation has completed."
+            echo "$JOBNAME has completed."
             JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next scc iteration
             break
           fi
@@ -615,7 +615,7 @@ do
           printf "SCC at $TOL did NOT converge after forces\nUser trouble-shoot required\n"
           exit
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       fi
@@ -634,7 +634,7 @@ do
   string=($stat)
   jobstat=(${string[12]}) # Check the status of the submitted job
     if [ "$jobstat" == "PD" ]; then # If the job is pending
-      echo "The simulation is pending..."
+      echo "$JOBNAME is pending..."
       sleep 5s
     else
       if [ $JOBNAME == "$COF-forces-1e-4" ]; then
@@ -643,14 +643,14 @@ do
           sed -i "s/.*<<<.*/  <<< ""1e-4-Forces-Out.gen""/g" dftb_in.hsd # Use previously generated geometry from forces-only calculation
           sed -i 's/^#//' dftb_in.hsd # Remove all commented lines that are necessary for SCC calculation
           sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd
-          echo "Forces converged. Attempting SCC at $TOL..."
+          echo "$JOBNAME converged. Attempting SCC at $TOL..."
           JOBNAME="$COF-scc2-$TOL"
           break
         elif grep -q "Geometry did NOT converge" detailed.out && grep -q "Geometry did NOT converge" $JOBNAME.log; then # If the Geometry does not converge with a forces only calculation, then exit and prompt for user troubleshoot.
-          printf "SCC did NOT converge at $TOL\nForces did NOT converge at $TOL\nUser trouble-shoot required\n"
+          printf "$COF at $TOL SCC did NOT converge\n$COF at $TOL Forces did NOT converge\nUser trouble-shoot required\n"
           exit
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc2-1e-3" ]; then
@@ -663,7 +663,7 @@ do
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g" dftb_in.hsd # New force tolerance
             sed -i "s/.*OutputPrefix.*/  OutputPrefix = "1e-4-Out"/g" dftb_in.hsd # New output file prefix
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
-            echo "The simulation has completed."
+            echo "$JOBNAME has completed."
             JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next SCC iteration. The 'scc2' is to indicate that it is the second SCC iteration at this same tolerance
             break
           else
@@ -675,7 +675,7 @@ do
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g" dftb_in.hsd # New force tolerance
             sed -i "s/.*OutputPrefix.*/  OutputPrefix = "1e-4-Out"/g" dftb_in.hsd # New output file prefix
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
-            echo "The simulation has completed."
+            echo "$JOBNAME has completed."
             JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next scc iteration
             break
           fi
@@ -683,7 +683,7 @@ do
           printf "SCC at $TOL did NOT converge after forces\nUser trouble-shoot required\n"
           exit
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc-1e-3" ]; then
@@ -697,7 +697,7 @@ do
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g" dftb_in.hsd # New force tolerance
             sed -i "s/.*OutputPrefix.*/  OutputPrefix = "1e-4-Out"/g" dftb_in.hsd # New output file prefix
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
-            echo "The simulation has completed."
+            echo "$JOBNAME has completed."
             JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next SCC iteration
             break
           else
@@ -710,7 +710,7 @@ do
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g" dftb_in.hsd # New force tolerance
             sed -i "s/.*OutputPrefix.*/  OutputPrefix = "1e-4-Out"/g" dftb_in.hsd # New output file prefix
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
-            echo "The simulation has completed."
+            echo "$JOBNAME has completed."
             JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next scc iteration
             break
           fi 
@@ -718,11 +718,11 @@ do
           sed -i 's/.*SCC = Yes.*/SCC = No/g' dftb_in.hsd # No SCC iterations as converging forces only
           sed -i '/^\s*SCCTolerance.*-0.1623 }$/ s|^|#|; /^\s*SCCTolerance/, /-0.1623 }$/ s|^|#|' dftb_in.hsd # Comment out the range of lines used in an SCC calculation 
           sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Forces-Out"/g" dftb_in.hsd
-          echo "SCC did NOT converge. Attempting forces only..."
+          echo "$JOBNAME did NOT converge. Attempting forces only..."
           JOBNAME="$COF-forces-$TOL" # Change the jobname to reflect a forces only calculation
           break
         else 
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       fi
@@ -742,7 +742,7 @@ do
   string=($stat)
   jobstat=(${string[12]}) # Check the status of the submitted job
     if [ "$jobstat" == "PD" ]; then # If the job is pending
-      echo "The simulation is pending..."
+      echo "$JOBNAME is pending..."
       sleep 5s
     else
       if [ $JOBNAME == "$COF-scc2-1e-5" ]; then
@@ -763,7 +763,7 @@ do
           printf "SCC at $TOL did NOT converge after forces\nUser trouble-shoot required\n"
           exit
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc-1e-5" ]; then
@@ -784,11 +784,11 @@ do
           sed -i 's/.*SCC = Yes.*/SCC = No/g' dftb_in.hsd # No SCC iterations as converging forces only
           sed -i '/^\s*SCCTolerance.*-0.1623 }$/ s|^|#|; /^\s*SCCTolerance/, /-0.1623 }$/ s|^|#|' dftb_in.hsd # Comment out the range of lines used in an SCC calculation 
           sed -i "s/.*OutputPrefix.*/  OutputPrefix = "1e-4-Forces-Out"/g" dftb_in.hsd
-          echo "SCC did NOT converge. Attempting forces only..."
+          echo "$JOBNAME did NOT converge. Attempting forces only..."
           JOBNAME="$COF-forces-1e-4" # Change the jobname to reflect a forces only calculation
           break
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-forces-1e-3" ]; then
@@ -797,14 +797,14 @@ do
           sed -i "s/.*<<<.*/  <<< ""1e-4-Forces-Out.gen""/g" dftb_in.hsd # Use previously generated geometry from forces-only calculation
           sed -i 's/^#//' dftb_in.hsd # Remove all commented lines that are necessary for SCC calculation
           sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd
-          echo "Forces converged. Attempting SCC at $TOL..."
+          echo "$JOBNAME converged. Attempting SCC at $TOL..."
           JOBNAME="$COF-scc2-$TOL"
           break
         elif grep -q "Geometry did NOT converge" detailed.out && grep -q "Geometry did NOT converge" $JOBNAME.log; then # If the Geometry does not converge with a forces only calculation, then exit and prompt for user troubleshoot.
-          printf "SCC did NOT converge at $TOL\nForces did NOT converge at $TOL\nUser trouble-shoot required\n"
+          printf "$COF at $TOL SCC did NOT converge\n$COF at $TOL Forces did NOT converge\nUser trouble-shoot required\n"
           exit
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       fi
@@ -823,7 +823,7 @@ do
   string=($stat)
   jobstat=(${string[12]}) # Check the status of the submitted job
     if [ "$jobstat" == "PD" ]; then # If the job is pending
-      echo "The simulation is pending..."
+      echo "$JOBNAME is pending..."
       sleep 5s
     else
       if [ $JOBNAME == "$COF-scc2-1e-3" ]; then
@@ -836,7 +836,7 @@ do
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g" dftb_in.hsd # New force tolerance
             sed -i "s/.*OutputPrefix.*/  OutputPrefix = "1e-4-Out"/g" dftb_in.hsd # New output file prefix
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
-            echo "The simulation has completed."
+            echo "$JOBNAME has completed."
             JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next SCC iteration. The 'scc2' is to indicate that it is the second SCC iteration at this same tolerance
             break
           else
@@ -848,7 +848,7 @@ do
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g" dftb_in.hsd # New force tolerance
             sed -i "s/.*OutputPrefix.*/  OutputPrefix = "1e-4-Out"/g" dftb_in.hsd # New output file prefix
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd # New scc tolerance
-            echo "The simulation has completed."
+            echo "$JOBNAME has completed."
             JOBNAME="$COF-scc-$TOL" # Change the jobname to reflect the next scc iteration
             break
           fi
@@ -856,7 +856,7 @@ do
           printf "SCC at $TOL did NOT converge after forces\nUser trouble-shoot required\n"
           exit
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-forces-1e-4" ]; then
@@ -865,14 +865,14 @@ do
           sed -i "s/.*<<<.*/  <<< ""1e-4-Forces-Out.gen""/g" dftb_in.hsd # Use previously generated geometry from forces-only calculation
           sed -i 's/^#//' dftb_in.hsd # Remove all commented lines that are necessary for SCC calculation
           sed -i "s/.*OutputPrefix.*/  OutputPrefix = "1e-4-Out"/g" dftb_in.hsd
-          echo "Forces converged. Attempting SCC at $TOL..."          
+          echo "$JOBNAME converged. Attempting SCC at $TOL..."          
           JOBNAME="$COF-scc2-$TOL"
           break
         elif grep -q "Geometry did NOT converge" detailed.out && grep -q "Geometry did NOT converge" $JOBNAME.log; then # If the Geometry does not converge with a forces only calculation, then exit and prompt for user troubleshoot.
-          printf "SCC did NOT converge at $TOL\nForces did NOT converge at $TOL\nUser trouble-shoot required\n"
+          printf "$COF at $TOL SCC did NOT converge\n$COF at $TOL Forces did NOT converge\nUser trouble-shoot required\n"
           exit
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       fi
@@ -891,7 +891,7 @@ do
   string=($stat)
   jobstat=(${string[12]}) # Check the status of the submitted job
     if [ "$jobstat" == "PD" ]; then # If the job is pending
-      echo "The simulation is pending..."
+      echo "$JOBNAME is pending..."
       sleep 5s
     else
       if [ $JOBNAME == "$COF-scc2-1e-5" ]; then
@@ -912,7 +912,7 @@ do
           printf "SCC at $TOL did NOT converge after forces\nUser trouble-shoot required\n"
           exit
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       elif [ $JOBNAME == "$COF-scc-1e-5" ]; then
@@ -933,11 +933,11 @@ do
           sed -i 's/.*SCC = Yes.*/SCC = No/g' dftb_in.hsd # No SCC iterations as converging forces only
           sed -i '/^\s*SCCTolerance.*-0.1623 }$/ s|^|#|; /^\s*SCCTolerance/, /-0.1623 }$/ s|^|#|' dftb_in.hsd # Comment out the range of lines used in an SCC calculation 
           sed -i "s/.*OutputPrefix.*/  OutputPrefix = "1e-4-Forces-Out"/g" dftb_in.hsd
-          echo "SCC did NOT converge. Attempting forces only..."
+          echo "$JOBNAME did NOT converge. Attempting forces only..."
           JOBNAME="$COF-forces-1e-4" # Change the jobname to reflect a forces only calculation
           break
         else
-          echo "The simulation is running..."
+          echo "$JOBNAME is running..."
           sleep 5s
         fi
       fi
@@ -956,7 +956,7 @@ do
   string=($stat)
   jobstat=(${string[12]}) # Check the status of the submitted job
     if [ "$jobstat" == "PD" ]; then # If the job is pending
-      echo "The simulation is pending..."
+      echo "$JOBNAME is pending..."
       sleep 5s
     else
       if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
@@ -964,14 +964,14 @@ do
         sed -i "s/.*<<<.*/  <<< ""1e-4-Forces-Out.gen""/g" dftb_in.hsd # Use previously generated geometry from forces-only calculation
         sed -i 's/^#//' dftb_in.hsd # Remove all commented lines that are necessary for SCC calculation
         sed -i "s/.*OutputPrefix.*/  OutputPrefix = "1e-4-Out"/g" dftb_in.hsd
-        echo "Forces converged. Attempting SCC at $TOL..."        
+        echo "$JOBNAME converged. Attempting SCC at $TOL..."        
         JOBNAME="$COF-scc2-$TOL"
         break
       elif grep -q "Geometry did NOT converge" detailed.out && grep -q "Geometry did NOT converge" $JOBNAME.log; then # If the Geometry does not converge with a forces only calculation, then exit and prompt for user troubleshoot.
-        printf "SCC did NOT converge at $TOL\nForces did NOT converge at $TOL\nUser trouble-shoot required\n"
+        printf "$COF at $TOL SCC did NOT converge\n$COF at $TOL Forces did NOT converge\nUser trouble-shoot required\n"
         exit
       else
-        echo "The simulation is running..."
+        echo "$JOBNAME is running..."
         sleep 5s
       fi
     fi
@@ -989,7 +989,7 @@ do
   string=($stat)
   jobstat=(${string[12]}) # Check the status of the submitted job
     if [ "$jobstat" == "PD" ]; then # If the job is pending
-      echo "The simulation is pending..."
+      echo "$JOBNAME is pending..."
       sleep 5s
     else
       if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
@@ -1008,6 +1008,9 @@ do
       elif grep -q "SCC is NOT converged" $JOBNAME.log; then # If the SCC does not converge, first run a forces only simulation
         printf "SCC at $TOL did NOT converge after fores\nUser trouble-shoot required\n"
         exit
+      else
+        echo "$JOBNAME is running..."
+        sleep 5s
       fi
     fi
 done
