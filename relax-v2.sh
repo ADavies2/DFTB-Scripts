@@ -33,7 +33,7 @@ do
       if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the job has suceeded
         if [ -d "./$TOL-Outputs" ]; then # Check if a directory exists that can hold these output files
           cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-          rm *out *log *xyz
+          rm *out *xyz
           # Rewrite dftb_in.hsd for the next SCC iteration
           sed -i 's/.*Geometry.*/Geometry = GenFormat {/g' dftb_in.hsd # Rewrite the geometry input format
           sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
@@ -48,7 +48,7 @@ do
         else # If the directory doesn't exist, make one. This loop will be used in the future for all successful SCC calculations.
           mkdir $TOL-Outputs
           cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-          rm *out *log *xyz
+          rm *out *xyz
           # Rewrite the inputs in dftb_in.hsd for the next SCC iteration
           sed -i 's/.*Geometry.*/Geometry = GenFormat {/g' dftb_in.hsd # Rewrite the geometry input format
           sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
@@ -93,7 +93,7 @@ do
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             # Rewrite the inputs in dftb_in.hsd for the next SCC iteration
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-3' # Define the next tolerance
@@ -106,7 +106,7 @@ do
           else
             mkdir $TOL-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             # Rewrite the inputs in dftb_in.hsd for the next SCC iteration
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-3' # Define the next tolerance
@@ -167,7 +167,7 @@ do
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC continuation is successful
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-5' # Define the next tolerance continuation
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g" dftb_in.hsd # New force tolerance
@@ -179,7 +179,7 @@ do
           else
             mkdir $TOL-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-5' # Define the next tolerance
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g" dftb_in.hsd # New force tolerance
@@ -220,7 +220,7 @@ do
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC is successful
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-2' # Define the next tolerance continuation
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
@@ -233,7 +233,7 @@ do
           else
             mkdir $TOL-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-2' # Define the next tolerance
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
@@ -290,14 +290,12 @@ do
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./1e-4-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
-            rm *out *log *xyz
             echo "$COF has been fully relaxed!" 
             rm *out *log *xyz *gen *bin # delete all duplicate output files
             exit
           else
             mkdir 1e-4-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
-            rm *out *log *xyz
             echo "$COF has been fully relaxed!"
             rm *out *log *xyz *gen *bin
             exit
@@ -317,7 +315,7 @@ do
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC is successful
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-3' # Define the next tolerance continuation
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
@@ -329,7 +327,7 @@ do
           else
             mkdir $TOL-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-3' # Define the next tolerance
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
@@ -350,7 +348,7 @@ do
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC continuation is successful
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-3' # Define the next tolerance continuation
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
@@ -362,7 +360,7 @@ do
           else
             mkdir $TOL-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-3' # Define the next tolerance
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
@@ -406,7 +404,7 @@ do
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC is successful
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-5' # Define the next tolerance continuation
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g" dftb_in.hsd # New force tolerance
@@ -418,7 +416,7 @@ do
           else
             mkdir $TOL-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-5' # Define the next tolerance
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g" dftb_in.hsd # New force tolerance
@@ -455,7 +453,7 @@ do
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             # Rewrite the inputs in dftb_in.hsd for the next SCC iteration
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-5' # Define the next tolerance
@@ -468,7 +466,7 @@ do
           else 
             mkdir $TOL-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             # Rewrite the inputs in dftb_in.hsd for the next SCC iteration
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-5' # Define the next tolerance
@@ -529,14 +527,12 @@ do
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./1e-4-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
-            rm *out *log *xyz
             echo "$COF has been fully relaxed!" 
             rm *out *log *xyz *gen *bin
             exit
           else
             mkdir 1e-4-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
-            rm *out *log *xyz
             echo "$COF has been fully relaxed!"
             rm *out *log *xyz *gen *bin
             exit
@@ -556,14 +552,12 @@ do
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC is successful
           if [ -d "./1e-4-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
-            rm *out *log *xyz
             echo "$COF has been fully relaxed!" 
             rm *out *log *xyz *gen *bin
             exit
           else
             mkdir 1e-4-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
-            rm *out *log *xyz
             echo "$COF has been fully relaxed!" 
             rm *out *log *xyz *gen *bin
           fi
@@ -594,7 +588,7 @@ do
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC is successful
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-3' # Define the next tolerance continuation
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
@@ -606,7 +600,7 @@ do
           else
             mkdir $TOL-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-3' # Define the next tolerance
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd # New force tolerance
@@ -662,7 +656,7 @@ do
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC is successful
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-5' # Define the next tolerance continuation
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g" dftb_in.hsd # New force tolerance
@@ -674,7 +668,7 @@ do
           else
             mkdir $TOL-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-5' # Define the next tolerance
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g" dftb_in.hsd # New force tolerance
@@ -695,7 +689,7 @@ do
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             # Rewrite the inputs in dftb_in.hsd for the next SCC iteration
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-5' # Define the next tolerance
@@ -708,7 +702,7 @@ do
           else
             mkdir $TOL-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             # Rewrite the inputs in dftb_in.hsd for the next SCC iteration
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-5' # Define the next tolerance
@@ -754,14 +748,12 @@ do
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./1e-4-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
-            rm *out *log *xyz
             echo "$COF has been fully relaxed!" 
             rm *out *log *xyz *gen *bin
             exit
           else
             mkdir 1e-4-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
-            rm *out *log *xyz
             echo "$COF has been fully relaxed!"
             rm *out *log *xyz *gen *bin
             exit
@@ -777,14 +769,12 @@ do
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./1e-4-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
-            rm *out *log *xyz
             echo "$COF has been fully relaxed!" 
             rm *out *log *xyz *gen *bin
             exit
           else
             mkdir 1e-4-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
-            rm *out *log *xyz
             echo "$COF has been fully relaxed!"
             rm *out *log *xyz *gen *bin
             exit
@@ -839,7 +829,7 @@ do
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC is successful
           if [ -d "./$TOL-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-5' # Define the next tolerance continuation
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g" dftb_in.hsd # New force tolerance
@@ -851,7 +841,7 @@ do
           else
             mkdir $TOL-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin $TOL-Outputs/
-            rm *out *log *xyz
+            rm *out *xyz
             sed -i "s/.*<<<.*/  <<< ""$TOL-Out.gen""/g" dftb_in.hsd # Rewrite the input file name
             TOL='1e-5' # Define the next tolerance
             sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g" dftb_in.hsd # New force tolerance
@@ -907,14 +897,12 @@ do
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./1e-4-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
-            rm *out *log *xyz
             echo "$COF has been fully relaxed!" 
             rm *out *log *xyz *gen *bin
             exit
           else
             mkdir 1e-4-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
-            rm *out *log *xyz
             echo "$COF has been fully relaxed!"
             rm *out *log *xyz *gen *bin
             exit
@@ -930,14 +918,12 @@ do
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./1e-4-Outputs" ]; then
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
-            rm *out *log *xyz
             echo "$COF has been fully relaxed!" 
             rm *out *log *xyz *gen *bin
             exit
           else
             mkdir 1e-4-Outputs
             cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
-            rm *out *log *xyz
             echo "$COF has been fully relaxed!"
             rm *out *log *xyz *gen *bin
             exit
@@ -1008,14 +994,12 @@ do
       if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
         if [ -d "./1e-4-Outputs" ]; then
           cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
-          rm *out *log *xyz
           echo "$COF has been fully relaxed!" 
           rm *out *log *xyz *gen *bin
           exit
         else
           mkdir 1e-4-Outputs
           cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
-          rm *out *log *xyz
           echo "$COF has been fully relaxed!"
           rm *out *log *xyz *gen *bin
           exit
