@@ -14,9 +14,9 @@ avagadro = 6.022e23 # molecules/mol, Avagadro's numer
 
 # User input of dimension in x, y, and z to calcualte the volume of the simulation cell
 
-x = int(input("Dimension of simulation cell in x (Ang): "))
-y = int(input("Dimension of simulation cell in y (Ang): "))
-z = int(input("Dimension of simulation cell in z (Ang): "))
+x = float(input("Dimension of simulation cell in x (Ang): "))
+y = float(input("Dimension of simulation cell in y (Ang): "))
+z = float(input("Dimension of simulation cell in z (Ang): "))
 
 volume = x*y*z # Ang3, volume of the simulation cell
 #print("Simulation cell volume is", volume, "Angstrom cubed")
