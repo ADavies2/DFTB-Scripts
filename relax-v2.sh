@@ -290,13 +290,13 @@ do
       elif [ $JOBNAME == "$COF-scc-1e-5" ]; then 
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./1e-4-Outputs" ]; then
-            cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
+            cp detailed.out $JOBNAME.log 1e-4-Out.gen 1e-4-Out.xyz charges.bin 1e-4-Outputs/
             echo "$COF has been fully relaxed!" 
             rm *out *log *xyz *gen *bin # delete all duplicate output files
             exit
           else
             mkdir 1e-4-Outputs
-            cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
+            cp detailed.out $JOBNAME.log 1e-4-Out.gen 1e-4-Out.xyz charges.bin 1e-4-Outputs/
             echo "$COF has been fully relaxed!"
             rm *out *log *xyz *gen *bin
             exit
@@ -527,13 +527,13 @@ do
       if [ $JOBNAME == "$COF-scc-1e-5" ]; then
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./1e-4-Outputs" ]; then
-            cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
+            cp detailed.out $JOBNAME.log 1e-4-Out.gen 1e-4-Out.xyz charges.bin 1e-4-Outputs/
             echo "$COF has been fully relaxed!" 
             rm *out *log *xyz *gen *bin
             exit
           else
             mkdir 1e-4-Outputs
-            cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
+            cp detailed.out $JOBNAME.log 1e-4-Out.gen 1e-4-Out.xyz charges.bin 1e-4-Outputs/
             echo "$COF has been fully relaxed!"
             rm *out *log *xyz *gen *bin
             exit
@@ -552,13 +552,13 @@ do
       elif [ $JOBNAME == "$COF-scc2-1e-5" ]; then
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then # If the SCC is successful
           if [ -d "./1e-4-Outputs" ]; then
-            cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
+            cp detailed.out $JOBNAME.log 1e-4-Out.gen 1e-4-Out.xyz charges.bin 1e-4-Outputs/
             echo "$COF has been fully relaxed!" 
             rm *out *log *xyz *gen *bin
             exit
           else
             mkdir 1e-4-Outputs
-            cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
+            cp detailed.out $JOBNAME.log 1e-4-Out.gen 1e-4-Out.xyz charges.bin 1e-4-Outputs/
             echo "$COF has been fully relaxed!" 
             rm *out *log *xyz *gen *bin
           fi
@@ -748,13 +748,13 @@ do
       if [ $JOBNAME == "$COF-scc2-1e-5" ]; then
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./1e-4-Outputs" ]; then
-            cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
+            cp detailed.out $JOBNAME.log 1e-4-Out.gen 1e-4-Out.xyz charges.bin 1e-4-Outputs/
             echo "$COF has been fully relaxed!" 
             rm *out *log *xyz *gen *bin
             exit
           else
             mkdir 1e-4-Outputs
-            cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
+            cp detailed.out $JOBNAME.log 1e-4-Out.gen 1e-4-Out.xyz charges.bin 1e-4-Outputs/
             echo "$COF has been fully relaxed!"
             rm *out *log *xyz *gen *bin
             exit
@@ -769,13 +769,13 @@ do
       elif [ $JOBNAME == "$COF-scc-1e-5" ]; then
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./1e-4-Outputs" ]; then
-            cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
+            cp detailed.out $JOBNAME.log 1e-4-Out.gen 1e-4-Out.xyz charges.bin 1e-4-Outputs/
             echo "$COF has been fully relaxed!" 
             rm *out *log *xyz *gen *bin
             exit
           else
             mkdir 1e-4-Outputs
-            cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
+            cp detailed.out $JOBNAME.log 1e-4-Out.gen 1e-4-Out.xyz charges.bin 1e-4-Outputs/
             echo "$COF has been fully relaxed!"
             rm *out *log *xyz *gen *bin
             exit
@@ -897,13 +897,13 @@ do
       if [ $JOBNAME == "$COF-scc2-1e-5" ]; then
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./1e-4-Outputs" ]; then
-            cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
+            cp detailed.out $JOBNAME.log 1e-4-Out.gen 1e-4-Out.xyz charges.bin 1e-4-Outputs/
             echo "$COF has been fully relaxed!" 
             rm *out *log *xyz *gen *bin
             exit
           else
             mkdir 1e-4-Outputs
-            cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
+            cp detailed.out $JOBNAME.log 1e-4-Out.gen 1e-4-Out.xyz charges.bin 1e-4-Outputs/
             echo "$COF has been fully relaxed!"
             rm *out *log *xyz *gen *bin
             exit
@@ -918,13 +918,13 @@ do
       elif [ $JOBNAME == "$COF-scc-1e-5" ]; then
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
           if [ -d "./1e-4-Outputs" ]; then
-            cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
+            cp detailed.out $JOBNAME.log 1e-4-Out.gen 1e-4-Out.xyz charges.bin 1e-4-Outputs/
             echo "$COF has been fully relaxed!" 
             rm *out *log *xyz *gen *bin
             exit
           else
             mkdir 1e-4-Outputs
-            cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
+            cp detailed.out $JOBNAME.log 1e-4-Out.gen 1e-4-Out.xyz charges.bin 1e-4-Outputs/
             echo "$COF has been fully relaxed!"
             rm *out *log *xyz *gen *bin
             exit
@@ -994,13 +994,13 @@ do
     else
       if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $JOBNAME.log; then
         if [ -d "./1e-4-Outputs" ]; then
-          cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
+          cp detailed.out $JOBNAME.log 1e-4-Out.gen 1e-4-Out.xyz charges.bin 1e-4-Outputs/
           echo "$COF has been fully relaxed!" 
           rm *out *log *xyz *gen *bin
           exit
         else
           mkdir 1e-4-Outputs
-          cp detailed.out $JOBNAME.log $TOL-Out.gen $TOL-Out.xyz charges.bin 1e-4-Outputs/
+          cp detailed.out $JOBNAME.log 1e-4-Out.gen 1e-4-Out.xyz charges.bin 1e-4-Outputs/
           echo "$COF has been fully relaxed!"
           rm *out *log *xyz *gen *bin
           exit
