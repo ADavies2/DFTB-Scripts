@@ -14,7 +14,7 @@ x = []
 with open(filename, 'r') as file:
     reader = csv.reader(file, delimiter=' ')
     for line in islice(reader, 2, None, 10):
-        print(len(line))
+        #print(len(line))
         x.append(list(filter(None, line)))
 x = np.array(x)
 
@@ -22,7 +22,7 @@ y = []
 with open(filename, 'r') as file:
     reader = csv.reader(file, delimiter=' ')
     for line in islice(reader, 3, None, 10):
-        print(len(line))
+        #print(len(line))
         y.append(list(filter(None, line)))
 y = np.array(y)
 
@@ -30,7 +30,7 @@ z = []
 with open(filename, 'r') as file:
     reader = csv.reader(file, delimiter=' ')
     for line in islice(reader, 4, None, 10):
-        print(len(line))
+        #print(len(line))
         z.append(list(filter(None, line)))
 z = np.array(z)
 
