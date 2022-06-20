@@ -34,9 +34,9 @@ with open(filename, 'r') as file:
         z.append(list(filter(None, line)))
 z = np.array(z)
 
-print(len(x))
-print(len(y))
-print(len(z))
+#print(len(x))
+#print(len(y))
+#print(len(z))
 
 file = open(xyz_filename, 'r')
 replace = []
