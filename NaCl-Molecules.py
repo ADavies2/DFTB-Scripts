@@ -17,9 +17,3 @@ if calculation == "y":
   num_nacl = input("How many NaCl molecules do you want?")
   volume = num_nacl*(1/avagadro)*(1/concentration)*(1/conv1)
   print("The volume to fit the given number of NaCl molecules at 0.5 M is", volume, "Angstrom cubed.")
-  
-
-
-
-
-
