@@ -11,15 +11,25 @@ conv1 = 1e-30 # conversion of m3 to Ang3
 mweight = 18.01 # g/mol, molecular weight of water molecule
 conv2 = 1000 # conversion of kg to g
 avagadro = 6.022e23 # molecules/mol, Avagadro's numer
+pi = math.pi()
 
-# User input of dimension in x, y, and z to calcualte the volume of the simulation cell
+# What is the shape of the space to fill with water?
+geometry = str(raw_input("What shape are you filling with water? Box or Cylinder?"))
 
-x = float(input("Dimension of simulation cell in x (Ang): "))
-y = float(input("Dimension of simulation cell in y (Ang): "))
-z = float(input("Dimension of simulation cell in z (Ang): "))
+if geometry == "Box":
+  x = float(input("Dimension of box in x (Ang): "))
+  y = float(input("Dimension of box in y (Ang): "))
+  z = float(input("Dimension of box in z (Ang): "))
 
-volume = x*y*z # Ang3, volume of the simulation cell
-#print("Simulation cell volume is", volume, "Angstrom cubed")
-
-water_molecules = density*conv1*volume*(1/mweight)*conv2*avagadro
-print("Number of whole water molecules in", volume, "Angstrom cubed simulation cell is", math.floor(water_molecules))
+  volume = x*y*z # Ang3, volume of the cubic cell
+  
+  water_molecules = density*conv1*volume*(1/mweight)*conv2*avagadro
+  print("Number of whole water molecules in", volume, "Angstrom cubed cubic cell is", math.floor(water_molecules))
+else:
+  r = float(input("Radius of the cylinder (Ang): "))
+  h = float(input("Height of the cylinder (Ang): "))
+  
+  volume = (r**2)*pi*h # Ang3, volume of the cylindrical cell
+  
+  water_molecules = density*conv1*volume*(1/mweight)*conv2*avagadro
+  print("Number of whole water molecules in", volume, "Angstrom cubed cylindrical cell is", math.floor(water_molecules))
