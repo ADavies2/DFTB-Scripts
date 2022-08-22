@@ -17,4 +17,4 @@ def modify(frame, data):
     msd = numpy.sum(displacement_magnitudes[ptypes == 2] ** 2) / len(displacement_magnitudes[ptypes == 2])
 
     # Output value as a global attribute to make it available within OVITO:
-    data.attributes["Oxygen MSD"] = msd
+    data.attributes["MSD"] = msd
