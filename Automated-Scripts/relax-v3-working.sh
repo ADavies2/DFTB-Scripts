@@ -39,8 +39,10 @@ MOMENTUM[Zn]=d
 
 # Declare an associative array for Hubbard derivatives of atom types in Input-POSCAR only
 declare -A myHUBBARD
-myHUBBARD[$1]=HUBBARD[$1]
-echo myHUBBARD
+#myHUBBARD[$1]=${HUBBARD[$1]}
+
+# Write for loop to add associative element to array for every element of $ATOM_TYPES
+# Do this for myHUBBARD and myMOMENTUM
 }
 
 # First working update:
