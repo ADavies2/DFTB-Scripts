@@ -1,6 +1,5 @@
 #!/bin/bash
 
-function 3obparams {
 # Declare an associative array for the Hubbard derivatives of each element for the 3ob parameters
 declare -A HUBBARD
 HUBBARD[Br]=-0.0573
@@ -37,14 +36,6 @@ MOMENTUM[P]=d
 MOMENTUM[S]=d
 MOMENTUM[Zn]=d
 
-# Declare an associative array for Hubbard derivatives of atom types in Input-POSCAR only
-declare -A myHUBBARD
-#myHUBBARD[$1]=${HUBBARD[$1]}
-
-# Write for loop to add associative element to array for every element of $ATOM_TYPES
-# Do this for myHUBBARD and myMOMENTUM
-}
-
 # First working update:
 # Prompt for user input of COF name and initial tolerance
 # Then, run the calculation in the background with nohup 
@@ -58,7 +49,19 @@ read TOL
 # Read input geometry file to get atom types and number of atoms
 ATOM_TYPES=($(sed -n 6p Input-POSCAR))
 
-# Read atom types into a function for angular momentum and Hubbard Derivative values
-# Read number of atoms into a function for number of cores to use in calculation
+# Read atom types into a function for angular momentum and Hubbard derivative values
+declare -A myHUBBARD
+declare -A myMOMENTUM
+for element in ${ATOM_TYPES[@]}
+do
+  myHUBBARD[$element]=${HUBBARD[$element]}
+  myMOMENTUM[$element]=${MOMENTUM[$element]}
+done
 
-
+# Read number of atoms
+POSCAR_ATOMS=($(sed -n 7p Input-POSCAR))
+N_ATOMS=0
+for i in ${POSCAR_ATOMS[@]}
+do
+  let N_ATOMS+=$i
+done
