@@ -11,6 +11,10 @@ read TOL
 
 # Second working update: 
 # Read input geometry file to get atom types and number of atoms
+ATOM_TYPES=$(sed -n 6p Input-POSCAR)
+echo $ATOM_TYPES
+
+
 # Read atom types into a function for angular momentum and Hubbard Derivative values
 # Read number of atoms into a function for number of cores to use in calculation
 
