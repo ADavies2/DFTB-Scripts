@@ -65,3 +65,29 @@ for i in ${POSCAR_ATOMS[@]}
 do
   let N_ATOMS+=$i
 done
+
+cat > dftb_in.hsd <<!
+Geometry = VASPFormat {
+  <<< Input-POSCAR
+}
+
+Driver = ConjugateGradient {
+  MovedAtoms = 1:-1
+  MaxSteps = 100000
+  LatticeOpt = Yes
+  MaxForceComponent = $TOL
+  OutputPrefix = $TOL-Out
+  AppendGeometries = No }
+
+Hamiltonian = DFTB {
+SCC = Yes
+SCCTolerance = $TOL
+ReadInitialCharges = No
+MaxSCCIterations = 5000
+ThirdOrderFull = Yes
+Dispersion = LennardJones {
+  Parameters = UFFParameters{} }
+HCorrection = Damping {
+  Exponent = 4.05 }
+HubbardDerivs {
+!
