@@ -36,41 +36,71 @@ MOMENTUM[P]=d
 MOMENTUM[S]=d
 MOMENTUM[Zn]=d
 
-# First working update:
+ncores () {
+  if (($1 <= 20)); then
+    CORES=2
+  elif (($1 >= 20 && $1 <= 50)); then
+    CORES=4
+  elif (($1 >= 50 && $1 <= 100)); then
+    CORES=8
+  elif (($1 >= 100)); then
+    CORES=16
+  fi
+}
+
 # Prompt for user input of COF name and initial tolerance
-# Then, run the calculation in the background with nohup 
+# Ask what the input geometry file is and if this is a restart calculation
 
-echo "What is the COF name?" 
-read COF 
-echo "What is your initial tolerance?" 
-read TOL 
+echo "What is the COF name?"
+read COF
+echo "What is your initial tolerance?"
+read TOL
+echo "What is your input geometry file called?"
+read GEO
+echo "Is this a restart calculation? yes/no"
+read RESTART
 
-# Second working update:
+JOBNAME=$COF-scc-$TOL
+
 # Read input geometry file to get atom types and number of atoms
-ATOM_TYPES=($(sed -n 6p Input-POSCAR))
+
+if [[ $GEO == *"gen"* ]]; then
+  ATOM_TYPES=($(sed -n 2p $GEO))
+  N_ATOMS=($(sed -n 1p $GEO))
+  N_ATOMS=${N_ATOMS[0]}
+  cat > dftb_in.hsd <<!
+Geometry = GenFormat {
+  <<< $GEO
+}
+!
+else
+  ATOM_TYPES=($(sed -n 6p $GEO))
+  POSCAR_ATOMS=($(sed -n 7p $GEO))
+  N_ATOMS=0
+  for i in ${POSCAR_ATOMS[@]}; do
+    let N_ATOMS+=$i
+  done
+  cat > dftb_in.hsd <<!
+Geometry = VASPFormat {
+  <<< $GEO
+}
+!
+fi
 
 # Read atom types into a function for angular momentum and Hubbard derivative values
 declare -A myHUBBARD
 declare -A myMOMENTUM
-for element in ${ATOM_TYPES[@]}
-do
-  myHUBBARD[$element]=${HUBBARD[$element]}
-  myMOMENTUM[$element]=${MOMENTUM[$element]}
+nl=$'\n'
+for element in ${ATOM_TYPES[@]}; do
+  myHUBBARD[$element]="$element = ${HUBBARD[$element]}"
+  myMOMENTUM[$element]="$element = ${MOMENTUM[$element]}"
 done
 
-# Read number of atoms
-POSCAR_ATOMS=($(sed -n 7p Input-POSCAR))
-N_ATOMS=0
-for i in ${POSCAR_ATOMS[@]}
-do
-  let N_ATOMS+=$i
-done
+# Calculate the number of required cores based on the total number of atoms in the unit cell
+ncores $N_ATOMS
 
-cat > dftb_in.hsd <<!
-Geometry = VASPFormat {
-  <<< Input-POSCAR
-}
-
+# Write dftb_in.hsd for the first calculation
+cat >> dftb_in.hsd <<!
 Driver = ConjugateGradient {
   MovedAtoms = 1:-1
   MaxSteps = 100000
@@ -82,7 +112,13 @@ Driver = ConjugateGradient {
 Hamiltonian = DFTB {
 SCC = Yes
 SCCTolerance = $TOL
-ReadInitialCharges = No
+!
+if [[ $RESTART == "yes" ]]; then
+  printf "ReadInitialCharges = Yes\n" >> dftb_in.hsd
+else
+  printf "ReadInitialCharges = No\n" >> dftb_in.hsd
+fi
+cat >> dftb_in.hsd <<!
 MaxSCCIterations = 5000
 ThirdOrderFull = Yes
 Dispersion = LennardJones {
@@ -90,4 +126,32 @@ Dispersion = LennardJones {
 HCorrection = Damping {
   Exponent = 4.05 }
 HubbardDerivs {
+!
+printf "%s\n" "${myHUBBARD[@]} }" >> dftb_in.hsd
+cat >> dftb_in.hsd <<!
+SlaterKosterFiles = Type2FileNames {
+  Prefix = "/project/designlab/Shared/Codes/dftb+sk/3ob-3-1/"
+  Separator = "-"
+  Suffix = ".skf" }
+KPointsAndWeights = SupercellFolding {
+  4 0 0
+  0 4 0
+  0 0 4
+  0.5 0.5 0.5 }
+MaxAngularMomentum {
+!
+printf "%s\n" "${myMOMENTUM[@]} }" >> dftb_in.hsd
+cat >> dftb_in.hsd <<!
+Filling = Fermi {
+  Temperature [Kelvin] = 0 } }
+
+Analysis = {
+  MullikenAnalysis = Yes }
+
+Parallel = {
+  Groups = 1
+  UseOmpThreads = Yes }
+
+ParserOptions {
+  ParserVersion = 10 }
 !
