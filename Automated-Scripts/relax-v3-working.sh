@@ -426,7 +426,6 @@ elif [ $RESULT == 'fail1' ]; then
 fi
 
 # LOOP 2 (LIGHTGREEN) RESULTS, SUBMITTING LOOP 3 (LIGHTYELLOW) CALCULATIONS 
-# (
 #  if [ $RESULT == 'success1' ]; then
 #    echo "$COF is fully relaxed!"
 #    exit
@@ -437,6 +436,7 @@ fi
 #    forces $CORES $COF $JOBNAME $TOL $RESULT
 #  elif [ $RESULT == 'success3' ]; then
 #    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
 #  elif [ $RESULT == 'fail2' ]; then
 #    echo "User trouble-shoot required."
 #    exit
@@ -445,3 +445,213 @@ fi
 #    exit
 
 # Repeat these if statements until all loops on the flowchart are accounted for
+
+# LOOP 3 (LIGHTYELLOW) RESULTS, SUBMITTING LOOP 4 (LIGHTRED)
+#  if [ $RESULT == 'success1' ]; then
+#    echo "$COF is fully relaxed!"
+#    exit
+#  elif [ $RESULT == 'success2' ]; then
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail1' ]; then
+#    forces_dftb_in $GEO $TOL myMOMENTUM
+#    forces $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'success3' ]; then
+#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail2' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+#  elif [ $RESULT == 'fail3' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+
+
+# LOOP 4 (LIGHTRED) RESULTS, SUBMITTING LOOP 5 (LIGHTPURPLE)
+#  if [ $RESULT == 'success1' ]; then
+#    echo "$COF is fully relaxed!"
+#    exit
+#  elif [ $RESULT == 'success2' ]; then
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail1' ]; then
+#    forces_dftb_in $GEO $TOL myMOMENTUM
+#    forces $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'success3' ]; then
+#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail2' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+#  elif [ $RESULT == 'fail3' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+
+# LOOP 5 (LIGHTPURPLE) RESULTS, SUBMITTING LOOP 6 (KELLYGREEN)
+#  if [ $RESULT == 'success1' ]; then
+#    echo "$COF is fully relaxed!"
+#    exit
+#  elif [ $RESULT == 'success2' ]; then
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail1' ]; then
+#    forces_dftb_in $GEO $TOL myMOMENTUM
+#    forces $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'success3' ]; then
+#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail2' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+#  elif [ $RESULT == 'fail3' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+
+# LOOP 6 (KELLYGREEN) RESULTS, SUBMITTING LOOP 7 (SKYBLUE)
+#  if [ $RESULT == 'success1' ]; then
+#    echo "$COF is fully relaxed!"
+#    exit
+#  elif [ $RESULT == 'success2' ]; then
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail1' ]; then
+#    forces_dftb_in $GEO $TOL myMOMENTUM
+#    forces $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'success3' ]; then
+#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail2' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+#  elif [ $RESULT == 'fail3' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+
+# LOOP 7 (SKYBLUE) RESULTS, SUBMITTING LOOP 8 (BRIGHTPURPLE)
+#  if [ $RESULT == 'success1' ]; then
+#    echo "$COF is fully relaxed!"
+#    exit
+#  elif [ $RESULT == 'success2' ]; then
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail1' ]; then
+#    forces_dftb_in $GEO $TOL myMOMENTUM
+#    forces $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'success3' ]; then
+#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail2' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+#  elif [ $RESULT == 'fail3' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+
+# LOOP 8 (BRIGHTPURPLE) RESULTS, SUBMITTING LOOP 9 (FUSCHIA)
+#  if [ $RESULT == 'success1' ]; then
+#    echo "$COF is fully relaxed!"
+#    exit
+#  elif [ $RESULT == 'success2' ]; then
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail1' ]; then
+#    forces_dftb_in $GEO $TOL myMOMENTUM
+#    forces $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'success3' ]; then
+#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail2' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+#  elif [ $RESULT == 'fail3' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+
+# LOOP 9 (FUSCHIA) RESULTS, SUBMITTING LOOP 10 (ORANGE)
+#  if [ $RESULT == 'success1' ]; then
+#    echo "$COF is fully relaxed!"
+#    exit
+#  elif [ $RESULT == 'success2' ]; then
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail1' ]; then
+#    forces_dftb_in $GEO $TOL myMOMENTUM
+#    forces $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'success3' ]; then
+#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail2' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+#  elif [ $RESULT == 'fail3' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+
+# LOOP 10 (ORANGE) RESULTS, SUBMITTING LOOP 11 (MUSTARD YELLOW)
+#  if [ $RESULT == 'success1' ]; then
+#    echo "$COF is fully relaxed!"
+#    exit
+#  elif [ $RESULT == 'success2' ]; then
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail1' ]; then
+#    forces_dftb_in $GEO $TOL myMOMENTUM
+#    forces $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'success3' ]; then
+#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail2' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+#  elif [ $RESULT == 'fail3' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+
+# LOOP 11 (MUSTARD YELLOW) RESULTS, SUBMITTING LOOP 12 (EGGPLANT)
+#  if [ $RESULT == 'success1' ]; then
+#    echo "$COF is fully relaxed!"
+#    exit
+#  elif [ $RESULT == 'success2' ]; then
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail1' ]; then
+#    forces_dftb_in $GEO $TOL myMOMENTUM
+#    forces $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'success3' ]; then
+#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail2' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+#  elif [ $RESULT == 'fail3' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+
+# LOOP 12 (EGGPLANT) RESULTS, SUBMITTING LOOP 13 (PERIWINKLE)
+#  if [ $RESULT == 'success1' ]; then
+#    echo "$COF is fully relaxed!"
+#    exit
+#  elif [ $RESULT == 'success2' ]; then
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail1' ]; then
+#    forces_dftb_in $GEO $TOL myMOMENTUM
+#    forces $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'success3' ]; then
+#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail2' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+#  elif [ $RESULT == 'fail3' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+
+# LOOP 13 (PERIWINKLE) RESULTS
+#  if [ $RESULT == 'success1' ]; then
+#    echo "$COF is fully relaxed!"
+#    exit
+#  elif [ $RESULT == 'success2' ]; then
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail1' ]; then
+#    forces_dftb_in $GEO $TOL myMOMENTUM
+#    forces $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'success3' ]; then
+#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail2' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+#  elif [ $RESULT == 'fail3' ]; then
+#    echo "User trouble-shoot required."
+#    exit
