@@ -48,6 +48,89 @@ ncores () {
   fi
 }
 
+scc_dftb_in () {
+  if [[ $1 == *"gen"* ]]; then
+    cat > dftb_in.hsd <<!
+Geometry = GenFormat {
+  <<< $1
+}
+!
+  else
+    cat > dftb_in.hsd <<!
+Geometry = VASPFormat {
+  <<< $1
+}
+!
+  fi
+  cat >> dftb_in.hsd <<!
+
+Driver = ConjugateGradient {
+  MovedAtoms = 1:-1
+  MaxSteps = 100000
+  LatticeOpt = Yes
+  AppendGeometries = No
+!
+  if [ $2 == '1e-5' ]; then
+    printf "  MaxForceComponent = 1e-4\n" >> dftb_in.hsd
+    printf "  OutputPrefix = 1e-4-Out }\n" >> dftb_in.hsd
+  else
+    printf  "  MaxForceComponent = $2\n" >> dftb_in.hsd
+    printf " OutputPrefix = $2-Out }\n" >> dftb_in.hsd
+  fi
+  cat >> dftb_in.hsd <<!
+
+Hamiltonian = DFTB {
+SCC = Yes
+SCCTolerance = $2
+!
+  if [[ $3 == "yes" ]]; then
+    printf "ReadInitialCharges = Yes\n" >> dftb_in.hsd
+  else
+    printf "ReadInitialCharges = No\n" >> dftb_in.hsd
+  fi
+  cat >> dftb_in.hsd <<!
+MaxSCCIterations = 5000
+ThirdOrderFull = Yes
+Dispersion = LennardJones {
+  Parameters = UFFParameters{} }
+HCorrection = Damping {
+  Exponent = 4.05 }
+HubbardDerivs {
+!
+  hubbard=$4[@]
+  sccHUBBARD=("${!hubbard}")
+  printf "%s\n" "${sccHUBBARD[@]} }" >> dftb_in.hsd
+  cat >> dftb_in.hsd <<!
+SlaterKosterFiles = Type2FileNames {
+  Prefix = "/project/designlab/Shared/Codes/dftb+sk/3ob-3-1/"
+  Separator = "-"
+  Suffix = ".skf" }
+KPointsAndWeights = SupercellFolding {
+  4 0 0
+  0 4 0
+  0 0 4
+  0.5 0.5 0.5 }
+MaxAngularMomentum {
+!
+  momentum=$5[@]
+  sccMOMENTUM=("${!momentum}")
+  printf "%s\n" "${sccMOMENTUM[@]} }" >> dftb_in.hsd
+  cat >> dftb_in.hsd <<!
+Filling = Fermi {
+  Temperature [Kelvin] = 0 } }
+
+Analysis = {
+  MullikenAnalysis = Yes }
+
+Parallel = {
+  Groups = 1
+  UseOmpThreads = Yes }
+
+ParserOptions {
+  ParserVersion = 10 }
+!
+}
+
 scc1 () {
 # $1 = $CORES
 # $2 = $COF
@@ -80,7 +163,7 @@ scc1 () {
             rm *out *xyz submit*
             sed -i 's/.*Geometry.*/Geometry = GenFormat {/g' dftb_in.hsd
             sed -i "s/.*<<<.*/  <<< ""$4-Out.gen""/g" dftb_in.hsd
-            sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd
+            sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd           
             if [ $4 == '1e-1' ]; then
               TOL='1e-2'
             elif [ $4 == '1e-2' ]; then
@@ -98,6 +181,7 @@ scc1 () {
           fi
         elif grep -q "SCC is NOT converged" $3.log; then
           sed -i 's/.*SCC = Yes.*/SCC = No/g' dftb_in.hsd
+          sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$4-Forces-Out"/g" dftb_in.hsd
           echo "$3 did NOT converge. Attempting forces only..."
           JOBNAME="$2-forces-$4"
           RESULT='fail1'
@@ -110,13 +194,180 @@ scc1 () {
   done
 }
 
+scc2 () {
+# $1 = $CORES
+# $2 = $COF
+# $3 = $JOBNAME
+# $4 = $TOL 
+# $5 = $RESULT
+  submit_dftb_automate $1 1 $3
+  while :
+  do 
+    stat="$(squeue -n $3)"
+    string=($stat)
+    jobstat=(${string[12]})
+      if [ "$jobstat" == "PD" ]; then
+        echo "$3 is pending..."
+        sleep 10s
+      else
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
+          if [ $4 == '1e-5' ]; then
+            if [ ! -d "$4-Outputs" ]; then
+              mkdir $4-Outputs
+            fi
+            cp detailed.out $3.log $4-Out.gen $4-Out.xyz charges.bin submit_$3 $4-Outputs/
+            rm *out *log *xyz *gen *bin submit*
+            RESULT='success1'
+            break
+          elif [[ $4 = '1e-2' || $4 = '1e-3' ]]; then
+            if [ ! -d "$4-Outputs" ]; then
+              mkdir $4-Outputs
+            fi
+            cp detailed.out $3.log $4-Out.gen $4-Out.xyz charges.bin submit_$3 $4-Outputs/
+            rm *out *xyz submit*
+            sed -i 's/.*Geometry.*/Geometry = GenFormat {/g' dftb_in.hsd
+            sed -i "s/.*<<<.*/  <<< ""$4-Out.gen""/g" dftb_in.hsd
+            sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd
+            if [ $4 == '1e-2' ]; then
+              TOL='1e-3'
+            elif [ $4 == '1e-3' ]; then
+              TOL='1e-5'
+            fi
+            sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd
+            sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd
+            sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd           
+            echo "$3 has completed."
+            JOBNAME="$2-scc-$TOL"
+            RESULT='success2'
+            break
+          fi
+        elif grep -q "SCC is NOT converged" $3.log; then
+          if [ $5 == 'success2' ]; then
+            sed -i 's/.*SCC = Yes.*/SCC = No/g' dftb_in.hsd
+            sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$4-Forces-Out"/g" dftb_in.hsd
+            echo "$3 did NOT converge. Attempting forces only..."
+            JOBNAME="$2-forces-$4"
+            RESULT='fail1'
+            break
+          elif [ $5 == 'success3' ]; then
+            echo "$2 at $4 SCC did NOT converge..."
+            echo "$2 at $4 Forces did NOT converge..."
+            RESULT='fail3'
+            break
+          fi
+        else
+          echo "$3 is still running..."
+          sleep 10s
+        fi
+      fi
+  done  
+}
+
+forces_dftb_in () {
+  if [ $1 == *"gen"* ]; then
+    cat > dftb_in.hsd <<!
+Geometry = GenFormat {
+  <<< $1
+}
+!
+  else
+    cat > dftb_in.hsd <<!
+Geometry = VASPFormat {
+  <<< $1
+}
+!
+  fi
+  cat >> dftb_in.hsd <<!
+
+Driver = ConjugateGradient {
+  MovedAtoms = 1:-1
+  MaxSteps = 100000
+  LatticeOpt = Yes
+  AppendGeometries = No
+!
+  if [ $2 == '1e-5' ]; then
+    printf "  MaxForceComponent = 1e-4\n" >> dftb_in.hsd
+    printf "  OutputPrefix = 1e-4-Forces-Out }\n" >> dftb_in.hsd
+  else
+    printf  "  MaxForceComponent = $2\n" >> dftb_in.hsd
+    printf " OutputPrefix = $2-Forces-Out }\n" >> dftb_in.hsd
+  fi
+  momentum=$3[@]
+  forcesMOMENTUM=("${!momentum}")
+  cat >> dftb_in.hsd <<!
+
+Hamiltonian = DFTB {
+SCC = No
+SlaterKosterFiles = Type2FileNames {
+  Prefix = "/project/designlab/Shared/Codes/dftb+sk/3ob-3-1/"
+  Separator = "-"
+  Suffix = ".skf" }
+KPointsAndWeights = SupercellFolding {
+  4 0 0
+  0 4 0
+  0 0 4
+  0.5 0.5 0.5 }
+MaxAngularMomentum {
+!
+  printf "%s\n" "${forcesMOMENTUM[@]} }" >> dftb_in.hsd
+  cat >> dftb_in.hsd <<!
+Filling = Fermi {
+  Temperature [Kelvin] = 0 } }
+
+Analysis = {
+  MullikenAnalysis = Yes }
+
+Parallel = {
+  Groups = 1
+  UseOmpThreads = Yes }
+
+ParserOptions {
+  ParserVersion = 10 }
+!
+}
+
+forces () {
+# $1 = $CORES
+# $2 = $COF
+# $3 = $JOBNAME
+# $4 = $TOL
+# $5 = $RESULT
+  submit_dftb_automate $1 1 $3 
+  while :
+  do
+    stat="$(squeue -n $3)"
+    string=($stat)
+    jobstat=(${string[12]})
+      if [ "$jobstat" == "PD" ]; then
+        echo "$3 is pending..."
+        sleep 10s 
+      else
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
+          echo "$3 converged. Attemping SCC again at $4..."
+          JOBNAME="$2-scc-$4"
+          RESTART='no'
+          RESULT='success3'
+          break
+        elif grep -q "Geometry did NOT converge" detailed.out && grep -q "Geometry did NOT converge" $3.log; then
+          echo "$2 at $4 SCC did NOT converge..."
+          echo "$2 at $4 Forces did NOT converge..."
+          RESULT='fail2'
+          break
+        else
+          echo "$3 is running..."
+          sleep 10s
+        fi
+      fi
+  done      
+}
+
 # Prompt for user input of COF name and initial tolerance
 # Ask what the input geometry file is and if this is a restart calculation
 
-echo "What is the COF name?"
+echo "What is the COF name?" 
 read COF
-echo "What is your initial SCC tolerance?"
-read TOL
+echo "What is your initial SCC tolerance?" 
+read TOL 
 echo "What is your input geometry file called?"
 read GEO
 echo "Is this a restart calculation? yes/no"
@@ -129,11 +380,6 @@ if [[ $GEO == *"gen"* ]]; then
   ATOM_TYPES=($(sed -n 2p $GEO))
   N_ATOMS=($(sed -n 1p $GEO))
   N_ATOMS=${N_ATOMS[0]}
-  cat > dftb_in.hsd <<!
-Geometry = GenFormat {
-  <<< $GEO
-}
-!
 else
   ATOM_TYPES=($(sed -n 6p $GEO))
   POSCAR_ATOMS=($(sed -n 7p $GEO))
@@ -141,10 +387,6 @@ else
   for i in ${POSCAR_ATOMS[@]}; do
     let N_ATOMS+=$i
   done
-  cat > dftb_in.hsd <<!
-Geometry = VASPFormat {
-  <<< $GEO
-}
 !
 fi
 
@@ -161,75 +403,16 @@ done
 ncores $N_ATOMS
 
 # Write dftb_in.hsd for the first calculation
-cat >> dftb_in.hsd <<!
-Driver = ConjugateGradient {
-  MovedAtoms = 1:-1
-  MaxSteps = 100000
-  LatticeOpt = Yes
-  AppendGeometries = No
-!
-if [ $TOL == '1e-5' ]; then
-  printf "  MaxForceComponent = 1e-4\n" >> dftb_in.hsd
-  printf "  OutputPrefix = 1e-4-Out }\n" >> dftb_in.hsd
-else
-  printf  "  MaxForceComponent = $TOL\n" >> dftb_in.hsd
-  printf " OutputPrefix = $TOL-Out }\n" >> dftb_in.hsd
-fi
-cat >> dftb_in.hsd <<!
+scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
 
-Hamiltonian = DFTB {
-SCC = Yes
-SCCTolerance = $TOL
-!
-if [[ $RESTART == "yes" ]]; then
-  printf "ReadInitialCharges = Yes\n" >> dftb_in.hsd
-else
-  printf "ReadInitialCharges = No\n" >> dftb_in.hsd
-fi
-cat >> dftb_in.hsd <<!
-MaxSCCIterations = 5000
-ThirdOrderFull = Yes
-Dispersion = LennardJones {
-  Parameters = UFFParameters{} }
-HCorrection = Damping {
-  Exponent = 4.05 }
-HubbardDerivs {
-!
-printf "%s\n" "${myHUBBARD[@]} }" >> dftb_in.hsd
-cat >> dftb_in.hsd <<!
-SlaterKosterFiles = Type2FileNames {
-  Prefix = "/project/designlab/Shared/Codes/dftb+sk/3ob-3-1/"
-  Separator = "-"
-  Suffix = ".skf" }
-KPointsAndWeights = SupercellFolding {
-  4 0 0
-  0 4 0
-  0 0 4
-  0.5 0.5 0.5 }
-MaxAngularMomentum {
-!
-printf "%s\n" "${myMOMENTUM[@]} }" >> dftb_in.hsd
-cat >> dftb_in.hsd <<!
-Filling = Fermi {
-  Temperature [Kelvin] = 0 } }
-
-Analysis = {
-  MullikenAnalysis = Yes }
-
-Parallel = {
-  Groups = 1
-  UseOmpThreads = Yes }
-
-ParserOptions {
-  ParserVersion = 10 }
-!
-
+# submit the first calculation
 scc1 $CORES $COF $JOBNAME $TOL
 if [ $RESULT == 'success1' ]; then
   echo "$COF is fully relaxed!"
   exit
 elif [ $RESULT == 'success2' ]; then
-  scc1 $CORES $COF $JOBNAME $TOL
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
 elif [ $RESULT == 'fail1' ]; then
-  forces $CORES $COF $JOBNAME $TOL
+  forces_dftb_in $GEO $TOL myMOMENTUM 
+  forces $CORES $COF $JOBNAME $TOL $RESULT
 fi
