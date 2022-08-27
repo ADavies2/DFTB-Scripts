@@ -36,6 +36,13 @@ MOMENTUM[P]=d
 MOMENTUM[S]=d
 MOMENTUM[Zn]=d
 
+# success1 = successful SCC 1e-5
+# success2 = successful 1e-1, 1e-2, or 1e-3 SCC
+# success3 = successful 1e-1, 1e-2, 1e-3, or 1e-4 Forces
+# fail1 = fail SCC1
+# fail2 = fail of 1e-1, 1e-2, 1e-3, or 1e-4 Forces
+# fail3 = fail SCC2
+
 ncores () {
   if (($1 <= 20)); then
     CORES=2
@@ -250,8 +257,8 @@ scc2 () {
             RESULT='fail1'
             break
           elif [ $5 == 'success3' ]; then
-            echo "$2 at $4 SCC did NOT converge..."
             echo "$2 at $4 Forces did NOT converge..."
+            echo "$2 at $4 SCC did NOT converge..."
             RESULT='fail3'
             break
           fi
@@ -405,6 +412,7 @@ ncores $N_ATOMS
 # Write dftb_in.hsd for the first calculation
 scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
 
+# LOOP 1 (LIGHTBLUE) RESULTS, SUBMITTING LOOP 2 (LIGHTGREEN) CALCULATIONS
 # submit the first calculation
 scc1 $CORES $COF $JOBNAME $TOL
 if [ $RESULT == 'success1' ]; then
@@ -416,3 +424,24 @@ elif [ $RESULT == 'fail1' ]; then
   forces_dftb_in $GEO $TOL myMOMENTUM 
   forces $CORES $COF $JOBNAME $TOL $RESULT
 fi
+
+# LOOP 2 (LIGHTGREEN) RESULTS, SUBMITTING LOOP 3 (LIGHTYELLOW) CALCULATIONS 
+# (
+#  if [ $RESULT == 'success1' ]; then
+#    echo "$COF is fully relaxed!"
+#    exit
+#  elif [ $RESULT == 'success2' ]; then
+#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'fail1' ]; then
+#    forces_dftb_in $GEO $TOL myMOMENTUM
+#    forces $CORES $COF $JOBNAME $TOL $RESULT
+#  elif [ $RESULT == 'success3' ]; then
+#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+#  elif [ $RESULT == 'fail2' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+#  elif [ $RESULT == 'fail3' ]; then
+#    echo "User trouble-shoot required."
+#    exit
+
+# Repeat these if statements until all loops on the flowchart are accounted for
