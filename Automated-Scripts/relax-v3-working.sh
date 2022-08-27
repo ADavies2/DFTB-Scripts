@@ -48,19 +48,80 @@ ncores () {
   fi
 }
 
+scc1 () {
+# $1 = $CORES
+# $2 = $COF
+# $3 = $JOBNAME
+# $4 = $TOL
+  submit_dftb_automate $1 1 $3
+  while :
+  do
+    stat="$(squeue -n $3)"
+    string=($stat)
+    jobstat=(${string[12]})
+      if [ "$jobstat" == "PD" ]; then
+        echo "$3 is pending..."
+        sleep 10s
+      else
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
+          if [ $4 == '1e-5' ]; then
+            if [ ! -d "$4-Outputs" ]; then
+              mkdir $4-Outputs
+            fi
+            cp detailed.out $3.log $4-Out.gen $4-Out.xyz charges.bin submit_$3 $4-Outputs/
+            rm *out *log *xyz *gen *bin submit*
+            RESULT='success1'
+            break
+          elif [[ $4 == '1e-1' || $4 = '1e-2' || $4 = '1e-3' ]]; then
+            if [ ! -d "$4-Outputs" ]; then
+              mkdir $4-Outputs
+            fi
+            cp detailed.out $3.log $4-Out.gen $4-Out.xyz charges.bin submit_$3 $4-Outputs/
+            rm *out *xyz submit*
+            sed -i 's/.*Geometry.*/Geometry = GenFormat {/g' dftb_in.hsd
+            sed -i "s/.*<<<.*/  <<< ""$4-Out.gen""/g" dftb_in.hsd
+            sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd
+            if [ $4 == '1e-1' ]; then
+              TOL='1e-2'
+            elif [ $4 == '1e-2' ]; then
+              TOL='1e-3'
+            elif [ $4 == '1e-3' ]; then
+              TOL='1e-5'
+            fi
+            sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd
+            sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out" }/g" dftb_in.hsd
+            sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd
+            echo "$3 has completed."
+            JOBNAME="$2-scc-$TOL"
+            RESULT='success2'
+            break
+          fi
+        elif grep -q "SCC is NOT converged" $3.log; then
+          sed -i 's/.*SCC = Yes.*/SCC = No/g' dftb_in.hsd
+          echo "$3 did NOT converge. Attempting forces only..."
+          JOBNAME="$2-forces-$4"
+          RESULT='fail1'
+          break
+        else
+          echo "$3 is still running..."
+          sleep 10s
+        fi
+      fi
+  done
+}
+
 # Prompt for user input of COF name and initial tolerance
 # Ask what the input geometry file is and if this is a restart calculation
 
 echo "What is the COF name?"
 read COF
-echo "What is your initial tolerance?"
+echo "What is your initial SCC tolerance?"
 read TOL
 echo "What is your input geometry file called?"
 read GEO
 echo "Is this a restart calculation? yes/no"
 read RESTART
-
-JOBNAME=$COF-scc-$TOL
+JOBNAME="$COF-scc-$TOL"
 
 # Read input geometry file to get atom types and number of atoms
 
@@ -105,9 +166,16 @@ Driver = ConjugateGradient {
   MovedAtoms = 1:-1
   MaxSteps = 100000
   LatticeOpt = Yes
-  MaxForceComponent = $TOL
-  OutputPrefix = $TOL-Out
-  AppendGeometries = No }
+  AppendGeometries = No
+!
+if [ $TOL == '1e-5' ]; then
+  printf "  MaxForceComponent = 1e-4\n" >> dftb_in.hsd
+  printf "  OutputPrefix = 1e-4-Out }\n" >> dftb_in.hsd
+else
+  printf  "  MaxForceComponent = $TOL\n" >> dftb_in.hsd
+  printf " OutputPrefix = $TOL-Out }\n" >> dftb_in.hsd
+fi
+cat >> dftb_in.hsd <<!
 
 Hamiltonian = DFTB {
 SCC = Yes
@@ -155,3 +223,13 @@ Parallel = {
 ParserOptions {
   ParserVersion = 10 }
 !
+
+scc1 $CORES $COF $JOBNAME $TOL
+if [ $RESULT == 'success1' ]; then
+  echo "$COF is fully relaxed!"
+  exit
+elif [ $RESULT == 'success2' ]; then
+  scc1 $CORES $COF $JOBNAME $TOL
+elif [ $RESULT == 'fail1' ]; then
+  forces $CORES $COF $JOBNAME $TOL
+fi
