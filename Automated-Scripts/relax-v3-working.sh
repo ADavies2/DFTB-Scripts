@@ -125,10 +125,17 @@ MaxAngularMomentum {
   cat >> dftb_in.hsd <<!
 Filling = Fermi {
   Temperature [Kelvin] = 0 } }
-
-Analysis = {
-  MullikenAnalysis = Yes }
-
+!
+  if [ $2 == '1e-5' ]; then
+    printf "%s\n" "Analysis = {" >> dftb_in.hsd
+    printf "%s\n" "  MullikenAnalysis = Yes" >> dftb_in.hsd
+    printf "%s\n" "  AtomResolvedEnergies = Yes" >> dftb_in.hsd
+    printf "%s\n" "  CalculateForces = Yes }" >> dftb_in.hsd
+  else
+    printf "%s\n" "Analysis = {" >> dftb_in.hsd
+    printf "%s\n" "  MullikenAnalysis = Yes }" >> dftb_in.hsd
+  fi
+  cat >> dftb_in.hsd <<!
 Parallel = {
   Groups = 1
   UseOmpThreads = Yes }
@@ -136,6 +143,10 @@ Parallel = {
 ParserOptions {
   ParserVersion = 10 }
 !
+  if [ $2 == '1e-5' ]; then
+    printf "%s\n" "Options {" >> dftb_in.hsd
+    printf "%s\n" "WriteChargesAsText = Yes }" >> dftb_in.hsd
+  fi 
 }
 
 scc1 () {
@@ -155,11 +166,11 @@ scc1 () {
       else
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
           if [ $4 == '1e-5' ]; then
-            if [ ! -d "$4-Outputs" ]; then
-              mkdir $4-Outputs
+            if [ ! -d "1e-4-Outputs" ]; then
+              mkdir '1e-4-Outputs'
             fi
-            cp detailed.out $3.log $4-Out.gen $4-Out.xyz charges.bin submit_$3 $4-Outputs/
-            rm *out *log *xyz *gen *bin submit*
+            cp detailed.out $3.log '1e-4-Out.gen' '1e-4-Out.xyz' charges* submit_$3 '1e-4-Outputs/'
+            rm *out *log *xyz *gen *bin submit* *dat
             RESULT='success1'
             break
           elif [[ $4 == '1e-1' || $4 = '1e-2' || $4 = '1e-3' ]]; then
@@ -173,13 +184,24 @@ scc1 () {
             sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd           
             if [ $4 == '1e-1' ]; then
               TOL='1e-2'
+              sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd
+              sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out" }/g" dftb_in.hsd
             elif [ $4 == '1e-2' ]; then
               TOL='1e-3'
+              sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd
+              sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out" }/g" dftb_in.hsd
             elif [ $4 == '1e-3' ]; then
               TOL='1e-5'
+              sed -i 's/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g' dftb_in.hsd
+              sed -i 's/.*OutputPrefix.*/  OutputPrefix = "1e-4-Out" }/g' dftb_in.hsd
+              sed -i '/.*Analysis.*/d' dftb_in.hsd
+              printf "%s\n" "Analysis = {" >> dftb_in.hsd
+              printf "%s\n" "  MullikenAnalysis = Yes" >> dftb_in.hsd
+              printf "%s\n" "  AtomResolvedEnergies = Yes" >> dftb_in.hsd
+              printf "%s\n" "  CalculateForces = Yes }" >> dftb_in.hsd
+              printf "%s\n" "Options {" >> dftb_in.hsd
+              printf "%s\n" "  WriteChargesAsText = Yes }" >> dftb_in.hsd 
             fi
-            sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd
-            sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out" }/g" dftb_in.hsd
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd
             echo "$3 has completed."
             JOBNAME="$2-scc-$TOL"
@@ -219,11 +241,11 @@ scc2 () {
       else
         if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
           if [ $4 == '1e-5' ]; then
-            if [ ! -d "$4-Outputs" ]; then
-              mkdir $4-Outputs
+            if [ ! -d "1e-4-Outputs" ]; then
+              mkdir '1e-4-Outputs'
             fi
-            cp detailed.out $3.log $4-Out.gen $4-Out.xyz charges.bin submit_$3 $4-Outputs/
-            rm *out *log *xyz *gen *bin submit*
+            cp detailed.out $3.log '1e-4-Out.gen' '1e-4-Out.xyz' charges* submit_$3 '1e-4-Outputs/'
+            rm *out *log *xyz *gen *bin submit* *dat
             RESULT='success1'
             break
           elif [[ $4 = '1e-2' || $4 = '1e-3' ]]; then
@@ -237,11 +259,20 @@ scc2 () {
             sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd
             if [ $4 == '1e-2' ]; then
               TOL='1e-3'
+              sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd
+              sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out" }/g" dftb_in.hsd
             elif [ $4 == '1e-3' ]; then
               TOL='1e-5'
+              sed -i 's/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g' dftb_in.hsd
+              sed -i 's/.*OutputPrefix.*/  OutputPrefix = 1e-4-Out }/g' dftb_in.hsd
+              sed -i '/.*Analysis.*/d' dftb_in.hsd
+              printf "%s\n" "Analysis = {" >> dftb_in.hsd
+              printf "%s\n" "  MullikenAnalysis = Yes" >> dftb_in.hsd
+              printf "%s\n" "  AtomResolvedEnergies = Yes" >> dftb_in.hsd
+              printf "%s\n" "  CalculateForces = Yes }" >> dftb_in.hsd
+              printf "%s\n" "Options {" >> dftb_in.hsd
+              printf "%s\n" "  WriteChargesAsText = Yes }" >> dftb_in.hsd
             fi
-            sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd
-            sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out"/g" dftb_in.hsd
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd           
             echo "$3 has completed."
             JOBNAME="$2-scc-$TOL"
@@ -383,6 +414,8 @@ JOBNAME="$COF-scc-$TOL"
 
 # Read input geometry file to get atom types and number of atoms
 
+(
+  trap '' 1
 if [[ $GEO == *"gen"* ]]; then
   ATOM_TYPES=($(sed -n 2p $GEO))
   N_ATOMS=($(sed -n 1p $GEO))
@@ -425,233 +458,245 @@ elif [ $RESULT == 'fail1' ]; then
   forces $CORES $COF $JOBNAME $TOL $RESULT
 fi
 
-# LOOP 2 (LIGHTGREEN) RESULTS, SUBMITTING LOOP 3 (LIGHTYELLOW) CALCULATIONS 
-#  if [ $RESULT == 'success1' ]; then
-#    echo "$COF is fully relaxed!"
-#    exit
-#  elif [ $RESULT == 'success2' ]; then
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail1' ]; then
-#    forces_dftb_in $GEO $TOL myMOMENTUM
-#    forces $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'success3' ]; then
-#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail2' ]; then
-#    echo "User trouble-shoot required."
-#    exit
-#  elif [ $RESULT == 'fail3' ]; then
-#    echo "User trouble-shoot required."
-#    exit
+#LOOP 2 (LIGHTGREEN) RESULTS, SUBMITTING LOOP 3 (LIGHTYELLOW) CALCULATIONS 
+if [ $RESULT == 'success1' ]; then
+  echo "$COF is fully relaxed!"
+  exit
+elif [ $RESULT == 'success2' ]; then
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail1' ]; then
+  forces_dftb_in $GEO $TOL myMOMENTUM
+  forces $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'success3' ]; then
+  scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail2' ]; then
+  echo "User trouble-shoot required."
+  exit
+elif [ $RESULT == 'fail3' ]; then
+  echo "User trouble-shoot required."
+  exit
+fi
 
 # Repeat these if statements until all loops on the flowchart are accounted for
 
 # LOOP 3 (LIGHTYELLOW) RESULTS, SUBMITTING LOOP 4 (LIGHTRED)
-#  if [ $RESULT == 'success1' ]; then
-#    echo "$COF is fully relaxed!"
-#    exit
-#  elif [ $RESULT == 'success2' ]; then
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail1' ]; then
-#    forces_dftb_in $GEO $TOL myMOMENTUM
-#    forces $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'success3' ]; then
-#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail2' ]; then
-#    echo "User trouble-shoot required."
-#    exit
-#  elif [ $RESULT == 'fail3' ]; then
-#    echo "User trouble-shoot required."
-#    exit
-
+if [ $RESULT == 'success1' ]; then
+  echo "$COF is fully relaxed!"
+  exit
+elif [ $RESULT == 'success2' ]; then
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail1' ]; then
+  forces_dftb_in $GEO $TOL myMOMENTUM
+  forces $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'success3' ]; then
+  scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail2' ]; then
+  echo "User trouble-shoot required."
+  exit
+elif [ $RESULT == 'fail3' ]; then
+  echo "User trouble-shoot required."
+  exit
+fi
 
 # LOOP 4 (LIGHTRED) RESULTS, SUBMITTING LOOP 5 (LIGHTPURPLE)
-#  if [ $RESULT == 'success1' ]; then
-#    echo "$COF is fully relaxed!"
-#    exit
-#  elif [ $RESULT == 'success2' ]; then
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail1' ]; then
-#    forces_dftb_in $GEO $TOL myMOMENTUM
-#    forces $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'success3' ]; then
-#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail2' ]; then
-#    echo "User trouble-shoot required."
-#    exit
-#  elif [ $RESULT == 'fail3' ]; then
-#    echo "User trouble-shoot required."
-#    exit
+if [ $RESULT == 'success1' ]; then
+  echo "$COF is fully relaxed!"
+  exit
+elif [ $RESULT == 'success2' ]; then
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail1' ]; then
+  forces_dftb_in $GEO $TOL myMOMENTUM
+  forces $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'success3' ]; then
+  scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail2' ]; then
+  echo "User trouble-shoot required."
+  exit
+elif [ $RESULT == 'fail3' ]; then
+  echo "User trouble-shoot required."
+  exit
+fi
 
 # LOOP 5 (LIGHTPURPLE) RESULTS, SUBMITTING LOOP 6 (KELLYGREEN)
-#  if [ $RESULT == 'success1' ]; then
-#    echo "$COF is fully relaxed!"
-#    exit
-#  elif [ $RESULT == 'success2' ]; then
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail1' ]; then
-#    forces_dftb_in $GEO $TOL myMOMENTUM
-#    forces $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'success3' ]; then
-#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail2' ]; then
-#    echo "User trouble-shoot required."
-#    exit
-#  elif [ $RESULT == 'fail3' ]; then
-#    echo "User trouble-shoot required."
-#    exit
+if [ $RESULT == 'success1' ]; then
+  echo "$COF is fully relaxed!"
+  exit
+elif [ $RESULT == 'success2' ]; then
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail1' ]; then
+  forces_dftb_in $GEO $TOL myMOMENTUM
+  forces $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'success3' ]; then
+  scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail2' ]; then
+  echo "User trouble-shoot required."
+  exit
+elif [ $RESULT == 'fail3' ]; then
+  echo "User trouble-shoot required."
+  exit
+fi
 
 # LOOP 6 (KELLYGREEN) RESULTS, SUBMITTING LOOP 7 (SKYBLUE)
-#  if [ $RESULT == 'success1' ]; then
-#    echo "$COF is fully relaxed!"
-#    exit
-#  elif [ $RESULT == 'success2' ]; then
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail1' ]; then
-#    forces_dftb_in $GEO $TOL myMOMENTUM
-#    forces $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'success3' ]; then
-#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail2' ]; then
-#    echo "User trouble-shoot required."
-#    exit
-#  elif [ $RESULT == 'fail3' ]; then
-#    echo "User trouble-shoot required."
-#    exit
+if [ $RESULT == 'success1' ]; then
+  echo "$COF is fully relaxed!"
+  exit
+elif [ $RESULT == 'success2' ]; then
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail1' ]; then
+  forces_dftb_in $GEO $TOL myMOMENTUM
+  forces $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'success3' ]; then
+  scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail2' ]; then
+  echo "User trouble-shoot required."
+  exit
+elif [ $RESULT == 'fail3' ]; then
+  echo "User trouble-shoot required."
+  exit
+fi
 
 # LOOP 7 (SKYBLUE) RESULTS, SUBMITTING LOOP 8 (BRIGHTPURPLE)
-#  if [ $RESULT == 'success1' ]; then
-#    echo "$COF is fully relaxed!"
-#    exit
-#  elif [ $RESULT == 'success2' ]; then
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail1' ]; then
-#    forces_dftb_in $GEO $TOL myMOMENTUM
-#    forces $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'success3' ]; then
-#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail2' ]; then
-#    echo "User trouble-shoot required."
-#    exit
-#  elif [ $RESULT == 'fail3' ]; then
-#    echo "User trouble-shoot required."
-#    exit
+if [ $RESULT == 'success1' ]; then
+  echo "$COF is fully relaxed!"
+  exit
+elif [ $RESULT == 'success2' ]; then
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail1' ]; then
+  forces_dftb_in $GEO $TOL myMOMENTUM
+  forces $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'success3' ]; then
+  scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail2' ]; then
+  echo "User trouble-shoot required."
+  exit
+elif [ $RESULT == 'fail3' ]; then
+  echo "User trouble-shoot required."
+  exit
+fi
 
 # LOOP 8 (BRIGHTPURPLE) RESULTS, SUBMITTING LOOP 9 (FUSCHIA)
-#  if [ $RESULT == 'success1' ]; then
-#    echo "$COF is fully relaxed!"
-#    exit
-#  elif [ $RESULT == 'success2' ]; then
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail1' ]; then
-#    forces_dftb_in $GEO $TOL myMOMENTUM
-#    forces $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'success3' ]; then
-#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail2' ]; then
-#    echo "User trouble-shoot required."
-#    exit
-#  elif [ $RESULT == 'fail3' ]; then
-#    echo "User trouble-shoot required."
-#    exit
+if [ $RESULT == 'success1' ]; then
+  echo "$COF is fully relaxed!"
+  exit
+elif [ $RESULT == 'success2' ]; then
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail1' ]; then
+  forces_dftb_in $GEO $TOL myMOMENTUM
+  forces $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'success3' ]; then
+  scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail2' ]; then
+  echo "User trouble-shoot required."
+  exit
+elif [ $RESULT == 'fail3' ]; then
+  echo "User trouble-shoot required."
+  exit
+fi
 
 # LOOP 9 (FUSCHIA) RESULTS, SUBMITTING LOOP 10 (ORANGE)
-#  if [ $RESULT == 'success1' ]; then
-#    echo "$COF is fully relaxed!"
-#    exit
-#  elif [ $RESULT == 'success2' ]; then
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail1' ]; then
-#    forces_dftb_in $GEO $TOL myMOMENTUM
-#    forces $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'success3' ]; then
-#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail2' ]; then
-#    echo "User trouble-shoot required."
-#    exit
-#  elif [ $RESULT == 'fail3' ]; then
-#    echo "User trouble-shoot required."
-#    exit
+if [ $RESULT == 'success1' ]; then
+  echo "$COF is fully relaxed!"
+  exit
+elif [ $RESULT == 'success2' ]; then
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail1' ]; then
+  forces_dftb_in $GEO $TOL myMOMENTUM
+  forces $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'success3' ]; then
+  scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail2' ]; then
+  echo "User trouble-shoot required."
+  exit
+elif [ $RESULT == 'fail3' ]; then
+  echo "User trouble-shoot required."
+  exit
+fi
 
 # LOOP 10 (ORANGE) RESULTS, SUBMITTING LOOP 11 (MUSTARD YELLOW)
-#  if [ $RESULT == 'success1' ]; then
-#    echo "$COF is fully relaxed!"
-#    exit
-#  elif [ $RESULT == 'success2' ]; then
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail1' ]; then
-#    forces_dftb_in $GEO $TOL myMOMENTUM
-#    forces $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'success3' ]; then
-#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail2' ]; then
-#    echo "User trouble-shoot required."
-#    exit
-#  elif [ $RESULT == 'fail3' ]; then
-#    echo "User trouble-shoot required."
-#    exit
+if [ $RESULT == 'success1' ]; then
+  echo "$COF is fully relaxed!"
+  exit
+elif [ $RESULT == 'success2' ]; then
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail1' ]; then
+  forces_dftb_in $GEO $TOL myMOMENTUM
+  forces $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'success3' ]; then
+  scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail2' ]; then
+  echo "User trouble-shoot required."
+  exit
+elif [ $RESULT == 'fail3' ]; then
+  echo "User trouble-shoot required."
+  exit
+fi
 
 # LOOP 11 (MUSTARD YELLOW) RESULTS, SUBMITTING LOOP 12 (EGGPLANT)
-#  if [ $RESULT == 'success1' ]; then
-#    echo "$COF is fully relaxed!"
-#    exit
-#  elif [ $RESULT == 'success2' ]; then
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail1' ]; then
-#    forces_dftb_in $GEO $TOL myMOMENTUM
-#    forces $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'success3' ]; then
-#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail2' ]; then
-#    echo "User trouble-shoot required."
-#    exit
-#  elif [ $RESULT == 'fail3' ]; then
-#    echo "User trouble-shoot required."
-#    exit
+if [ $RESULT == 'success1' ]; then
+  echo "$COF is fully relaxed!"
+  exit
+elif [ $RESULT == 'success2' ]; then
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail1' ]; then
+  forces_dftb_in $GEO $TOL myMOMENTUM
+  forces $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'success3' ]; then
+  scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail2' ]; then
+  echo "User trouble-shoot required."
+  exit
+elif [ $RESULT == 'fail3' ]; then
+  echo "User trouble-shoot required."
+  exit
+fi
 
 # LOOP 12 (EGGPLANT) RESULTS, SUBMITTING LOOP 13 (PERIWINKLE)
-#  if [ $RESULT == 'success1' ]; then
-#    echo "$COF is fully relaxed!"
-#    exit
-#  elif [ $RESULT == 'success2' ]; then
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail1' ]; then
-#    forces_dftb_in $GEO $TOL myMOMENTUM
-#    forces $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'success3' ]; then
-#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail2' ]; then
-#    echo "User trouble-shoot required."
-#    exit
-#  elif [ $RESULT == 'fail3' ]; then
-#    echo "User trouble-shoot required."
-#    exit
+if [ $RESULT == 'success1' ]; then
+  echo "$COF is fully relaxed!"
+  exit
+elif [ $RESULT == 'success2' ]; then
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail1' ]; then
+  forces_dftb_in $GEO $TOL myMOMENTUM
+  forces $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'success3' ]; then
+  scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail2' ]; then
+  echo "User trouble-shoot required."
+  exit
+elif [ $RESULT == 'fail3' ]; then
+  echo "User trouble-shoot required."
+  exit
+fi
 
 # LOOP 13 (PERIWINKLE) RESULTS
-#  if [ $RESULT == 'success1' ]; then
-#    echo "$COF is fully relaxed!"
-#    exit
-#  elif [ $RESULT == 'success2' ]; then
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail1' ]; then
-#    forces_dftb_in $GEO $TOL myMOMENTUM
-#    forces $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'success3' ]; then
-#    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-#    scc2 $CORES $COF $JOBNAME $TOL $RESULT
-#  elif [ $RESULT == 'fail2' ]; then
-#    echo "User trouble-shoot required."
-#    exit
-#  elif [ $RESULT == 'fail3' ]; then
-#    echo "User trouble-shoot required."
-#    exit
+if [ $RESULT == 'success1' ]; then
+  echo "$COF is fully relaxed!"
+  exit
+elif [ $RESULT == 'success2' ]; then
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail1' ]; then
+  forces_dftb_in $GEO $TOL myMOMENTUM
+  forces $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'success3' ]; then
+  scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $RESULT == 'fail2' ]; then
+  echo "User trouble-shoot required."
+  exit
+elif [ $RESULT == 'fail3' ]; then
+  echo "User trouble-shoot required."
+  exit
+fi
+) </dev/null >log.$COF 2>&1 &
