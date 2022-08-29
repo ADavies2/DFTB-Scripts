@@ -1,117 +1,233 @@
-# Before running this script, make sure there is a base dftb_in.hsd script in the Properties directory, as well as the final geometry and charges. All calculations should be run with fully optimized geometry.
-
 #!/bin/bash
 
-COF='cof5' # COF name
+# Declare an associative array for the Hubbard derivatives of each element for the 3ob parameters
+declare -A HUBBARD
+HUBBARD[Br]=-0.0573
+HUBBARD[C]=-0.1492
+HUBBBARD[Ca]=-0.034
+HUBBARD[Cl]=-0.0697
+HUBBARD[F]=-0.1623
+HUBBARD[H]=-0.1857
+HUBBARD[I]=-0.0433
+HUBBARD[K]=-0.0339
+HUBBARD[Mg]=-0.02
+HUBBARD[N]=-0.1535
+HUBBARD[Na]=-0.0454
+HUBBARD[O]=-0.1575
+HUBBARD[P]=-0.14
+HUBBARD[S]=-0.11
+HUBBARD[Zn]=-0.03
 
-## Make directories to store the data from each property calculation
-mkdir Charges # charge distribution, charges as text from DFTB+
-mkdir Band # band structures
-mkdir DOS # density of states
-mkdir Waveplot # charge density distribution (blue and red isosurface plots)
+# Declare an associative array for the max angular momentum orbitals for each element for the 3ob parameters
+declare -A MOMENTUM
+MOMENTUM[Br]=d
+MOMENTUM[C]=p
+MOMENTUM[Ca]=p
+MOMENTUM[Cl]=d
+MOMENTUM[F]=p
+MOMENTUM[H]=s
+MOMENTUM[I]=d
+MOMENTUM[K]=p
+MOMENTUM[Mg]=p
+MOMENTUM[N]=p
+MOMENTUM[Na]=p
+MOMENTUM[O]=p
+MOMENTUM[P]=d
+MOMENTUM[S]=d
+MOMENTUM[Zn]=d
 
-## Calculate charge distribution from DFTB+ first using the option WriteChargesAsText = Yes
+ncores () {
+  if (($1 <= 40)); then
+    CORES=2
+  elif (($1 >= 40 && $1 <= 50)); then
+    CORES=4
+  elif (($1 >= 50 && $1 <= 100)); then
+    CORES=8
+  elif (($1 >= 100)); then
+    CORES=16
+  fi
+}
 
-cd Charges
-cp ../dftb_in.hsd ./
-printf '\nOptions {\n  WriteChargesAsText = Yes }\n' >> dftb_in.hsd
-# The above is the only change that needs to be made to the dftb_in.hsd script to generate charge data as a text file.
-cp ../Input.gen ./
-cp ../charges.bin ./
+scc_dftb_in () {
+  if [[ $1 == *"gen"* ]]; then
+    cat > dftb_in.hsd <<!
+Geometry = GenFormat {
+  <<< $1
+}
+!
+  else
+    cat > dftb_in.hsd <<!
+Geometry = VASPFormat {
+  <<< $1
+}
+!
+  fi
+  cat >> dftb_in.hsd <<!
 
-# submit the calculation to generate the charge data as a text file
-submit_dftb_hybrid 8 1 $COF-charges
-echo "$COF charges as text has been submitted..."
+Driver = ConjugateGradient {
+  MovedAtoms = 1:-1
+  MaxSteps = 100000
+  LatticeOpt = Yes
+  AppendGeometries = No
+  OutputPrefix = $1-$3 }
+  
+Hamiltonian = DFTB {
+SCC = Yes
+ReadInitialCharges = Yes
+MaxSCCIterations = 5000
+ThirdOrderFull = Yes
+Dispersion = LennardJones {
+  Parameters = UFFParameters{} }
+HCorrection = Damping {
+  Exponent = 4.05 }
+HubbardDerivs {
+!
+  hubbard=$4[@]
+  sccHUBBARD=("${!hubbard}")
+  printf "%s\n" "${sccHUBBARD[@]} }" >> dftb_in.hsd
+  cat >> dftb_in.hsd <<!
+SlaterKosterFiles = Type2FileNames {
+  Prefix = "/project/designlab/Shared/Codes/dftb+sk/3ob-3-1/"
+  Separator = "-"
+  Suffix = ".skf" }
+KPointsAndWeights = SupercellFolding {
+  4 0 0
+  0 4 0
+  0 0 4
+  0.5 0.5 0.5 }
+MaxAngularMomentum {
+!
+  momentum=$5[@]
+  sccMOMENTUM=("${!momentum}")
+  printf "%s\n" "${sccMOMENTUM[@]} }" >> dftb_in.hsd
+  cat >> dftb_in.hsd <<!
+Filling = Fermi {
+  Temperature [Kelvin] = 0 } }
+!
+  if [ $2 == 'yes' ]; then
+    printf "%s\n" "Analysis = {" >> dftb_in.hsd
+    printf "%s\n" "  MullikenAnalysis = Yes" >> dftb_in.hsd
+    printf "%s\n" "  AtomResolvedEnergies = Yes" >> dftb_in.hsd
+    printf "%s\n" "  CalculateForces = Yes }" >> dftb_in.hsd
+  else
+    printf "%s\n" "Analysis = {" >> dftb_in.hsd
+    printf "%s\n" "  MullikenAnalysis = Yes }" >> dftb_in.hsd
+  fi
+  cat >> dftb_in.hsd <<!
+Parallel = {
+  Groups = 1
+  UseOmpThreads = Yes }
 
-## Calculate the band structure from DFTB+
+ParserOptions {
+  ParserVersion = 10 }
+!
+  if [ $2 == 'yes' ]; then
+    printf "%s\n" "Options {" >> dftb_in.hsd
+    printf "%s\n" "WriteChargesAsText = Yes }" >> dftb_in.hsd
+  fi
+}
 
-cd ../Band
-mkdir Relax
-cd Relax
-# Rerun a relaxation with the final geometry and charges in order to generate the band.out file
-cp ../../dftb_in.hsd ../../Input.gen ../../charges.bin ./
-
-submit_dftb_hybrid 8 1 $COF-bands-relax
-echo "Relaxation of $COF for bands has been submitted..."
-
-while :
-do
-  stat="$(squeue -n $COF-bands-relax)"
-  string=($stat)
-  jobstat=(${string[12]})
-    if [ "$jobstat" == "PD" ]; then
-      echo "$COF-bands-relax is pending..."
-      sleep 5s
-    else
-      if grep -q "SCC converged" detailed.out; then
-        cp dftb_in.hsd Input.gen charges.bin ../
+scc_mono () {
+# $1 = $CORES
+# $2 = $COF
+# $3 = $JOBNAME
+  submit_dftb_automate $1 1 $3
+  while :
+  do
+    stat="$(squeue -n $3)"
+    string=($stat)
+    jobstat=(${string[12]})
+      if [ "$jobstat" == "PD" ]; then
+        echo "$3 is pending..."
+        sleep 10s
+      else
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
+          
+          if [ $4 == '1e-5' ]; then
+            if [ ! -d "1e-4-Outputs" ]; then
+              mkdir '1e-4-Outputs'
+            fi
+            cp detailed.out $3.log '1e-4-Out.gen' '1e-4-Out.xyz' charges* submit_$3 '1e-4-Outputs/'
+            rm *out *log *xyz *gen *bin submit* *dat
+            RESULT='success1'
+            break
+          elif [[ $4 == '1e-1' || $4 = '1e-2' || $4 = '1e-3' ]]; then
+            if [ ! -d "$4-Outputs" ]; then
+              mkdir $4-Outputs
+            fi
+            cp detailed.out $3.log $4-Out.gen $4-Out.xyz charges.bin submit_$3 $4-Outputs/
+            rm *out *xyz submit*
+            sed -i 's/.*Geometry.*/Geometry = GenFormat {/g' dftb_in.hsd
+            sed -i "s/.*<<<.*/  <<< ""$4-Out.gen""/g" dftb_in.hsd
+            sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd
+            if [ $4 == '1e-1' ]; then
+              TOL='1e-2'
+              sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd
+              sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out" }/g" dftb_in.hsd
+            elif [ $4 == '1e-2' ]; then
+              TOL='1e-3'
+              sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd
+              sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out" }/g" dftb_in.hsd
+            elif [ $4 == '1e-3' ]; then
+              TOL='1e-5'
+              sed -i 's/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g' dftb_in.hsd
+              sed -i 's/.*OutputPrefix.*/  OutputPrefix = "1e-4-Out" }/g' dftb_in.hsd
+              sed -i '/.*Analysis.*/d' dftb_in.hsd
+              printf "%s\n" "Analysis = {" >> dftb_in.hsd
+              printf "%s\n" "  MullikenAnalysis = Yes" >> dftb_in.hsd
+              printf "%s\n" "  AtomResolvedEnergies = Yes" >> dftb_in.hsd
+              printf "%s\n" "  CalculateForces = Yes }" >> dftb_in.hsd
+              printf "%s\n" "Options {" >> dftb_in.hsd
+              printf "%s\n" "  WriteChargesAsText = Yes }" >> dftb_in.hsd
+            fi
+            sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd
+            echo "$3 has completed."
+            JOBNAME="$2-scc-$TOL"
+            RESULT='success2'
+            break
+          fi
+        elif grep -q "SCC is NOT converged" $3.log; then
+          sed -i 's/.*SCC = Yes.*/SCC = No/g' dftb_in.hsd
+          sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$4-Forces-Out"/g" dftb_in.hsd
+          echo "$3 did NOT converge. Attempting forces only..."
+          JOBNAME="$2-forces-$4"
+          RESULT='fail1'
+          break
+        else
+          echo "$3 is still running..."
+          sleep 10s
+        fi
       fi
-    fi
-done
+  done
+}
 
-cd ../
-# Now, the dftb_in.hsd script must be edited to generate the band structure of a well converged system upon initial diagonalization of the Hamiltonian
-# These edits include a static calculation, max SCC iterations, and the path of high symmetry.
-# The path of high symmetry used here is the general path for hexagonal COFs.
-# NOTE, that the user may want to change this if they see so fit.
+echo "What is the COF name?"
+read COF
+echo "What is your input geometry file called?"
+read GEO
+echo "Is this a Curated COF? yes/no"
+read CURATED
 
-sed -i 's/.*Driver.*/Driver = { }/g' dftb_in.hsd # Rewrite for a static calculation
-sed -i '/.*MovedAtoms.*/,/.*LatticeOpt.*/d' dftb_in.hsd # Remove the other driver lines
-sed -i 's/.*MaxSCCIterations.*/MaxSCCIterations = 1/g' dftb_in.hsd # Set to one scc iteration
-sed -i '/.*4 0 0.*/,/.*0.5 0.5 0.5.*/d' dftb_in.hsd # Remove the previous k-point mesh
-sed -i 's/.*KPointsAndWeights.*/KPointsAndWeights [relative] = Klines {\n  1 0.0 0.0 0.0\n  10 0.33 0.33 0.0\n  10 0.5 0.0 0.0\n  10 0.0 0.0 0.0 }/g' dftb_in.hsd # Rewrite the new k-path of high symmetry
+if [ CURATED == 'yes' ]; then
+  CALC='mono'
+  JOBNAME="$COF-$CALC"
+else
+  CALC='stack'
+fi
 
-submit_dftb_hybrid 8 1 generate-$COF-bands
-echo "Generating $COF bands submitted..."
-
-while :
-do
-  stat="$(squeue -n generate-$COF-bands)"
-  string=($stat)
-  jobstat=(${string[12]})
-    if [ "$jobstat" == "PD" ]; then
-      echo "generate-$COF-bands is pending..."
-      sleep 5s
-    else
-      if grep -q "SCC is NOT converged" generate-$COF-bands.log; then
-        break
-      fi
-    fi
-done
-
-submit_dftb_bands 4 $COF-band # generate a plottable data file to visualize the band structure
-# The data file will be $COF-band_tot.dat
-echo "$COF band structure conversion submitted..."
-
-## Calculate the density of states and atom-resolved partial density of states
-
-cd ../DOS
-cp ../dftb_in.hsd ../Input.gen ../charges.bin ./
-
-# Edits to the base dftb_in.hsd script include making this a static calculation and including the analysis section that has the atom resolved DOS input.
-# NOTE, the user will want to change this depending on the types of atoms in their simulation
-
-sed -i 's/.*Driver.*/Driver = { }/g' dftb_in.hsd # Rewrite for a static calculation
-sed -i '/.*MovedAtoms.*/,/.*LatticeOpt.*/d' dftb_in.hsd # Remove the other driver lines
-sed -i 's/.*MullikenAnalysis.*/  MullikenAnalysis = Yes\n  ProjectStates {\n    Region {\n      Atoms = C\n      ShellResolved = Yes\n      label = "dos_C" }\n    Region {\n      Atoms = H\n      ShellResolved = Yes\n      label = "dos_H" }\n    Region {\n      Atoms = N\n      ShellResolved = Yes\n      label = "dos_N" }\n    Region {\n      Atoms = O\n      ShellResolved = Yes\n      label = "dos_O" }\n  }\n}/g' dftb_in.hsd # Include the DOS information
-
-submit_dftb_hybrid 8 1 generate-$COF-dos
-echo "Generating $COF DOS..."
-
-while :
-do
-  stat="$(squeue -n generate-$COF-dos)"
-  string=($stat)
-  jobstat=(${string[12]})
-    if [ "$jobstat" == "PD" ]; then
-      echo "generate-$COF-dos is pending..."
-      sleep 5s
-    else
-      if grep -q "SCC converged" detailed.out; then
-        break
-      fi
-    fi
-done
-
-submit_dftb_dos 4 $COF-dos
-echo "$COF DOS conversion submitted..."
+if [[ $GEO == *"gen"* ]]; then
+  ATOM_TYPES=($(sed -n 2p $GEO))
+  N_ATOMS=($(sed -n 1p $GEO))
+  N_ATOMS=${N_ATOMS[0]}
+  
+else
+  ATOM_TYPES=($(sed -n 6p $GEO))
+  POSCAR_ATOMS=($(sed -n 7p $GEO))
+  N_ATOMS=0
+  for i in ${POSCAR_ATOMS[@]}; do
+    let N_ATOMS+=$i
+  done
+  Z=($(sed -n 5p $GEO))
+  Z[2]=30
+  sed -i "s/.*${Z[@]}.*/
+!
