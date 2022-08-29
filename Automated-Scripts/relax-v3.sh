@@ -245,7 +245,7 @@ scc2 () {
               mkdir '1e-4-Outputs'
             fi
             cp detailed.out $3.log '1e-4-Out.gen' '1e-4-Out.xyz' charges* submit_$3 '1e-4-Outputs/'
-            rm *out *log *xyz *gen *bin submit* *dat
+            rm *out *log *xyz *gen charges* submit*
             RESULT='success1'
             break
           elif [[ $4 = '1e-2' || $4 = '1e-3' ]]; then
