@@ -49,7 +49,12 @@ ncores () {
 }
 
 scc_dftb_in () {
-  if [[ $1 == *"gen"* ]]; then
+# $1 = $GEO
+# $2 = $COF
+# $3 = $JOBNAME
+# $4 = myHUBBARD
+# $5 = myMOMENTUM
+  if [[ $1 == *"gen"* ]]; then 
     cat > dftb_in.hsd <<!
 Geometry = GenFormat {
   <<< $1
@@ -62,15 +67,24 @@ Geometry = VASPFormat {
 }
 !
   fi
-  cat >> dftb_in.hsd <<!
+  if [[ $3 == *"Mono"* ]] || [[ $3 == *"Final"* ]]; then
+    cat >> dftb_in.hsd <<!
 
 Driver = ConjugateGradient {
   MovedAtoms = 1:-1
   MaxSteps = 100000
   LatticeOpt = Yes
   AppendGeometries = No
-  OutputPrefix = "$2-Out-$3" }
-  
+  OutputPrefix = "$3-Out" }
+!
+  else
+    cat >> dftb_in.hsd <<!
+
+Driver = { }
+!
+  fi
+  cat >> dftb_in.hsd <<!
+
 Hamiltonian = DFTB {
 SCC = Yes
 ReadInitialCharges = Yes
@@ -105,7 +119,7 @@ Filling = Fermi {
   Temperature [Kelvin] = 0 } }
   
 !
-  if [ $2 == 'yes' ]; then
+  if [[ $3 == *"Mono"* ]] || [[ $3 == *"Final"* ]]; then
     printf "%s\n" "Analysis = {" >> dftb_in.hsd
     printf "%s\n" "  MullikenAnalysis = Yes" >> dftb_in.hsd
     printf "%s\n" "  AtomResolvedEnergies = Yes" >> dftb_in.hsd
@@ -122,17 +136,19 @@ Parallel = {
 
 ParserOptions {
   ParserVersion = 10 }
+  
 !
-  if [ $2 == 'yes' ]; then
+  if [[ $3 == *"Mono"* ]] || [[ $3 == *"Final"* ]]; then
     printf "%s\n" "Options {" >> dftb_in.hsd
     printf "%s\n" "WriteChargesAsText = Yes }" >> dftb_in.hsd
   fi
 }
 
-scc_mono () {
+scc1 () {
 # $1 = $CORES
 # $2 = $COF
 # $3 = $JOBNAME
+# $4 = $GEO
   submit_dftb_automate $1 1 $3
   while :
   do
@@ -143,61 +159,71 @@ scc_mono () {
         echo "$3 is pending..."
         sleep 10s
       else
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
-          
-          if [ $4 == '1e-5' ]; then
-            if [ ! -d "1e-4-Outputs" ]; then
-              mkdir '1e-4-Outputs'
-            fi
-            cp detailed.out $3.log '1e-4-Out.gen' '1e-4-Out.xyz' charges* submit_$3 '1e-4-Outputs/'
-            rm *out *log *xyz *gen *bin submit* *dat
-            RESULT='success1'
-            break
-          elif [[ $4 == '1e-1' || $4 = '1e-2' || $4 = '1e-3' ]]; then
-            if [ ! -d "$4-Outputs" ]; then
-              mkdir $4-Outputs
-            fi
-            cp detailed.out $3.log $4-Out.gen $4-Out.xyz charges.bin submit_$3 $4-Outputs/
-            rm *out *xyz submit*
-            sed -i 's/.*Geometry.*/Geometry = GenFormat {/g' dftb_in.hsd
-            sed -i "s/.*<<<.*/  <<< ""$4-Out.gen""/g" dftb_in.hsd
-            sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd
-            if [ $4 == '1e-1' ]; then
-              TOL='1e-2'
-              sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd
-              sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out" }/g" dftb_in.hsd
-            elif [ $4 == '1e-2' ]; then
-              TOL='1e-3'
-              sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd
-              sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out" }/g" dftb_in.hsd
-            elif [ $4 == '1e-3' ]; then
-              TOL='1e-5'
-              sed -i 's/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g' dftb_in.hsd
-              sed -i 's/.*OutputPrefix.*/  OutputPrefix = "1e-4-Out" }/g' dftb_in.hsd
-              sed -i '/.*Analysis.*/d' dftb_in.hsd
-              printf "%s\n" "Analysis = {" >> dftb_in.hsd
-              printf "%s\n" "  MullikenAnalysis = Yes" >> dftb_in.hsd
-              printf "%s\n" "  AtomResolvedEnergies = Yes" >> dftb_in.hsd
-              printf "%s\n" "  CalculateForces = Yes }" >> dftb_in.hsd
-              printf "%s\n" "Options {" >> dftb_in.hsd
-              printf "%s\n" "  WriteChargesAsText = Yes }" >> dftb_in.hsd
-            fi
-            sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd
-            echo "$3 has completed."
-            JOBNAME="$2-scc-$TOL"
-            RESULT='success2'
-            break
+        if [[ $3 == *"Mono"* ]] || [[ $3 == *"Final"* ]]; then
+          if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
+            echo "$2 Monolayer is fully relaxed!"
+            exit
+          elif grep -q "SCC is NOT converged" $3.log; then
+            printf "$2 Monolayer did NOT converge.\n User trouble-shoot required." 
+            exit
+          else
+            echo "$3 is still running..."
+            sleep 10s
           fi
-        elif grep -q "SCC is NOT converged" $3.log; then
-          sed -i 's/.*SCC = Yes.*/SCC = No/g' dftb_in.hsd
-          sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$4-Forces-Out"/g" dftb_in.hsd
-          echo "$3 did NOT converge. Attempting forces only..."
-          JOBNAME="$2-forces-$4"
-          RESULT='fail1'
-          break
         else
-          echo "$3 is still running..."
-          sleep 10s
+          if grep -q "SCC converged" detailed.out; then
+            cp detailed.out $3-detailed.out
+            if [[ $3 == *"Stack1"* ]]; then
+              if [[ $4 == *"gen"* ]]; then
+                GEO=Input2.gen
+              else
+                GEO=Input2-POSCAR
+              fi
+              JOBNAME="$2-Stack2"
+              echo "$3 is complete. Starting $JOBNAME..."
+              break
+            elif [[ $3 == *"Stack2"* ]]; then
+              if [[ $4 == *"gen"* ]]; then
+                GEO=Input3.gen
+              else
+                GEO=Input3-POSCAR
+              fi
+              JOBNAME="$2-Stack3"
+              echo "$3 is complete. Starting $JOBNAME..."
+              break
+            else 
+              echo "Static stacked calculations for $2 are complete! Beginning energy analysis..."
+              break
+            fi
+          elif grep -q "SCC is NOT converged" $3.log; then
+            echo "$3 did NOT converge."
+            cp detailed.out $3-detailed.out
+            if [[ $3 == *"Stack1"* ]]; then
+              if [[ $4 == *"gen"* ]]; then
+                GEO=Input2.gen
+              else
+                GEO=Input2-POSCAR
+              fi
+              JOBNAME="$2-Stack2"
+              echo "Starting $JOBNAME..."
+              break
+            elif [[ $3 == *"Stack2"* ]]; then
+              if [[ $4 == *"gen"* ]]; then
+                GEO=Input3.gen
+              else
+                GEO=Input3-POSCAR
+              fi
+              JOBNAME="$2-Stack3"
+              echo "Starting $JOBNAME..."
+              break
+            else
+              echo "Static stacked calculations for $2 are complete! Beginning energy analysis..."
+              break
+            fi
+          else
+            echo "$3 is still running..."
+            sleep 10s
+          fi
         fi
       fi
   done
@@ -207,28 +233,56 @@ echo "What is the COF name?"
 read COF
 echo "What is your input geometry file called?"
 read GEO
-echo "Is your input geometry stacked or a monolayer? Answer stack/mono"
-read CALC
+echo "Is your input geometry stacked or a monolayer? Answer stacked/mono"
+read STARTING
 
-if [ $CALC == 'stacked' ]; then
-  JOBNAME="$COF-$CALC"
+(
+  trap '' 1
+stackedHEIGHTS=(3.3 3.5 4)
+
+if [ $STARTING == 'stacked' ]; then
+  JOBNAME="$COF-Mono"
+else
+  JOBNAME="$COF-Stack1"
 fi
 
 if [[ $GEO == *"gen"* ]]; then
   ATOM_TYPES=($(sed -n 2p $GEO))
   N_ATOMS=($(sed -n 1p $GEO))
   N_ATOMS=${N_ATOMS[0]}
-  if [ $CALC == 'stacked' ]; then
-  zorigin=($(sed -n '$p' $GEO))
+  if [ $STARTING == 'stacked' ]; then
+    zorigin=($(sed -n '$p' $GEO))
     declare -a znew
-    znew[0]="${zorigin[0]}"
-    znew[1]="${zorigin[1]}"
-    znew[2]=30
+    znew=("${zorigin[0]}" "${zorigin[1]}" "30")
     oldZ="    ${zorigin[0]}    ${zorigin[1]}    ${zorigin[2]}"
     newZ="    ${znew[0]}   ${znew[1]}    ${znew[2]}"
     sed -i '$ d' $GEO
     cat >> $GEO <<!
 $newZ
+!
+  else
+    cp $GEO Input1.gen
+    cp $GEO Input2.gen
+    cp $GEO Input3.gen
+    zorigin=($(sed -n '$p' $GEO))
+    znew1=("${zorigin[0]}" "${zorigin[1]}" "3.3")
+    znew2=("${zorigin[0]}" "${zorigin[1]}" "3.5")
+    znew3=("${zorigin[0]}" "${zorigin[1]}" "4")
+    oldZ="    ${zorigin[0]}    ${zorigin[1]}    ${zorigin[2]}"
+    newZ1="    ${znew1[0]}   ${znew1[1]}    ${znew1[2]}"
+    newZ2="    ${znew2[0]}   ${znew2[1]}    ${znew2[2]}"
+    newZ3="    ${znew3[0]}   ${znew3[1]}    ${znew3[2]}"
+    sed -i '$ d' Input1.gen
+    sed -i '$ d' Input2.gen
+    sed -i '$ d' Input3.gen
+    cat >> Input1.gen <<!
+$newZ1
+!
+    cat >> Input2.gen <<!
+$newZ2
+!
+    cat >> Input3.gen <<!
+$newZ3
 !
   fi
 else
@@ -238,15 +292,28 @@ else
   for i in ${POSCAR_ATOMS[@]}; do
     let N_ATOMS+=$i
   done
-  if [ $CALC == 'stacked' ]; then
+  if [ $STARTING == 'stacked' ]; then
     zorigin=($(sed -n 5p $GEO))
     declare -a znew
-    znew[0]="${zorigin[0]}"
-    znew[1]="${zorigin[1]}"
-    znew[2]=30
+    znew=("${zorigin[0]}" "${zorigin[1]}" "30")
     oldZ="${zorigin[0]} ${zorigin[1]} ${zorigin[2]}"
     newZ="${znew[0]} ${znew[1]} ${znew[2]}"
     sed -i "s/$oldZ/$newZ/g" $GEO
+  else
+    cp $GEO Input1-POSCAR
+    cp $GEO Input2-POSCAR
+    cp $GEO Input3-POSCAR
+    zorigin=($(sed -n 5p $GEO))
+    znew1=("${zorigin[0]}" "${zorigin[1]}" "3.3")
+    znew2=("${zorigin[0]}" "${zorigin[1]}" "3.5")
+    znew3=("${zorigin[0]}" "${zorigin[1]}" "4")
+    oldZ="${zorigin[0]} ${zorigin[1]} ${zorigin[2]}"
+    newZ1="${znew1[0]} ${znew1[1]} ${znew1[2]}"
+    newZ2="${znew2[0]} ${znew2[1]} ${znew2[2]}"
+    newZ3="${znew3[0]} ${znew3[1]} ${znew3[2]}"
+    sed -i "s/$oldZ/$newZ1/g" Input1-POSCAR
+    sed -i "s/$oldZ/$newZ2/g" Input2-POSCAR
+    sed -i "s/$oldZ/$newZ3/g" Input3-POSCAR
   fi
 fi
 
@@ -260,11 +327,60 @@ done
 
 ncores $N_ATOMS
 
-scc_dftb_in $GEO $COF $CALC myHUBBARD myMOMENTUM
+# Write dftb_in.hsd for monolayer calculation or for the first stacked static calculation
+if [ $STARTING == 'stacked' ]; then
+  scc_dftb_in $GEO $COF $JOBNAME myHUBBARD myMOMENTUM
+else
+  GEO="Input1.gen"
+  scc_dftb_in $GEO $COF $JOBNAME myHUBBARD myMOMENTUM
+fi
 
-# Run an SCC calculation of the monolayer, 1e-5 with ReadInitialCharges
+# Run either an SCC of a monolayer, or a static SCC of the first stacked geometry
+scc1 $CORES $COF $JOBNAME $GEO
 
-# For $CALC = stacked, create three geometry files (4, 3.5, 3.3)
-# Run a static SCC calculation
-# Check detailed.out TotalEnergy and take the geometry with the lowest energy
-# Run an SCC calculation of this stacked geometry, 1e-5 with ReadInitialCharges
+# Run the next static SCC of the stacked geometries
+scc_dftb_in $GEO $COF $JOBNAME myHUBBARD myMOMENTUM
+scc1 $CORES $COF $JOBNAME $GEO
+
+# Run the last static SCC of the stacked geometries
+scc_dftb_in $GEO $COF $JOBNAME myHUBBARD myMOMENTUM
+scc1 $CORES $COF $JOBNAME $GEO
+
+# Check the total energies of each system, compare to find the minimum, and store that value along with the geometry that produced it
+stackedGEOS=("$COF-Stack1" "$COF-Stack2" "$COF-Stack3")
+min=0
+declare -A ENERGY
+for geo in "${stackedGEOS[@]}"; do
+  energy=($(grep "Total energy" $geo-detailed.out))
+  ENERGY[$geo]="${energy[4]}"
+  lessthan=($(echo "${ENERGY[$geo]}<$min" | bc))
+  if (( $lessthan == 1 )); then
+    min=${ENERGY[$geo]}
+    geoOPT=$geo
+  fi
+done
+
+# Set $GEO to match the lowest-energy static geometry
+if [[ $GEO == *"gen"* ]]; then
+  if [[ $geoOPT == *"1"* ]]; then
+    GEO="Input1.gen"
+  elif [[ $geoOPT == *"2"* ]]; then
+    GEO="Input2.gen"
+  else
+    GEO="Input3.gen"
+  fi
+else
+  if [[ $geoOPT == *"1"* ]]; then
+    GEO="Input1-POSCAR"
+  elif [[ $geoOPT == *"2"* ]]; then
+    GEO="Input2-POSCAR"
+  else
+    GEO="Input3-POSCAR"
+  fi
+fi
+
+# Run a dynamic SCC calculation with new $GEO
+JOBNAME="$COF-Final-Opt"
+scc_dftb_in $GEO $COF $JOBNAME myHUBBARD myMOMENTUM
+scc1 $CORES $COF $JOBNAME $GEO
+) </dev/null >log.$COF-Stacking 2>&1 &
