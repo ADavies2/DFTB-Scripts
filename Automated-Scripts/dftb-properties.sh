@@ -207,20 +207,30 @@ echo "What is the COF name?"
 read COF
 echo "What is your input geometry file called?"
 read GEO
-echo "Is this a Curated COF? yes/no"
-read CURATED
+echo "Is your input geometry stacked or a monolayer? Answer stack/mono"
+read CALC
 
-if [ $CURATED == 'yes' ]; then
-  CALC='Mono'
+if [ $CALC == 'stacked' ]; then
   JOBNAME="$COF-$CALC"
-else
-  CALC='Stack'
 fi
 
 if [[ $GEO == *"gen"* ]]; then
   ATOM_TYPES=($(sed -n 2p $GEO))
   N_ATOMS=($(sed -n 1p $GEO))
   N_ATOMS=${N_ATOMS[0]}
+  if [ $CALC == 'stacked' ]; then
+  zorigin=($(sed -n '$p' $GEO))
+    declare -a znew
+    znew[0]="${zorigin[0]}"
+    znew[1]="${zorigin[1]}"
+    znew[2]=30
+    oldZ="    ${zorigin[0]}    ${zorigin[1]}    ${zorigin[2]}"
+    newZ="    ${znew[0]}   ${znew[1]}    ${znew[2]}"
+    sed -i '$ d' $GEO
+    cat >> $GEO <<!
+$newZ
+!
+  fi
 else
   ATOM_TYPES=($(sed -n 6p $GEO))
   POSCAR_ATOMS=($(sed -n 7p $GEO))
@@ -228,7 +238,7 @@ else
   for i in ${POSCAR_ATOMS[@]}; do
     let N_ATOMS+=$i
   done
-  if [ $CURATED == 'yes' ]; then
+  if [ $CALC == 'stacked' ]; then
     zorigin=($(sed -n 5p $GEO))
     declare -a znew
     znew[0]="${zorigin[0]}"
@@ -251,3 +261,10 @@ done
 ncores $N_ATOMS
 
 scc_dftb_in $GEO $COF $CALC myHUBBARD myMOMENTUM
+
+# Run an SCC calculation of the monolayer, 1e-5 with ReadInitialCharges
+
+# For $CALC = stacked, create three geometry files (4, 3.5, 3.3)
+# Run a static SCC calculation
+# Check detailed.out TotalEnergy and take the geometry with the lowest energy
+# Run an SCC calculation of this stacked geometry, 1e-5 with ReadInitialCharges
