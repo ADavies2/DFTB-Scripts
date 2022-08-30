@@ -69,7 +69,7 @@ Driver = ConjugateGradient {
   MaxSteps = 100000
   LatticeOpt = Yes
   AppendGeometries = No
-  OutputPrefix = $1-$3 }
+  OutputPrefix = "$2-Out-$3" }
   
 Hamiltonian = DFTB {
 SCC = Yes
@@ -103,6 +103,7 @@ MaxAngularMomentum {
   cat >> dftb_in.hsd <<!
 Filling = Fermi {
   Temperature [Kelvin] = 0 } }
+  
 !
   if [ $2 == 'yes' ]; then
     printf "%s\n" "Analysis = {" >> dftb_in.hsd
@@ -114,6 +115,7 @@ Filling = Fermi {
     printf "%s\n" "  MullikenAnalysis = Yes }" >> dftb_in.hsd
   fi
   cat >> dftb_in.hsd <<!
+  
 Parallel = {
   Groups = 1
   UseOmpThreads = Yes }
@@ -208,18 +210,17 @@ read GEO
 echo "Is this a Curated COF? yes/no"
 read CURATED
 
-if [ CURATED == 'yes' ]; then
-  CALC='mono'
+if [ $CURATED == 'yes' ]; then
+  CALC='Mono'
   JOBNAME="$COF-$CALC"
 else
-  CALC='stack'
+  CALC='Stack'
 fi
 
 if [[ $GEO == *"gen"* ]]; then
   ATOM_TYPES=($(sed -n 2p $GEO))
   N_ATOMS=($(sed -n 1p $GEO))
   N_ATOMS=${N_ATOMS[0]}
-  
 else
   ATOM_TYPES=($(sed -n 6p $GEO))
   POSCAR_ATOMS=($(sed -n 7p $GEO))
@@ -227,7 +228,26 @@ else
   for i in ${POSCAR_ATOMS[@]}; do
     let N_ATOMS+=$i
   done
-  Z=($(sed -n 5p $GEO))
-  Z[2]=30
-  sed -i "s/.*${Z[@]}.*/
-!
+  if [ $CURATED == 'yes' ]; then
+    zorigin=($(sed -n 5p $GEO))
+    declare -a znew
+    znew[0]="${zorigin[0]}"
+    znew[1]="${zorigin[1]}"
+    znew[2]=30
+    oldZ="${zorigin[0]} ${zorigin[1]} ${zorigin[2]}"
+    newZ="${znew[0]} ${znew[1]} ${znew[2]}"
+    sed -i "s/$oldZ/$newZ/g" $GEO
+  fi
+fi
+
+declare -A myHUBBARD
+declare -A myMOMENTUM
+nl=$'\n'
+for element in ${ATOM_TYPES[@]}; do
+  myHUBBARD[$element]="$element = ${HUBBARD[$element]}"
+  myMOMENTUM[$element]="$element = ${MOMENTUM[$element]}"
+done
+
+ncores $N_ATOMS
+
+scc_dftb_in $GEO $COF $CALC myHUBBARD myMOMENTUM
