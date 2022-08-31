@@ -171,6 +171,65 @@ ParserOptions {
 !
 }
 
+scc () {
+# $1 = $CORES
+# $2 = $COF
+# $3 = $JOBNAME
+# $4 = $SUPERCELL
+  submit_dftb_automate $1 1 $3
+  while :
+  do
+    stat="$(squeue -n $3)"
+    string=($stat)
+    jobstat=(${string[12]})
+      if [ "$jobstat" == "PD" ]; then
+        echo "$3 is pending..."
+        sleep 10s
+      else
+        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
+          echo "$4 $2 is fully relaxed! Beginning Waveplot calculations..."
+          JOBNAME="$2-Waveplot2"
+          break
+        elif grep -q "SCC is NOT converged" $3.log; then
+          printf "$4 $2 did NOT converge.\n User trouble-shoot required." 
+          exit
+        else
+          echo "#3 is still runing..."
+          sleep 10s
+        fi
+      fi
+  done
+}
+
+waveplot () {
+# $1 = $JOBNAME
+# $2 = $SUPERCELL
+# $3 = $COF
+  sed -i '/.*srun dftb+.*/s/^/#/g' ~/bin/submit_dftb_automate
+  sed -i '/.*waveplot.*/s/^#//g' ~/bin/submit_dftb_automate
+  submit_dftb_automate 16 1 $1
+  while :
+  do 
+    stat="$(squeue -n $3)"
+    string=($stat)
+    jobstat=(${string[12]})
+      if [ "$jobstat" == "PD" ]; then
+        echo "$3 is pending..."
+        sleep 10s
+      else
+        if grep -q "File 'wp-abs2diff.cube' written" $3.log; then
+          echo "$2 $COF Waveplot is complete!"
+          sed -i '/.*srun dftb+.*/s/^#//g' ~/bin/submit_dftb_automate
+          sed -i '/.*waveplot.*/s/^/#/g' ~/bin/submit_dftb_automate
+          exit
+        else
+          echo "#3 is still runing..."
+          sleep 10s
+        fi
+      fi
+  done
+}
+
 # The user needs to supply the supercell input file, the detailed.xml and the eigenvec.bin files
 
 echo "What is the COF name?" 
@@ -179,7 +238,7 @@ echo "What are your supercell dimensions?"
 read SUPERCELL
 echo "What is your input geometry file called?"
 read GEO
-JOBNAME="$COF-ChargeDiff"
+JOBNAME="$COF-Waveplot1"
 
 if [[ $GEO == *"gen"* ]]; then
   ATOM_TYPES=($(sed -n 2p $GEO))
@@ -209,3 +268,8 @@ ncores $N_ATOMS
 
 # Run a dftb_in.hsd calculation of the supercell with tags for detailed.xml and eigenvec.bin
 dftb_in $GEO $COF myHUBBARD myMOMENTUM
+scc $CORES $COF $JOBNAME $SUPERCELL
+
+# After a successful relaxation of the supercell, with the detailed.xml and eigenvec. bin files, run the waveplot calculation
+waveplot_in $SUPERCELL
+waveplot $JOBNAME $SUPERCELL $COF
