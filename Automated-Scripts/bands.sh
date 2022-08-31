@@ -68,6 +68,7 @@ Driver = { }
 Hamiltonian = DFTB {
 SCC = Yes
 MaxSCCIterations = 1
+ReadInitialCharges = Yes
 ThirdOrderFull = Yes
 Dispersion = LennardJones {
   Parameters = UFFParameters{} }
