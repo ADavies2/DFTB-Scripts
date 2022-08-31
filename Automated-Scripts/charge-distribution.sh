@@ -70,7 +70,7 @@ Options {
   PlottedRegion = UnitCell {
     MinEdgeLength [Angstrom] = 23
   }
-  
+
   NrOfPoints = 30 30 30
   NrOfCachedGrids = -1
   Verbose = Yes
@@ -91,116 +91,6 @@ Basis {
 !
 }
 
-dftb_in () {
-# $1 = $GEO
-# $2 = $COF
-# $3 = myHUBBARD
-# $4 = myMOMENTUM
-  if [[ $1 == *"gen"* ]]; then
-    cat > dftb_in.hsd <<!
-Geometry = GenFormat {
-  <<< $1
-}
-
-!
-  else
-    cat > dftb_in.hsd <<!
-Geometry = VASPFormat {
-  <<< $1
-}
-
-!
-  fi
-  cat >> dftb_in.hsd <<!
-Driver = ConjugateGradient {
-  MovedAtoms = 1:-1
-  MaxSteps = 100000
-  LatticeOpt = Yes
-  OuptutPrefix = "$2-Charge-Relax"
-  AppendGeometries = No }
-  
-Hamiltonian = Yes {
-SCC = Yes
-ReadInitialCharges = No
-ThirdOrderFull = Yes
-Dispersion = LennardJones {
-  Parameters = UFFParameters{} }
-HCorrection = Damping {
-  Exponent = 4.05 }
-HubbardDerivs {
-!
-  hubbard=$3[@]
-  sccHUBBARD=("${!hubbard}")
-  printf "%s\n" "${sccHUBBARD[@]} }" >> dftb_in.hsd
-  cat >> dftb_in.hsd <<!
-SlaterKosterFiles = Type2FileNames {
-  Prefix = "/project/designlab/Shared/Codes/dftb+sk/3ob-3-1/"
-  Separator = "-"
-  Suffix = ".skf" }
-KPointsAndWeights = SupercellFolding {
-  4 0 0
-  0 4 0
-  0 0 4
-  0.5 0.5 0.5 }
-MaxAngularMomentum {
-!
-  momentum=$4[@]
-  sccMOMENTUM=("${!momentum}")
-  printf "%s\n" "${sccMOMENTUM[@]} }" >> dftb_in.hsd
-  cat >> dftb_in.hsd <<!
-Filling = Fermi {
-  Temperature [Kelvin] = 0 } }
-
-Options {
-  WriteDetailedXML = Yes
-}
-
-Analysis = {
-  MullikenAnalysis = Yes
-  WriteEigenvectors = Yes
-}
-
-Parallel {
-  Groups = 1
-  UseOmpThreads = Yes
-}
-
-ParserOptions {
-  ParserVersion = 10
-}
-!
-}
-
-scc () {
-# $1 = $CORES
-# $2 = $COF
-# $3 = $JOBNAME
-# $4 = $SUPERCELL
-  submit_dftb_automate $1 1 $3
-  while :
-  do
-    stat="$(squeue -n $3)"
-    string=($stat)
-    jobstat=(${string[12]})
-      if [ "$jobstat" == "PD" ]; then
-        echo "$3 is pending..."
-        sleep 10s
-      else
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
-          echo "$4 $2 is fully relaxed! Beginning Waveplot calculations..."
-          JOBNAME="$2-Waveplot2"
-          break
-        elif grep -q "SCC is NOT converged" $3.log; then
-          printf "$4 $2 did NOT converge.\n User trouble-shoot required." 
-          exit
-        else
-          echo "#3 is still runing..."
-          sleep 10s
-        fi
-      fi
-  done
-}
-
 waveplot () {
 # $1 = $JOBNAME
 # $2 = $SUPERCELL
@@ -209,21 +99,24 @@ waveplot () {
   sed -i '/.*waveplot.*/s/^#//g' ~/bin/submit_dftb_automate
   submit_dftb_automate 16 1 $1
   while :
-  do 
-    stat="$(squeue -n $3)"
+  do
+    stat="$(squeue -n $1)"
     string=($stat)
     jobstat=(${string[12]})
       if [ "$jobstat" == "PD" ]; then
-        echo "$3 is pending..."
+        echo "$1 is pending..."
         sleep 10s
       else
-        if grep -q "File 'wp-abs2diff.cube' written" $3.log; then
-          echo "$2 $COF Waveplot is complete!"
+        if grep -q "File 'wp-abs2diff.cube' written" $1.log; then
+          supercell=$2[@]
+          repeatCELL=("${!supercell}")
+          echo "${repeatCELL[@]} $3 Waveplot is complete!"
           sed -i '/.*srun dftb+.*/s/^#//g' ~/bin/submit_dftb_automate
           sed -i '/.*waveplot.*/s/^/#/g' ~/bin/submit_dftb_automate
+          cp wp-abs2diff.cube $3-wp-abs2diff.cube
           exit
         else
-          echo "#3 is still runing..."
+          echo "$1 is still runing..."
           sleep 10s
         fi
       fi
@@ -232,26 +125,18 @@ waveplot () {
 
 # The user needs to supply the supercell input file, the detailed.xml and the eigenvec.bin files
 
-echo "What is the COF name?" 
+echo "What is the COF name?"
 read COF
-echo "What are your supercell dimensions?" 
+echo "What are your supercell dimensions?"
 read SUPERCELL
 echo "What is your input geometry file called?"
 read GEO
-JOBNAME="$COF-Waveplot1"
+JOBNAME="$COF-Waveplot"
 
 if [[ $GEO == *"gen"* ]]; then
   ATOM_TYPES=($(sed -n 2p $GEO))
-  N_ATOMS=($(sed -n 1p $GEO))
-  N_ATOMS=${N_ATOMS[0]}
 else
   ATOM_TYPES=($(sed -n 6p $GEO))
-  POSCAR_ATOMS=($(sed -n 7p $GEO))
-  N_ATOMS=0
-  for i in ${POSCAR_ATOMS[@]}; do
-    let N_ATOMS+=$i
-  done
-!
 fi
 
 # Read atom types into a function for angular momentum and Hubbard derivative values
@@ -263,13 +148,6 @@ for element in ${ATOM_TYPES[@]}; do
   myMOMENTUM[$element]="$element = ${MOMENTUM[$element]}"
 done
 
-# Calculate the number of required cores based on the total number of atoms in the unit cell
-ncores $N_ATOMS
-
-# Run a dftb_in.hsd calculation of the supercell with tags for detailed.xml and eigenvec.bin
-dftb_in $GEO $COF myHUBBARD myMOMENTUM
-scc $CORES $COF $JOBNAME $SUPERCELL
-
 # After a successful relaxation of the supercell, with the detailed.xml and eigenvec. bin files, run the waveplot calculation
-waveplot_in $SUPERCELL
-waveplot $JOBNAME $SUPERCELL $COF
+waveplot_in SUPERCELL
+waveplot $JOBNAME SUPERCELL $COF
