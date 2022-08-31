@@ -140,6 +140,7 @@ ParserOptions {
 !
   if [[ $3 == *"Mono"* ]] || [[ $3 == *"Final"* ]]; then
     printf "%s\n" "Options {" >> dftb_in.hsd
+    print "$\n" "WriteDetailedXML = Yes" >> dftb_in.hsd
     printf "%s\n" "WriteChargesAsText = Yes }" >> dftb_in.hsd
   fi
 }
