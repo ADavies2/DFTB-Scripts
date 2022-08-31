@@ -123,6 +123,7 @@ Filling = Fermi {
     printf "%s\n" "Analysis = {" >> dftb_in.hsd
     printf "%s\n" "  MullikenAnalysis = Yes" >> dftb_in.hsd
     printf "%s\n" "  AtomResolvedEnergies = Yes" >> dftb_in.hsd
+    printf "%s\n" "  WriteEigenvectors = Yes" >> dftb_in.hsd
     printf "%s\n" "  CalculateForces = Yes }" >> dftb_in.hsd
   else
     printf "%s\n" "Analysis = {" >> dftb_in.hsd
@@ -140,6 +141,7 @@ ParserOptions {
 !
   if [[ $3 == *"Mono"* ]] || [[ $3 == *"Final"* ]]; then
     printf "%s\n" "Options {" >> dftb_in.hsd
+    printf "%s\n" "WriteDetailedXML = Yes" >> dftb_in.hsd
     printf "%s\n" "WriteChargesAsText = Yes }" >> dftb_in.hsd
   fi
 }
