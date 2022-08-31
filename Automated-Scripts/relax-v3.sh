@@ -129,6 +129,7 @@ Filling = Fermi {
   if [ $2 == '1e-5' ]; then
     printf "%s\n" "Analysis = {" >> dftb_in.hsd
     printf "%s\n" "  MullikenAnalysis = Yes" >> dftb_in.hsd
+    printf "%s\n" "  WriteEigenvectors = Yes" >> dftb_in.hsd
     printf "%s\n" "  AtomResolvedEnergies = Yes" >> dftb_in.hsd
     printf "%s\n" "  CalculateForces = Yes }" >> dftb_in.hsd
   else
