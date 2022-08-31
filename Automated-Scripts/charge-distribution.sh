@@ -1,49 +1,5 @@
 #!/bin/bash
 
-## FUTURE EDITS: AUTOMATICALLY GENERATE THE SUPERCELL RATHER THAN MANUALLY WITH OVITO
-
-# Declare an associative array for the Hubbard derivatives of each element for the 3ob parameters
-declare -A HUBBARD
-HUBBARD[Br]=-0.0573
-HUBBARD[C]=-0.1492
-HUBBBARD[Ca]=-0.034
-HUBBARD[Cl]=-0.0697
-HUBBARD[F]=-0.1623
-HUBBARD[H]=-0.1857
-HUBBARD[I]=-0.0433
-HUBBARD[K]=-0.0339
-HUBBARD[Mg]=-0.02
-HUBBARD[N]=-0.1535
-HUBBARD[Na]=-0.0454
-HUBBARD[O]=-0.1575
-HUBBARD[P]=-0.14
-HUBBARD[S]=-0.11
-HUBBARD[Zn]=-0.03
-
-# Declare an associative array for the max angular momentum orbitals for each element for the 3ob parameters
-declare -A MOMENTUM
-MOMENTUM[Br]=d
-MOMENTUM[C]=p
-MOMENTUM[Ca]=p
-MOMENTUM[Cl]=d
-MOMENTUM[F]=p
-MOMENTUM[H]=s
-MOMENTUM[I]=d
-MOMENTUM[K]=p
-MOMENTUM[Mg]=p
-MOMENTUM[N]=p
-MOMENTUM[Na]=p
-MOMENTUM[O]=p
-MOMENTUM[P]=d
-MOMENTUM[S]=d
-MOMENTUM[Zn]=d
-
-# Write function to write dftb_in.hsd for the supercell calculation
-# Check outputs
-# Set-up director for charge difference calculation
-# Write waveplot_in.hsd
-# Begin charge difference calculation
-
 ncores () {
   if (($1 <= 20)); then
     CORES=2
@@ -123,31 +79,13 @@ waveplot () {
   done
 }
 
-# The user needs to supply the supercell input file, the detailed.xml and the eigenvec.bin files
+# The user needs to supply the detailed.xml and the eigenvec.bin files
 
 echo "What is the COF name?"
 read COF
-echo "What are your supercell dimensions?"
+echo "What are your supercell dimensions? (i.e. 2 2 1)"
 read SUPERCELL
-echo "What is your input geometry file called?"
-read GEO
 JOBNAME="$COF-Waveplot"
 
-if [[ $GEO == *"gen"* ]]; then
-  ATOM_TYPES=($(sed -n 2p $GEO))
-else
-  ATOM_TYPES=($(sed -n 6p $GEO))
-fi
-
-# Read atom types into a function for angular momentum and Hubbard derivative values
-declare -A myHUBBARD
-declare -A myMOMENTUM
-nl=$'\n'
-for element in ${ATOM_TYPES[@]}; do
-  myHUBBARD[$element]="$element = ${HUBBARD[$element]}"
-  myMOMENTUM[$element]="$element = ${MOMENTUM[$element]}"
-done
-
-# After a successful relaxation of the supercell, with the detailed.xml and eigenvec. bin files, run the waveplot calculation
 waveplot_in SUPERCELL
 waveplot $JOBNAME SUPERCELL $COF
