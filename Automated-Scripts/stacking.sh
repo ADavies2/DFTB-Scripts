@@ -122,6 +122,7 @@ Filling = Fermi {
   if [[ $3 == *"Mono"* ]] || [[ $3 == *"Final"* ]]; then
     printf "%s\n" "Analysis = {" >> dftb_in.hsd
     printf "%s\n" "  MullikenAnalysis = Yes" >> dftb_in.hsd
+    printf "%s\n" "  WriteEigenvectors = Yes" >> dftb_in.hsd
     printf "%s\n" "  AtomResolvedEnergies = Yes" >> dftb_in.hsd
     printf "%s\n" "  CalculateForces = Yes }" >> dftb_in.hsd
   else
