@@ -1,8 +1,42 @@
 #!/bin/bash
 
-# Run a DetailedXML calculation with the supercell of the stacked geometry
 ## FUTURE EDITS: AUTOMATICALLY GENERATE THE SUPERCELL RATHER THAN MANUALLY WITH OVITO
-# The run a charge distribution with the detailed.xml and eigenvec.bin files from the supercell calculation
+
+# Declare an associative array for the Hubbard derivatives of each element for the 3ob parameters
+declare -A HUBBARD
+HUBBARD[Br]=-0.0573
+HUBBARD[C]=-0.1492
+HUBBBARD[Ca]=-0.034
+HUBBARD[Cl]=-0.0697
+HUBBARD[F]=-0.1623
+HUBBARD[H]=-0.1857
+HUBBARD[I]=-0.0433
+HUBBARD[K]=-0.0339
+HUBBARD[Mg]=-0.02
+HUBBARD[N]=-0.1535
+HUBBARD[Na]=-0.0454
+HUBBARD[O]=-0.1575
+HUBBARD[P]=-0.14
+HUBBARD[S]=-0.11
+HUBBARD[Zn]=-0.03
+
+# Declare an associative array for the max angular momentum orbitals for each element for the 3ob parameters
+declare -A MOMENTUM
+MOMENTUM[Br]=d
+MOMENTUM[C]=p
+MOMENTUM[Ca]=p
+MOMENTUM[Cl]=d
+MOMENTUM[F]=p
+MOMENTUM[H]=s
+MOMENTUM[I]=d
+MOMENTUM[K]=p
+MOMENTUM[Mg]=p
+MOMENTUM[N]=p
+MOMENTUM[Na]=p
+MOMENTUM[O]=p
+MOMENTUM[P]=d
+MOMENTUM[S]=d
+MOMENTUM[Zn]=d
 
 # Write function to write dftb_in.hsd for the supercell calculation
 # Check outputs
@@ -23,6 +57,7 @@ ncores () {
 }
 
 waveplot_in () {
+# $1 = $SUPERCELL
   cat > waveplot_in.hsd <<!
 Options {
   TotalChargeDensity = Yes
@@ -56,6 +91,86 @@ Basis {
 !
 }
 
+dftb_in () {
+# $1 = $GEO
+# $2 = $COF
+# $3 = myHUBBARD
+# $4 = myMOMENTUM
+  if [[ $1 == *"gen"* ]]; then
+    cat > dftb_in.hsd <<!
+Geometry = GenFormat {
+  <<< $1
+}
+
+!
+  else
+    cat > dftb_in.hsd <<!
+Geometry = VASPFormat {
+  <<< $1
+}
+
+!
+  fi
+  cat >> dftb_in.hsd <<!
+Driver = ConjugateGradient {
+  MovedAtoms = 1:-1
+  MaxSteps = 100000
+  LatticeOpt = Yes
+  OuptutPrefix = "$2-Charge-Relax"
+  AppendGeometries = No }
+  
+Hamiltonian = Yes {
+SCC = Yes
+ReadInitialCharges = No
+ThirdOrderFull = Yes
+Dispersion = LennardJones {
+  Parameters = UFFParameters{} }
+HCorrection = Damping {
+  Exponent = 4.05 }
+HubbardDerivs {
+!
+  hubbard=$3[@]
+  sccHUBBARD=("${!hubbard}")
+  printf "%s\n" "${sccHUBBARD[@]} }" >> dftb_in.hsd
+  cat >> dftb_in.hsd <<!
+SlaterKosterFiles = Type2FileNames {
+  Prefix = "/project/designlab/Shared/Codes/dftb+sk/3ob-3-1/"
+  Separator = "-"
+  Suffix = ".skf" }
+KPointsAndWeights = SupercellFolding {
+  4 0 0
+  0 4 0
+  0 0 4
+  0.5 0.5 0.5 }
+MaxAngularMomentum {
+!
+  momentum=$4[@]
+  sccMOMENTUM=("${!momentum}")
+  printf "%s\n" "${sccMOMENTUM[@]} }" >> dftb_in.hsd
+  cat >> dftb_in.hsd <<!
+Filling = Fermi {
+  Temperature [Kelvin] = 0 } }
+
+Options {
+  WriteDetailedXML = Yes
+}
+
+Analysis = {
+  MullikenAnalysis = Yes
+  WriteEigenvectors = Yes
+}
+
+Parallel {
+  Groups = 1
+  UseOmpThreads = Yes
+}
+
+ParserOptions {
+  ParserVersion = 10
+}
+!
+}
+
 # The user needs to supply the supercell input file, the detailed.xml and the eigenvec.bin files
 
 echo "What is the COF name?" 
@@ -66,4 +181,31 @@ echo "What is your input geometry file called?"
 read GEO
 JOBNAME="$COF-ChargeDiff"
 
+if [[ $GEO == *"gen"* ]]; then
+  ATOM_TYPES=($(sed -n 2p $GEO))
+  N_ATOMS=($(sed -n 1p $GEO))
+  N_ATOMS=${N_ATOMS[0]}
+else
+  ATOM_TYPES=($(sed -n 6p $GEO))
+  POSCAR_ATOMS=($(sed -n 7p $GEO))
+  N_ATOMS=0
+  for i in ${POSCAR_ATOMS[@]}; do
+    let N_ATOMS+=$i
+  done
+!
+fi
 
+# Read atom types into a function for angular momentum and Hubbard derivative values
+declare -A myHUBBARD
+declare -A myMOMENTUM
+nl=$'\n'
+for element in ${ATOM_TYPES[@]}; do
+  myHUBBARD[$element]="$element = ${HUBBARD[$element]}"
+  myMOMENTUM[$element]="$element = ${MOMENTUM[$element]}"
+done
+
+# Calculate the number of required cores based on the total number of atoms in the unit cell
+ncores $N_ATOMS
+
+# Run a dftb_in.hsd calculation of the supercell with tags for detailed.xml and eigenvec.bin
+dftb_in $GEO $COF myHUBBARD myMOMENTUM
