@@ -424,10 +424,16 @@ echo "Is this a restart calculation? yes/no"
 read RESTART
 JOBNAME="$COF-scc-$TOL"
 
-# Read input geometry file to get atom types and number of atoms
-
 (
   trap '' 1
+
+# Create the working directory (for neatness)
+mkdir Relax
+cp $GEO Relax # Copy the input geometry file to the working directory
+rm $GEO # Remove the duplicate
+cd Relax # Change to the working directory for the following calculations
+  
+# Read input geometry file to get atom types and number of atoms  
 if [[ $GEO == *"gen"* ]]; then
   ATOM_TYPES=($(sed -n 2p $GEO))
   N_ATOMS=($(sed -n 1p $GEO))
