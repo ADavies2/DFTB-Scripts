@@ -171,8 +171,8 @@ scc1 () {
             if [ ! -d "1e-4-Outputs" ]; then
               mkdir '1e-4-Outputs'
             fi
-            cp detailed.out $3.log '1e-4-Out.gen' '1e-4-Out.xyz' charges* submit_$3 '1e-4-Outputs/'
-            rm *out *log *xyz *gen *bin submit* *dat
+            cp detailed* $3.log '1e-4-Out.gen' '1e-4-Out.xyz' charges* eigenvec.bin submit_$3 '1e-4-Outputs/'
+            rm *out *log *xyz *gen *bin submit* *dat *xml
             RESULT='success1'
             break
           elif [[ $4 == '1e-1' || $4 = '1e-2' || $4 = '1e-3' ]]; then
@@ -246,8 +246,8 @@ scc2 () {
             if [ ! -d "1e-4-Outputs" ]; then
               mkdir '1e-4-Outputs'
             fi
-            cp detailed.out $3.log '1e-4-Out.gen' '1e-4-Out.xyz' charges* submit_$3 '1e-4-Outputs/'
-            rm *out *log *xyz *gen charges* submit*
+            cp detailed* $3.log '1e-4-Out.gen' '1e-4-Out.xyz' eigenvec.bin charges* submit_$3 '1e-4-Outputs/'
+            rm *out *log *xyz *gen charges* submit* *bin *xml
             RESULT='success1'
             break
           elif [[ $4 = '1e-2' || $4 = '1e-3' ]]; then
