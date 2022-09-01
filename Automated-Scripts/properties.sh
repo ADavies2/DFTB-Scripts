@@ -335,7 +335,6 @@ read SUPERCELL
 
 (
   trap '' 1
-  
 # Make a directory for each property calculation
 mkdir Properties
 mkdir Properties/Layer-Analysis
@@ -343,7 +342,7 @@ mkdir Properties/Bands
 mkdir Properties/DOS
 mkdir Properties/Charge-Diff
 
-#Copy the required input files to the Layer-Analysis (first calculation here)
+# Copy the required input files to the Layer-Analysis (first calculation here)
 cp Relax/1e-4-Outputs/1e-4-Out.gen Properties/Layer-Analysis/Input.gen
 cp Relax/1e-4-Outputs/charges.bin Properties/Layer-Analysis
 
@@ -353,8 +352,8 @@ cp Relax/1e-4-Outputs/charges.bin Properties/Layer-Analysis
 stackedHEIGHTS=(3.3 3.5 4)
 if [ $STARTING == 'stacked' ]; then
   JOBNAME="$COF-Mono"
-  cp 'Relax/1e-4-Outputs/detailed.xml' Charge-Diff
-  cp 'Relax/1e-4-Outputs/eigenvec.bin' Charge-Diff
+  cp 'Relax/1e-4-Outputs/detailed.xml' Properties/Charge-Diff/
+  cp 'Relax/1e-4-Outputs/eigenvec.bin' Properties/Charge-Diff/
 else
   JOBNAME="$COF-Stack1"
 fi
@@ -368,8 +367,8 @@ if [[ $GEO == *"gen"* ]]; then
     zorigin=($(sed -n '$p' $GEO))
     declare -a znew
     znew=("${zorigin[0]}" "${zorigin[1]}" "30")
-    oldZ="    ${zorigin[0]}    ${zorigin[1]}    ${zorigin[2]}"
-    newZ="    ${znew[0]}   ${znew[1]}    ${znew[2]}"
+    oldZ="   ${zorigin[0]}    ${zorigin[1]}    ${zorigin[2]}"
+    newZ="   ${znew[0]i}   ${znew[1]}    ${znew[2]}"
     sed -i '$ d' $GEO
     cat >> $GEO <<!
 $newZ
@@ -382,10 +381,10 @@ $newZ
     znew1=("${zorigin[0]}" "${zorigin[1]}" "3.3")
     znew2=("${zorigin[0]}" "${zorigin[1]}" "3.5")
     znew3=("${zorigin[0]}" "${zorigin[1]}" "4")
-    oldZ="    ${zorigin[0]}    ${zorigin[1]}    ${zorigin[2]}"
-    newZ1="    ${znew1[0]}   ${znew1[1]}    ${znew1[2]}"
-    newZ2="    ${znew2[0]}   ${znew2[1]}    ${znew2[2]}"
-    newZ3="    ${znew3[0]}   ${znew3[1]}    ${znew3[2]}"
+    oldZ="   ${zorigin[0]}    ${zorigin[1]}    ${zorigin[2]}"
+    newZ1="   ${znew1[0]}   ${znew1[1]}    ${znew1[2]}"
+    newZ2="   ${znew2[0]}   ${znew2[1]}    ${znew2[2]}"
+    newZ3="   ${znew3[0]}   ${znew3[1]}    ${znew3[2]}"
     sed -i '$ d' Input1.gen
     sed -i '$ d' Input2.gen
     sed -i '$ d' Input3.gen
@@ -460,59 +459,57 @@ fi
 # Run stacking. This is either a single monolayer calculation or the first static stacked calculation
 scc $CORES $COF $JOBNAME $GEO $PROPERTY
 
+if [[ $STARTING == "mono" ]]; then
 # Run the second static stacked calculation
-dftb_in $GEO $PROPERTY $JOBNAME myHUBBARD myMOMENTUM ATOM_TYPES
-scc $CORES $COF $JOBNAME $GEO $PROPERTY
+  dftb_in $GEO $PROPERTY $JOBNAME myHUBBARD myMOMENTUM ATOM_TYPES
+  scc $CORES $COF $JOBNAME $GEO $PROPERTY
 
 # Run the third and final static stacked calculation
-dftb_in $GEO $PROPERTY $JOBNAME myHUBBARD myMOMENTUM ATOM_TYPES
-scc $CORES $COF $JOBNAME $GEO $PROPERTY
+  dftb_in $GEO $PROPERTY $JOBNAME myHUBBARD myMOMENTUM ATOM_TYPES
+  scc $CORES $COF $JOBNAME $GEO $PROPERTY
 
 # Check the total energies of each system in their separate detailed.out files
 # Compare the total energy values, determine the minimum, and store the corresponding geometry name 
-stackedGEOS=("$COF-Stack1" "$COF-Stack2" "$COF-Stack3")
-min=0
-declare -A ENERGY
-for geo in "${stackedGEOS[@]}"; do
-  energy=($(grep "Total energy" $geo-detailed.out))
-  ENERGY[$geo]="${energy[4]}"
-  lessthan=($(echo "${ENERGY[$geo]}<$min" | bc))
-  if (( $lessthan == 1 )); then
-    min=${ENERGY[$geo]}
-    geoOPT=$geo
-  fi
-done
+  stackedGEOS=("$COF-Stack1" "$COF-Stack2" "$COF-Stack3")
+  min=0
+  declare -A ENERGY
+  for geo in "${stackedGEOS[@]}"; do
+    energy=($(grep "Total energy" $geo-detailed.out))
+    ENERGY[$geo]="${energy[4]}"
+    lessthan=($(echo "${ENERGY[$geo]}<$min" | bc))
+    if [[ $lessthan == 1 ]]; then
+      min=${ENERGY[$geo]}
+      geoOPT=$geo
+    fi
+  done
 
 # Set $GEO to match the lowest-energy static geometry previously determined
-if [[ $GEO == *"gen"* ]]; then
-  if [[ $geoOPT == *"1"* ]]; then
-    GEO="Input1.gen"
-  elif [[ $geoOPT == *"2"* ]]; then
-    GEO="Input2.gen"
+  if [[ $GEO == *"gen"* ]]; then
+    if [[ $geoOPT == *"1"* ]]; then
+      GEO="Input1.gen"
+    elif [[ $geoOPT == *"2"* ]]; then
+      GEO="Input2.gen"
+    else
+      GEO="Input3.gen"
+    fi
   else
-    GEO="Input3.gen"
+    if [[ $geoOPT == *"1"* ]]; then
+      GEO="Input1-POSCAR"
+    elif [[ $geoOPT == *"2"* ]]; then
+      GEO="Input2-POSCAR"
+    else
+      GEO="Input3-POSCAR"
+    fi
   fi
-else
-  if [[ $geoOPT == *"1"* ]]; then
-    GEO="Input1-POSCAR"
-  elif [[ $geoOPT == *"2"* ]]; then
-    GEO="Input2-POSCAR"
-  else
-    GEO="Input3-POSCAR"
-  fi
-fi
 
 # Run a dynamic SCC calculation with this stacked geometry
-JOBNAME="$COF-Final-Opt"
-dftb_in $GEO $PROPERTY $JOBNAME myHUBBARD myMOMENTUM ATOM_TYPES
-scc $CORES $COF $JOBNAME $GEO $PROPERTY
+  JOBNAME="$COF-Final-Opt"
+  dftb_in $GEO $PROPERTY $JOBNAME myHUBBARD myMOMENTUM ATOM_TYPES
+  scc $CORES $COF $JOBNAME $GEO $PROPERTY
 
 # Copy the required files for the charge difference calculation into the appropriate directory
-cp detailed.xml ../Charge-Diff
-cp eigenvec.bin ../Charge-Diff
-
-# Copy the input files for the next calculation
-if [[ $STARTING == "mono" ]]; then
+  cp detailed.xml ../Charge-Diff
+  cp eigenvec.bin ../Charge-Diff
   cp "$COF-Final-Opt-Out.gen" ../Bands/Input.gen
   cp "$COF-Final-Opt-Out.gen" ../DOS/Input.gen
 else
