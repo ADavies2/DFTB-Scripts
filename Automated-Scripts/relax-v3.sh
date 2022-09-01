@@ -197,12 +197,17 @@ scc1 () {
               sed -i 's/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g' dftb_in.hsd
               sed -i 's/.*OutputPrefix.*/  OutputPrefix = "1e-4-Out" }/g' dftb_in.hsd
               sed -i '/.*Analysis.*/d' dftb_in.hsd
-              printf "%s\n" "Analysis = {" >> dftb_in.hsd
-              printf "%s\n" "  MullikenAnalysis = Yes" >> dftb_in.hsd
-              printf "%s\n" "  AtomResolvedEnergies = Yes" >> dftb_in.hsd
-              printf "%s\n" "  CalculateForces = Yes }" >> dftb_in.hsd
-              printf "%s\n" "Options {" >> dftb_in.hsd
-              printf "%s\n" "  WriteChargesAsText = Yes }" >> dftb_in.hsd 
+              cat >> dftb_in.hsd <<!
+Analysis = {
+  MullikenAnalysis = Yes
+  AtomResolvedEnergies = Yes
+  WriteEigenvectors = Yes
+  CalculateForces = Yes }
+
+Options {
+  WriteChargesAsText = Yes
+  WriteDetailedXML = Yes }
+!
             fi
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd
             echo "$3 has completed."
@@ -268,12 +273,17 @@ scc2 () {
               sed -i 's/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g' dftb_in.hsd
               sed -i 's/.*OutputPrefix.*/  OutputPrefix = 1e-4-Out }/g' dftb_in.hsd
               sed -i '/.*Analysis.*/d' dftb_in.hsd
-              printf "%s\n" "Analysis = {" >> dftb_in.hsd
-              printf "%s\n" "  MullikenAnalysis = Yes" >> dftb_in.hsd
-              printf "%s\n" "  AtomResolvedEnergies = Yes" >> dftb_in.hsd
-              printf "%s\n" "  CalculateForces = Yes }" >> dftb_in.hsd
-              printf "%s\n" "Options {" >> dftb_in.hsd
-              printf "%s\n" "  WriteChargesAsText = Yes }" >> dftb_in.hsd
+              cat >> dftb_in.hsd <<!
+Analysis = {
+  MullikenAnalysis = Yes
+  AtomResolvedEnergies = Yes
+  WriteEigenvectors = Yes
+  CalculateForces = Yes }
+
+Options {
+  WriteChargesAsText = Yes
+  WriteDetailedXML = Yes }
+!
             fi
             sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd           
             echo "$3 has completed."
