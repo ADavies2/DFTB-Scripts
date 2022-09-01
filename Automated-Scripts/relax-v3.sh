@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Declare an associative array for the Hubbard derivatives of each element for the 3ob parameters
 declare -A HUBBARD
 HUBBARD[Br]=-0.0573
@@ -44,11 +42,11 @@ MOMENTUM[Zn]=d
 # fail3 = fail SCC2
 
 ncores () {
-  if (($1 <= 20)); then
+  if (($1 <= 40)); then
     CORES=2
-  elif (($1 >= 20 && $1 <= 50)); then
+  elif (($1 >= 40 && $1 <= 60)); then
     CORES=4
-  elif (($1 >= 50 && $1 <= 100)); then
+  elif (($1 >= 60 && $1 <= 100)); then
     CORES=8
   elif (($1 >= 100)); then
     CORES=16
@@ -431,6 +429,10 @@ JOBNAME="$COF-scc-$TOL"
 mkdir Relax
 cp $GEO Relax # Copy the input geometry file to the working directory
 rm $GEO # Remove the duplicate
+if [[ $RESTART == "yes" ]]; then
+  cp charges.bin Relax
+  rm charges.bin
+fi
 cd Relax # Change to the working directory for the following calculations
   
 # Read input geometry file to get atom types and number of atoms  
