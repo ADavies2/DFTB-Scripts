@@ -335,6 +335,7 @@ read SUPERCELL
 
 (
   trap '' 1
+
 # Make a directory for each property calculation
 mkdir Properties
 mkdir Properties/Layer-Analysis
@@ -513,12 +514,12 @@ if [[ $STARTING == "mono" ]]; then
   cp "$COF-Final-Opt-Out.gen" ../Bands/Input.gen
   cp "$COF-Final-Opt-Out.gen" ../DOS/Input.gen
 else
-  cp Input.gen ../Bands
-  cp Input.gen ../DOS
+  cp "../../Relax/1e-4-Outputs/1e-4-Out.gen" ../Bands/Input.gen
+  cp "../../Relax/1e-4-Outputs/1e-4-Out.gen" ../DOS/Input.gen
+  cp "../../Relax/1e-4-Outputs/charges.bin" ../Bands
+  cp "../../Relax/1e-4-Outputs/charges.bin" ../DOS
 fi
 GEO="Input.gen"
-cp charges.bin ../Bands
-cp charges.bin ../DOS
 
 ## Bands calculation next
 PROPERTY="bands"
@@ -572,4 +573,5 @@ waveplot $JOBNAME SUPERCELL $COF
 
 ## All calculations have been run now
 echo "DFTB+ Property Calculations for $COF are complete!"
+exit
 ) </dev/null >log.$COF-Properties 2>&1 &
