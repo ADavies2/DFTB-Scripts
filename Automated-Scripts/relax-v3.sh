@@ -170,7 +170,7 @@ scc1 () {
               mkdir '1e-4-Outputs'
             fi
             cp detailed* $3.log '1e-4-Out.gen' '1e-4-Out.xyz' charges.bin eigenvec.bin submit_$3 '1e-4-Outputs/'
-            cp charges.dat "1e-4-Outputs/$COF-charges.dat"
+            cp charges.dat "1e-4-Outputs/$2-charges.dat"
             rm *out *log *xyz *gen *bin submit* *dat *xml
             RESULT='success1'
             break
@@ -251,7 +251,7 @@ scc2 () {
               mkdir '1e-4-Outputs'
             fi
             cp detailed* $3.log '1e-4-Out.gen' '1e-4-Out.xyz' eigenvec.bin charges.bin submit_$3 '1e-4-Outputs/'
-            cp charges.dat "1e-4-Outputs/$COF-charges.dat"
+            cp charges.dat "1e-4-Outputs/$2-charges.dat"
             rm *out *log *xyz *gen charges* submit* *bin *xml
             RESULT='success1'
             break
