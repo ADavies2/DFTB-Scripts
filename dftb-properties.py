@@ -36,7 +36,7 @@ print(np.shape(Total))
 
 GapLower = -5.22
 GapHigher = -3.13
-Gap = GapLower-GapHigher
+Gap = abs(GapLower-GapHigher)
 print(Gap)
 
 PDOS = []
