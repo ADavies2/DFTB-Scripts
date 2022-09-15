@@ -42,9 +42,9 @@ MOMENTUM[Zn]=d
 # fail3 = fail SCC2
 
 ncores () {
-  if (($1 <= 40)); then
-    CORES=2
-  elif (($1 >= 40 && $1 <= 60)); then
+  if (($1 <= 30)); then
+    CORES=4
+  elif (($1 >= 30 && $1 <= 60)); then
     CORES=4
   elif (($1 >= 60 && $1 <= 100)); then
     CORES=8
@@ -57,13 +57,13 @@ scc_dftb_in () {
   if [[ $1 == *"gen"* ]]; then
     cat > dftb_in.hsd <<!
 Geometry = GenFormat {
-  <<< $1
+  <<< "$1"
 }
 !
   else
     cat > dftb_in.hsd <<!
 Geometry = VASPFormat {
-  <<< $1
+  <<< "$1"
 }
 !
   fi
@@ -154,12 +154,13 @@ scc1 () {
 # $2 = $COF
 # $3 = $JOBNAME
 # $4 = $TOL
-  submit_dftb_automate $1 1 $3
+  submit_dftb_automate 1 $1 $3
+  #submit_dftb_hybrid 1 $1 $3
   while :
   do
-    stat="$(squeue -n $3)"
-    string=($stat)
-    jobstat=(${string[12]})
+    stat=($(squeue -n $3))
+    jobstat=(${stat[12]})
+    JOBID=(${stat[8]})
       if [ "$jobstat" == "PD" ]; then
         echo "$3 is pending..."
         sleep 10s
@@ -170,7 +171,7 @@ scc1 () {
               mkdir '1e-4-Outputs'
             fi
             cp detailed* $3.log '1e-4-Out.gen' '1e-4-Out.xyz' charges.bin eigenvec.bin submit_$3 '1e-4-Outputs/'
-            cp charges.dat "1e-4-Outputs/$2-charges.dat"
+            cp charges.dat "1e-4-Outputs/$COF-charges.dat"
             rm *out *log *xyz *gen *bin submit* *dat *xml
             RESULT='success1'
             break
@@ -221,9 +222,22 @@ Options {
           JOBNAME="$2-forces-$4"
           RESULT='fail1'
           break
+        elif grep -q "ERROR!" $3.log; then
+          echo "DFTB+ Error. User trouble-shoot required."
+          exit
         else
-          echo "$3 is still running..."
-          sleep 10s
+          log_size=($(ls -l ./Relax/$3.log))
+          size=(${log_size[4]})
+          sleep 20s
+          log_size2=($(ls -l ./Relax/$3.log))
+          size2=(${log_size2[4]})
+          if [[ $size2 > $size ]]; then
+            echo "$3 is still running..."
+          elif [[ $size2 == $size ]]; then
+            echo "$3 has stalled."
+            qdel $JOBID
+            exit
+          fi
         fi
       fi
   done
@@ -235,12 +249,13 @@ scc2 () {
 # $3 = $JOBNAME
 # $4 = $TOL 
 # $5 = $RESULT
-  submit_dftb_automate $1 1 $3
+  submit_dftb_automate 1 $1 $3
+  #submit_dftb_hybrid 1 $1 $3
   while :
   do 
-    stat="$(squeue -n $3)"
-    string=($stat)
-    jobstat=(${string[12]})
+    stat=($(squeue -n $3))
+    jobstat=(${stat[12]})
+    JOBID=(${stat[8]})
       if [ "$jobstat" == "PD" ]; then
         echo "$3 is pending..."
         sleep 10s
@@ -251,7 +266,7 @@ scc2 () {
               mkdir '1e-4-Outputs'
             fi
             cp detailed* $3.log '1e-4-Out.gen' '1e-4-Out.xyz' eigenvec.bin charges.bin submit_$3 '1e-4-Outputs/'
-            cp charges.dat "1e-4-Outputs/$2-charges.dat"
+            cp charges.dat "1e-4-Outputs/$COF-charges.dat"
             rm *out *log *xyz *gen charges* submit* *bin *xml
             RESULT='success1'
             break
@@ -305,9 +320,22 @@ Options {
             RESULT='fail3'
             break
           fi
+        elif grep -q "ERROR!" $3.log; then
+          echo "DFTB+ Error. User trouble-shoot required."
+          exit
         else
-          echo "$3 is still running..."
-          sleep 10s
+          log_size=($(ls -l ./Relax/$3.log))
+          size=(${log_size[4]})
+          sleep 20s
+          log_size2=($(ls -l ./Relax/$3.log))
+          size2=(${log_size2[4]})
+          if [[ $size2 > $size ]]; then
+            echo "$3 is still running..."
+          elif [[ $size2 == $size ]]; then
+            qdel $JOBID
+            echo "$3 has stalled."
+            exit
+          fi
         fi
       fi
   done  
@@ -317,13 +345,13 @@ forces_dftb_in () {
   if [ $1 == *"gen"* ]; then
     cat > dftb_in.hsd <<!
 Geometry = GenFormat {
-  <<< $1
+  <<< "$1"
 }
 !
   else
     cat > dftb_in.hsd <<!
 Geometry = VASPFormat {
-  <<< $1
+  <<< "$1"
 }
 !
   fi
@@ -382,12 +410,13 @@ forces () {
 # $3 = $JOBNAME
 # $4 = $TOL
 # $5 = $RESULT
-  submit_dftb_automate $1 1 $3 
+  submit_dftb_automate 1 $1 $3 
+  #submit_dftb_hybrid 1 $1 $3
   while :
   do
-    stat="$(squeue -n $3)"
-    string=($stat)
-    jobstat=(${string[12]})
+    stat=($(squeue -n $3))
+    jobstat=(${stat[12]})
+    JOBID=(${stat[8]})
       if [ "$jobstat" == "PD" ]; then
         echo "$3 is pending..."
         sleep 10s 
@@ -403,9 +432,22 @@ forces () {
           echo "$2 at $4 Forces did NOT converge..."
           RESULT='fail2'
           break
+        elif grep -q "ERROR!" $3.log; then
+          echo "DFTB+ Error. User trouble-shoot required."
+          exit
         else
-          echo "$3 is running..."
-          sleep 10s
+          log_size=($(ls -l ./Relax/$3.log))
+          size=(${log_size[4]})
+          sleep 20s
+          log_size2=($(ls -l ./Relax/$3.log))
+          size2=(${log_size2[4]})
+          if [[ $size2 > $size ]]; then
+            echo "$3 is still running..."
+          elif [[ $size2 == $size ]]; then
+            qdel $JOBID
+            echo "$3 has stalled."
+            exit
+          fi
         fi
       fi
   done      
@@ -423,10 +465,12 @@ read GEO
 echo "Is this a restart calculation? yes/no"
 read RESTART
 JOBNAME="$COF-scc-$TOL"
+id=$$
 
 (
   trap '' 1
 
+echo $id
 # Create the working directory (for neatness)
 mkdir Relax
 cp $GEO Relax # Copy the input geometry file to the working directory
@@ -461,8 +505,7 @@ for element in ${ATOM_TYPES[@]}; do
   myMOMENTUM[$element]="$element = ${MOMENTUM[$element]}"
 done
 
-# Calculate the number of required cores based on the total number of atoms in the unit cell
-ncores $N_ATOMS
+CORES=8
 
 # Write dftb_in.hsd for the first calculation
 scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
