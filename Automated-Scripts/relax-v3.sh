@@ -163,41 +163,50 @@ scc1 () {
     JOBID=(${stat[8]})
       if [ "$jobstat" == "PD" ]; then
         echo "$3 is pending..."
-        sleep 10s
+        sleep 3s
       else
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
-          if [ $4 == '1e-5' ]; then
-            if [ ! -d "1e-4-Outputs" ]; then
-              mkdir '1e-4-Outputs'
-            fi
-            cp detailed* $3.log '1e-4-Out.gen' '1e-4-Out.xyz' charges.bin eigenvec.bin submit_$3 '1e-4-Outputs/'
-            cp charges.dat "1e-4-Outputs/$COF-charges.dat"
-            rm *out *log *xyz *gen *bin submit* *dat *xml
-            RESULT='success1'
-            break
-          elif [[ $4 == '1e-1' || $4 = '1e-2' || $4 = '1e-3' ]]; then
-            if [ ! -d "$4-Outputs" ]; then
-              mkdir $4-Outputs
-            fi
-            cp detailed.out $3.log $4-Out.gen $4-Out.xyz charges.bin submit_$3 $4-Outputs/
-            rm *out *xyz submit*
-            sed -i 's/.*Geometry.*/Geometry = GenFormat {/g' dftb_in.hsd
-            sed -i "s/.*<<<.*/  <<< ""$4-Out.gen""/g" dftb_in.hsd
-            sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd           
-            if [ $4 == '1e-1' ]; then
-              TOL='1e-2'
-              sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd
-              sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out" }/g" dftb_in.hsd
-            elif [ $4 == '1e-2' ]; then
-              TOL='1e-3'
-              sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd
-              sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out" }/g" dftb_in.hsd
-            elif [ $4 == '1e-3' ]; then
-              TOL='1e-5'
-              sed -i 's/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g' dftb_in.hsd
-              sed -i 's/.*OutputPrefix.*/  OutputPrefix = "1e-4-Out" }/g' dftb_in.hsd
-              sed -i '/.*Analysis.*/d' dftb_in.hsd
-              cat >> dftb_in.hsd <<!
+        log_size=($(ls -l "$3.log"))
+        size=(${log_size[4]})
+        sleep 30s
+        log_size2=($(ls -l "$3.log"))
+        size2=(${log_size2[4]}) 
+        if [[ $size2 > $size ]]; then
+          echo "$3 is still running..."
+        elif [[ $size2 == $size ]]; then
+          sleep 30s
+          if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
+            if [ $4 == '1e-5' ]; then
+              if [ ! -d "1e-4-Outputs" ]; then
+                mkdir '1e-4-Outputs'
+              fi
+              cp detailed* $3.log '1e-4-Out.gen' '1e-4-Out.xyz' charges.bin eigenvec.bin submit_$3 '1e-4-Outputs/'
+              cp charges.dat "1e-4-Outputs/$COF-charges.dat"
+              rm *out *log *xyz *gen *bin submit* *dat *xml
+              RESULT='success1'
+              break
+            elif [[ $4 == '1e-1' || $4 = '1e-2' || $4 = '1e-3' ]]; then
+              if [ ! -d "$4-Outputs" ]; then
+                mkdir $4-Outputs
+              fi
+              cp detailed.out $3.log $4-Out.gen $4-Out.xyz charges.bin submit_$3 $4-Outputs/
+              rm *out *xyz submit*
+              sed -i 's/.*Geometry.*/Geometry = GenFormat {/g' dftb_in.hsd
+              sed -i "s/.*<<<.*/  <<< ""$4-Out.gen""/g" dftb_in.hsd
+              sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd           
+              if [ $4 == '1e-1' ]; then
+                TOL='1e-2'
+                sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd
+                sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out" }/g" dftb_in.hsd
+              elif [ $4 == '1e-2' ]; then
+                TOL='1e-3'
+                sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd
+                sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out" }/g" dftb_in.hsd
+              elif [ $4 == '1e-3' ]; then
+                TOL='1e-5'
+                sed -i 's/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g' dftb_in.hsd
+                sed -i 's/.*OutputPrefix.*/  OutputPrefix = "1e-4-Out" }/g' dftb_in.hsd
+                sed -i '/.*Analysis.*/d' dftb_in.hsd
+                cat >> dftb_in.hsd <<!
 Analysis = {
   MullikenAnalysis = Yes
   AtomResolvedEnergies = Yes
@@ -208,35 +217,31 @@ Options {
   WriteChargesAsText = Yes
   WriteDetailedXML = Yes }
 !
+              fi
+              sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd
+              echo "$3 has completed."
+              JOBNAME="$2-scc-$TOL"
+              RESULT='success2'
+              break
             fi
-            sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd
-            echo "$3 has completed."
-            JOBNAME="$2-scc-$TOL"
-            RESULT='success2'
+          elif grep -q "SCC is NOT converged" $3.log; then
+            sed -i 's/.*SCC = Yes.*/SCC = No/g' dftb_in.hsd
+            sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$4-Forces-Out"/g" dftb_in.hsd
+            echo "$3 did NOT converge. Attempting forces only..."
+            JOBNAME="$2-forces-$4"
+            RESULT='fail1'
             break
-          fi
-        elif grep -q "SCC is NOT converged" $3.log; then
-          sed -i 's/.*SCC = Yes.*/SCC = No/g' dftb_in.hsd
-          sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$4-Forces-Out"/g" dftb_in.hsd
-          echo "$3 did NOT converge. Attempting forces only..."
-          JOBNAME="$2-forces-$4"
-          RESULT='fail1'
-          break
-        elif grep -q "ERROR!" $3.log; then
-          echo "DFTB+ Error. User trouble-shoot required."
-          exit
-        else
-          log_size=($(ls -l ./Relax/$3.log))
-          size=(${log_size[4]})
-          sleep 20s
-          log_size2=($(ls -l ./Relax/$3.log))
-          size2=(${log_size2[4]})
-          if [[ $size2 > $size ]]; then
-            echo "$3 is still running..."
-          elif [[ $size2 == $size ]]; then
-            echo "$3 has stalled."
-            qdel $JOBID
+          elif grep -q "ERROR!" $3.log; then
+            echo "DFTB+ Error. User trouble-shoot required."
             exit
+          else
+            log_size3=($(ls -l "$3.log"))
+            size3=(${log_size3[4]})
+            if [[ $size3 == $size2 ]]; then
+              echo "$3 has stalled. User trouble-shoot required."
+              qdel $JOBID
+              exit
+            fi 
           fi
         fi
       fi
@@ -258,37 +263,46 @@ scc2 () {
     JOBID=(${stat[8]})
       if [ "$jobstat" == "PD" ]; then
         echo "$3 is pending..."
-        sleep 10s
+        sleep 3s
       else
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
-          if [ $4 == '1e-5' ]; then
-            if [ ! -d "1e-4-Outputs" ]; then
-              mkdir '1e-4-Outputs'
-            fi
-            cp detailed* $3.log '1e-4-Out.gen' '1e-4-Out.xyz' eigenvec.bin charges.bin submit_$3 '1e-4-Outputs/'
-            cp charges.dat "1e-4-Outputs/$COF-charges.dat"
-            rm *out *log *xyz *gen charges* submit* *bin *xml
-            RESULT='success1'
-            break
-          elif [[ $4 = '1e-2' || $4 = '1e-3' ]]; then
-            if [ ! -d "$4-Outputs" ]; then
-              mkdir $4-Outputs
-            fi
-            cp detailed.out $3.log $4-Out.gen $4-Out.xyz charges.bin submit_$3 $4-Outputs/
-            rm *out *xyz submit*
-            sed -i 's/.*Geometry.*/Geometry = GenFormat {/g' dftb_in.hsd
-            sed -i "s/.*<<<.*/  <<< ""$4-Out.gen""/g" dftb_in.hsd
-            sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd
-            if [ $4 == '1e-2' ]; then
-              TOL='1e-3'
-              sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd
-              sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out" }/g" dftb_in.hsd
-            elif [ $4 == '1e-3' ]; then
-              TOL='1e-5'
-              sed -i 's/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g' dftb_in.hsd
-              sed -i 's/.*OutputPrefix.*/  OutputPrefix = 1e-4-Out }/g' dftb_in.hsd
-              sed -i '/.*Analysis.*/d' dftb_in.hsd
-              cat >> dftb_in.hsd <<!
+        log_size=($(ls -l "$3.log"))
+        size=(${log_size[4]})
+        sleep 30s
+        log_size2=($(ls -l "$3.log"))
+        size2=(${log_size2[4]})
+        if [[ $size2 > $size ]]; then
+          echo "$3 is still running..."
+        elif [[ $size2 == $size ]]; then 
+          sleep 30s      
+          if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
+            if [ $4 == '1e-5' ]; then
+              if [ ! -d "1e-4-Outputs" ]; then
+                mkdir '1e-4-Outputs'
+              fi
+              cp detailed* $3.log '1e-4-Out.gen' '1e-4-Out.xyz' eigenvec.bin charges.bin submit_$3 '1e-4-Outputs/'
+              cp charges.dat "1e-4-Outputs/$COF-charges.dat"
+              rm *out *log *xyz *gen charges* submit* *bin *xml
+              RESULT='success1'
+              break
+            elif [[ $4 = '1e-2' || $4 = '1e-3' ]]; then
+              if [ ! -d "$4-Outputs" ]; then
+                mkdir $4-Outputs
+              fi
+              cp detailed.out $3.log $4-Out.gen $4-Out.xyz charges.bin submit_$3 $4-Outputs/
+              rm *out *xyz submit*
+              sed -i 's/.*Geometry.*/Geometry = GenFormat {/g' dftb_in.hsd
+              sed -i "s/.*<<<.*/  <<< ""$4-Out.gen""/g" dftb_in.hsd
+              sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd
+              if [ $4 == '1e-2' ]; then
+                TOL='1e-3'
+                sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd
+                sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out" }/g" dftb_in.hsd
+              elif [ $4 == '1e-3' ]; then
+                TOL='1e-5'
+                sed -i 's/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g' dftb_in.hsd
+                sed -i 's/.*OutputPrefix.*/  OutputPrefix = 1e-4-Out }/g' dftb_in.hsd
+                sed -i '/.*Analysis.*/d' dftb_in.hsd
+                cat >> dftb_in.hsd <<!
 Analysis = {
   MullikenAnalysis = Yes
   AtomResolvedEnergies = Yes
@@ -299,42 +313,38 @@ Options {
   WriteChargesAsText = Yes
   WriteDetailedXML = Yes }
 !
+              fi
+              sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd           
+              echo "$3 has completed."
+              JOBNAME="$2-scc-$TOL"
+              RESULT='success2'
+              break
             fi
-            sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd           
-            echo "$3 has completed."
-            JOBNAME="$2-scc-$TOL"
-            RESULT='success2'
-            break
-          fi
-        elif grep -q "SCC is NOT converged" $3.log; then
-          if [ $5 == 'success2' ]; then
-            sed -i 's/.*SCC = Yes.*/SCC = No/g' dftb_in.hsd
-            sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$4-Forces-Out"/g" dftb_in.hsd
-            echo "$3 did NOT converge. Attempting forces only..."
-            JOBNAME="$2-forces-$4"
-            RESULT='fail1'
-            break
-          elif [ $5 == 'success3' ]; then
-            echo "$2 at $4 Forces did NOT converge..."
-            echo "$2 at $4 SCC did NOT converge..."
-            RESULT='fail3'
-            break
-          fi
-        elif grep -q "ERROR!" $3.log; then
-          echo "DFTB+ Error. User trouble-shoot required."
-          exit
-        else
-          log_size=($(ls -l ./Relax/$3.log))
-          size=(${log_size[4]})
-          sleep 20s
-          log_size2=($(ls -l ./Relax/$3.log))
-          size2=(${log_size2[4]})
-          if [[ $size2 > $size ]]; then
-            echo "$3 is still running..."
-          elif [[ $size2 == $size ]]; then
-            qdel $JOBID
-            echo "$3 has stalled."
+          elif grep -q "SCC is NOT converged" $3.log; then
+            if [ $5 == 'success2' ]; then
+              sed -i 's/.*SCC = Yes.*/SCC = No/g' dftb_in.hsd
+              sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$4-Forces-Out"/g" dftb_in.hsd
+              echo "$3 did NOT converge. Attempting forces only..."
+              JOBNAME="$2-forces-$4"
+              RESULT='fail1'
+              break
+            elif [ $5 == 'success3' ]; then
+              echo "$2 at $4 Forces did NOT converge..."
+              echo "$2 at $4 SCC did NOT converge..."
+              RESULT='fail3'
+              break
+            fi
+          elif grep -q "ERROR!" $3.log; then
+            echo "DFTB+ Error. User trouble-shoot required."
             exit
+          else
+            log_size3=($(ls -l "$3.log"))
+            size3=(${log_size3[4]})
+            if [[ $size3 == $size2 ]]; then
+              echo "$3 has stalled."
+              qdel $JOBID
+              exit
+            fi
           fi
         fi
       fi
@@ -419,34 +429,39 @@ forces () {
     JOBID=(${stat[8]})
       if [ "$jobstat" == "PD" ]; then
         echo "$3 is pending..."
-        sleep 10s 
+        sleep 3s 
       else
-        if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
-          echo "$3 converged. Attemping SCC again at $4..."
-          JOBNAME="$2-scc-$4"
-          RESTART='no'
-          RESULT='success3'
-          break
-        elif grep -q "Geometry did NOT converge" detailed.out && grep -q "Geometry did NOT converge" $3.log; then
-          echo "$2 at $4 SCC did NOT converge..."
-          echo "$2 at $4 Forces did NOT converge..."
-          RESULT='fail2'
-          break
-        elif grep -q "ERROR!" $3.log; then
-          echo "DFTB+ Error. User trouble-shoot required."
-          exit
-        else
-          log_size=($(ls -l ./Relax/$3.log))
-          size=(${log_size[4]})
-          sleep 20s
-          log_size2=($(ls -l ./Relax/$3.log))
-          size2=(${log_size2[4]})
-          if [[ $size2 > $size ]]; then
-            echo "$3 is still running..."
-          elif [[ $size2 == $size ]]; then
-            qdel $JOBID
-            echo "$3 has stalled."
+        log_size=($(ls -l "$3.log"))
+        size=(${log_size[4]})
+        sleep 30s
+        log_size2=($(ls -l "$3.log"))
+        size2=(${log_size2[4]})
+        if [[ $size2 > $size ]]; then
+          echo "$3 is still running..."
+        elif [[ $size2 == $size ]]; then
+          sleep 30s
+          if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
+            echo "$3 converged. Attemping SCC again at $4..."
+            JOBNAME="$2-scc-$4"
+            RESTART='no'
+            RESULT='success3'
+            break
+          elif grep -q "Geometry did NOT converge" detailed.out && grep -q "Geometry did NOT converge" $3.log; then
+            echo "$2 at $4 SCC did NOT converge..."
+            echo "$2 at $4 Forces did NOT converge..."
+            RESULT='fail2'
+            break
+          elif grep -q "ERROR!" $3.log; then
+            echo "DFTB+ Error. User trouble-shoot required."
             exit
+          else
+            log_size3=($(ls -l "$3.log"))
+            size3=(${log_size3[4]})
+            if [[ $size3 == $size2 ]]; then
+              echo "$3 has stalled."
+              qdel $JOBID 
+              exit
+            fi
           fi
         fi
       fi
@@ -464,6 +479,8 @@ echo "What is your input geometry file called?"
 read GEO
 echo "Is this a restart calculation? yes/no"
 read RESTART
+echo "How many cores?"
+read CORES
 JOBNAME="$COF-scc-$TOL"
 id=$$
 
@@ -505,7 +522,8 @@ for element in ${ATOM_TYPES[@]}; do
   myMOMENTUM[$element]="$element = ${MOMENTUM[$element]}"
 done
 
-CORES=8
+# Calculate the number of required cores based on the total number of atoms in the unit cell
+# ncores $N_ATOMS
 
 # Write dftb_in.hsd for the first calculation
 scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
