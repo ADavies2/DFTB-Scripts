@@ -42,14 +42,34 @@ MOMENTUM[Zn]=d
 # fail3 = fail SCC2
 
 ncores () {
-  if (($1 <= 30)); then
-    CORES=4
-  elif (($1 >= 30 && $1 <= 60)); then
-    CORES=4
-  elif (($1 >= 60 && $1 <= 100)); then
-    CORES=8
-  elif (($1 >= 100)); then
-    CORES=16
+# $1 = $TOL
+# $2 = $NO_ATOMS
+# $3 = $STALL
+# $4 = $CORES
+  if [[ $1 == '1e-1' || $1 == '1e-2' || $1 == '1e-3' ]]; then
+    if [[ $3 == 'scc1' || $3 == 'scc2' || $3 == 'forces' ]]; then
+      if (($4 == 16)); then
+        CORES=8
+      elif (($4 == 8)); then
+        if (($2 < 80)); then
+          CORES=4
+        elif (($2 >= 80)); then
+          CORES=8
+        fi
+      fi
+    else
+      CORES=16
+    fi
+  elif [[ $1 == '1e-5' ]]; then
+    if [[ $3 == 'scc1' || $3 == 'scc2' || $3 == 'forces' ]]; then
+      if (($2 < 80)); then
+        CORES=4
+      elif (($2 >= 80)); then
+        CORES=8
+      fi
+    else
+      CORES=8
+    fi
   fi
 }
 
@@ -238,9 +258,10 @@ Options {
             log_size3=($(ls -l "$3.log"))
             size3=(${log_size3[4]})
             if [[ $size3 == $size2 ]]; then
-              echo "$3 has stalled. User trouble-shoot required."
+              echo "$3 has stalled. Restarting..."
               qdel $JOBID
-              exit
+              STALL='scc1'
+              break
             fi 
           fi
         fi
@@ -341,9 +362,10 @@ Options {
             log_size3=($(ls -l "$3.log"))
             size3=(${log_size3[4]})
             if [[ $size3 == $size2 ]]; then
-              echo "$3 has stalled."
+              echo "$3 has stalled. Restarting..."
               qdel $JOBID
-              exit
+              STALL='scc2'
+              break
             fi
           fi
         fi
@@ -419,7 +441,6 @@ forces () {
 # $2 = $COF
 # $3 = $JOBNAME
 # $4 = $TOL
-# $5 = $RESULT
   submit_dftb_automate 1 $1 $3 
   #submit_dftb_hybrid 1 $1 $3
   while :
@@ -458,9 +479,10 @@ forces () {
             log_size3=($(ls -l "$3.log"))
             size3=(${log_size3[4]})
             if [[ $size3 == $size2 ]]; then
-              echo "$3 has stalled."
+              echo "$3 has stalled. Restarting..."
               qdel $JOBID 
-              exit
+              STALL='forces'
+              break
             fi
           fi
         fi
@@ -479,8 +501,8 @@ echo "What is your input geometry file called?"
 read GEO
 echo "Is this a restart calculation? yes/no"
 read RESTART
-echo "How many cores?"
-read CORES
+STALL='no'
+CORES=0
 JOBNAME="$COF-scc-$TOL"
 id=$$
 
@@ -488,13 +510,14 @@ id=$$
   trap '' 1
 
 echo $id
-# Create the working directory (for neatness)
-mkdir Relax
-cp $GEO Relax # Copy the input geometry file to the working directory
-rm $GEO # Remove the duplicate
-if [[ $RESTART == "yes" ]]; then
-  cp charges.bin Relax
-  rm charges.bin
+if [ ! -d "Relax" ]; then
+  mkdir Relax
+  cp $GEO Relax
+  rm $GEO
+  if [[ $RESTART == 'yes' ]]; then
+    cp charges.bin Relax
+    rm charges.bin 
+  fi
 fi
 cd Relax # Change to the working directory for the following calculations
   
@@ -523,7 +546,7 @@ for element in ${ATOM_TYPES[@]}; do
 done
 
 # Calculate the number of required cores based on the total number of atoms in the unit cell
-# ncores $N_ATOMS
+ncores $TOL $N_ATOMS $STALL $CORES
 
 # Write dftb_in.hsd for the first calculation
 scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
@@ -538,7 +561,13 @@ elif [ $RESULT == 'success2' ]; then
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
 elif [ $RESULT == 'fail1' ]; then
   forces_dftb_in $GEO $TOL myMOMENTUM 
-  forces $CORES $COF $JOBNAME $TOL $RESULT
+  forces $CORES $COF $JOBNAME $TOL
+elif [ $STALL == 'scc1' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc1 $CORES $COF $JOBNAME $TOL
+elif [ $STALL == 'scc2' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
 fi
 
 #LOOP 2 (LIGHTGREEN) RESULTS, SUBMITTING LOOP 3 (LIGHTYELLOW) CALCULATIONS 
@@ -549,10 +578,19 @@ elif [ $RESULT == 'success2' ]; then
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
 elif [ $RESULT == 'fail1' ]; then
   forces_dftb_in $GEO $TOL myMOMENTUM
-  forces $CORES $COF $JOBNAME $TOL $RESULT
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'scc1' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc1 $CORES $COF $JOBNAME $TOL
+elif [ $STALL == 'scc2' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'forces' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
   exit
@@ -571,10 +609,19 @@ elif [ $RESULT == 'success2' ]; then
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
 elif [ $RESULT == 'fail1' ]; then
   forces_dftb_in $GEO $TOL myMOMENTUM
-  forces $CORES $COF $JOBNAME $TOL $RESULT
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'scc1' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc1 $CORES $COF $JOBNAME $TOL
+elif [ $STALL == 'scc2' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'forces' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
   exit
@@ -591,10 +638,19 @@ elif [ $RESULT == 'success2' ]; then
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
 elif [ $RESULT == 'fail1' ]; then
   forces_dftb_in $GEO $TOL myMOMENTUM
-  forces $CORES $COF $JOBNAME $TOL $RESULT
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'scc1' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc1 $CORES $COF $JOBNAME $TOL
+elif [ $STALL == 'scc2' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'forces' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
   exit
@@ -611,10 +667,19 @@ elif [ $RESULT == 'success2' ]; then
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
 elif [ $RESULT == 'fail1' ]; then
   forces_dftb_in $GEO $TOL myMOMENTUM
-  forces $CORES $COF $JOBNAME $TOL $RESULT
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'scc1' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc1 $CORES $COF $JOBNAME $TOL
+elif [ $STALL == 'scc2' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'forces' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
   exit
@@ -631,10 +696,19 @@ elif [ $RESULT == 'success2' ]; then
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
 elif [ $RESULT == 'fail1' ]; then
   forces_dftb_in $GEO $TOL myMOMENTUM
-  forces $CORES $COF $JOBNAME $TOL $RESULT
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'scc1' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc1 $CORES $COF $JOBNAME $TOL
+elif [ $STALL == 'scc2' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'forces' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
   exit
@@ -651,10 +725,19 @@ elif [ $RESULT == 'success2' ]; then
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
 elif [ $RESULT == 'fail1' ]; then
   forces_dftb_in $GEO $TOL myMOMENTUM
-  forces $CORES $COF $JOBNAME $TOL $RESULT
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'scc1' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc1 $CORES $COF $JOBNAME $TOL
+elif [ $STALL == 'scc2' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'forces' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
   exit
@@ -671,16 +754,26 @@ elif [ $RESULT == 'success2' ]; then
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
 elif [ $RESULT == 'fail1' ]; then
   forces_dftb_in $GEO $TOL myMOMENTUM
-  forces $CORES $COF $JOBNAME $TOL $RESULT
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'scc1' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc1 $CORES $COF $JOBNAME $TOL
+elif [ $STALL == 'scc2' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'forces' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
   exit
 elif [ $RESULT == 'fail3' ]; then
   echo "User trouble-shoot required."
   exit
+fiit
 fi
 
 # LOOP 9 (FUSCHIA) RESULTS, SUBMITTING LOOP 10 (ORANGE)
@@ -691,10 +784,19 @@ elif [ $RESULT == 'success2' ]; then
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
 elif [ $RESULT == 'fail1' ]; then
   forces_dftb_in $GEO $TOL myMOMENTUM
-  forces $CORES $COF $JOBNAME $TOL $RESULT
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'scc1' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc1 $CORES $COF $JOBNAME $TOL
+elif [ $STALL == 'scc2' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'forces' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
   exit
@@ -711,10 +813,19 @@ elif [ $RESULT == 'success2' ]; then
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
 elif [ $RESULT == 'fail1' ]; then
   forces_dftb_in $GEO $TOL myMOMENTUM
-  forces $CORES $COF $JOBNAME $TOL $RESULT
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'scc1' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc1 $CORES $COF $JOBNAME $TOL
+elif [ $STALL == 'scc2' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'forces' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
   exit
@@ -731,10 +842,19 @@ elif [ $RESULT == 'success2' ]; then
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
 elif [ $RESULT == 'fail1' ]; then
   forces_dftb_in $GEO $TOL myMOMENTUM
-  forces $CORES $COF $JOBNAME $TOL $RESULT
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'scc1' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc1 $CORES $COF $JOBNAME $TOL
+elif [ $STALL == 'scc2' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'forces' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
   exit
@@ -751,10 +871,19 @@ elif [ $RESULT == 'success2' ]; then
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
 elif [ $RESULT == 'fail1' ]; then
   forces_dftb_in $GEO $TOL myMOMENTUM
-  forces $CORES $COF $JOBNAME $TOL $RESULT
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'scc1' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc1 $CORES $COF $JOBNAME $TOL
+elif [ $STALL == 'scc2' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'forces' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
   exit
@@ -771,10 +900,19 @@ elif [ $RESULT == 'success2' ]; then
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
 elif [ $RESULT == 'fail1' ]; then
   forces_dftb_in $GEO $TOL myMOMENTUM
-  forces $CORES $COF $JOBNAME $TOL $RESULT
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'scc1' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc1 $CORES $COF $JOBNAME $TOL
+elif [ $STALL == 'scc2' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT
+elif [ $STALL == 'forces' ]; then
+  ncores $TOL $N_ATOMS $RESULT $CORES
+  forces $CORES $COF $JOBNAME $TOL
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
   exit
