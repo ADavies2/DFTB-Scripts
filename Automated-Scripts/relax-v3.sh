@@ -194,6 +194,7 @@ scc1 () {
         echo "$3 is pending..."
         sleep 3s
       else
+        echo "$3 is running..."
         log_size=($(ls -l "$3.log"))
         size=(${log_size[4]})
         sleep 30s
@@ -299,6 +300,7 @@ scc2 () {
         echo "$3 is pending..."
         sleep 3s
       else
+        echo "$3 is running..."
         log_size=($(ls -l "$3.log"))
         size=(${log_size[4]})
         sleep 30s
@@ -469,6 +471,7 @@ forces () {
         echo "$3 is pending..."
         sleep 3s 
       else
+        echo "$3 is running..."
         log_size=($(ls -l "$3.log"))
         size=(${log_size[4]})
         sleep 30s
@@ -580,10 +583,10 @@ elif [ $RESULT == 'fail1' ]; then
   forces_dftb_in $GEO $TOL myMOMENTUM 
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $STALL == 'scc1' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc1 $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $STALL == 'scc2' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 fi
 
@@ -600,13 +603,13 @@ elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'scc1' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc1 $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $STALL == 'scc2' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
@@ -631,13 +634,13 @@ elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'scc1' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc1 $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $STALL == 'scc2' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
@@ -660,13 +663,13 @@ elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'scc1' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc1 $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $STALL == 'scc2' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
@@ -689,13 +692,13 @@ elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'scc1' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc1 $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $STALL == 'scc2' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
@@ -718,13 +721,13 @@ elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'scc1' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc1 $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $STALL == 'scc2' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
@@ -747,13 +750,13 @@ elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'scc1' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc1 $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $STALL == 'scc2' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
@@ -776,13 +779,13 @@ elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'scc1' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc1 $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $STALL == 'scc2' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
@@ -805,13 +808,13 @@ elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'scc1' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc1 $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $STALL == 'scc2' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
@@ -834,13 +837,13 @@ elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'scc1' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc1 $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $STALL == 'scc2' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
@@ -863,13 +866,13 @@ elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'scc1' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc1 $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $STALL == 'scc2' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
@@ -892,13 +895,13 @@ elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'scc1' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc1 $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $STALL == 'scc2' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
@@ -921,13 +924,13 @@ elif [ $RESULT == 'success3' ]; then
   scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'scc1' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc1 $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $STALL == 'scc2' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $TOL $N_ATOMS $RESULT $CORES
+  ncores $TOL $N_ATOMS $STALL $CORES
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $RESULT == 'fail2' ]; then
   echo "User trouble-shoot required."
