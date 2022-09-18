@@ -324,6 +324,7 @@ scc () {
           fi
         fi
       fi
+    fi
   done       
 }
 
@@ -417,6 +418,7 @@ waveplot () {
           fi
         fi
       fi
+    fi
   done
 }
 
