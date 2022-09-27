@@ -277,15 +277,7 @@ waveplot () {
 # $2 = $COF
 # $3 = $JOBNAME
 # $4 = $CORE_TYPE
-  if [[ $4 == 'CPUS' ]]; then
-    sed -i '/.*srun dftb+.*/s/^/#/g' ~/bin/submit_dftb_cpus
-    sed -i '/.*waveplot.*/s/^#//g' ~/bin/submit_dftb_cpus
-    submit_dftb_cpus 1 $1 $3
-  else
-    sed -i '/.*srun dftb+.*/s/^/#/g' ~/bin/submit_dftb_tasks
-    sed -i '/.*waveplot.*/s/^#//g' ~/bin/submit_dftb_tasks
-    submit_dftb_tasks $1 1 $3
-  fi
+  submit_dftb_waveplot 1 $1 $3
   while :
   do
     stat=($(squeue -n $3))
@@ -459,13 +451,13 @@ cd ../Charge-Diff
 CORES=16
 CORE_TYPE='TASKS'
 waveplot_in SUPERCELL
-waveplot $JOBNAME SUPERCELL $COF
+waveplot $CORES $COF $JOBNAME SUPERCELL $COF
 if [[ $STALL != 'none' ]]; then
   ncores $N_ATOMS $STALL $CORES
-  waveplot $CORES $COF $JOBNAME $GEO $PROPERTY $CORE_TYPE
+  waveplot $CORES $COF $JOBNAME $CORE_TYPE
   if [[ $STALL != 'none' ]]; then
     ncores $N_ATOMS $STALL $CORES
-    waveplot $CORES $COF $JOBNAME $GEO $PROPERTY $CORE_TYPE
+    waveplot $CORES $COF $JOBNAME $CORE_TYPE
   fi
 fi
 
