@@ -361,6 +361,13 @@ fi
 cp 'Relax/1e-4-Outputs/detailed.xml' Properties/Charge-Diff/
 cp 'Relax/1e-4-Outputs/eigenvec.bin' Properties/Charge-Diff/
 
+cp 'Relax/1e-4-Outputs/1e-4-Out.gen' Properties/Bands/Input.gen
+cp 'Relax/1e-4-Outputs/1e-4-Out.gen' Properties/DOS/Input.gen
+
+cp 'Relax/1e-4-Outputs/charges.bin' Properties/Bands
+cp 'Relax/1e-4-Outputs/charges.bin' Properties/DOS
+
+cd Properties/Bands
 if [[ $GEO == *"gen"* ]]; then
   ATOM_TYPES=($(sed -n 2p $GEO))
   N_ATOMS=($(sed -n 1p $GEO))
