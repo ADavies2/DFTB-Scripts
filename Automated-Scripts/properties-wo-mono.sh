@@ -80,18 +80,7 @@ Geometry = VASPFormat {
 
 !
   fi
-  if [[ $3 == *"Mono"* ]] || [[ $3 == *"Final"* ]]; then
-    cat >> dftb_in.hsd <<!
-Driver = ConjugateGradient {
-  MovedAtoms = 1:-1
-  MaxSteps = 100000
-  LatticeOpt = Yes
-  AppendGeometries = No
-  OutputPrefix = "$3-Out" }
-!
-  else
-    printf "%s\n" "Driver = { }" >> dftb_in.hsd
-  fi
+  printf "%s\n" "Driver = { }" >> dftb_in.hsd
   cat >> dftb_in.hsd <<!
 
 Hamiltonian = DFTB {
@@ -147,13 +136,8 @@ Filling = Fermi {
 
 Analysis = {
 !
-  if [[ $2 == "bands" ]] || [[ $3 == *"Stack"* ]]; then
+  if [[ $2 == "bands" ]]; then
     printf "%s\n" "  MullikenAnalysis = Yes }" >> dftb_in.hsd
-  elif [[ $3 == *"Mono"* ]] || [[ $3 == *"Final"* ]]; then
-    printf "%s\n" "  MullikenAnalysis = Yes" >> dftb_in.hsd
-    printf "%s\n" "  AtomResolvedEnergies = Yes" >> dftb_in.hsd
-    printf "%s\n" "  WriteEigenvectors = Yes" >> dftb_in.hsd
-    printf "%s\n" "  CalculateForces = Yes }" >> dftb_in.hsd
   elif [[ $2 == "DOS" ]]; then
     printf "%s\n" "  MullikenAnalysis = Yes" >> dftb_in.hsd
     printf "%s\n" "  ProjectStates {" >> dftb_in.hsd
@@ -179,11 +163,6 @@ ParserOptions {
   ParserVersion = 10 } 
   
 !
-  if [[ $3 == *"Mono"* ]] || [[ $3 == *"Final"* ]]; then
-    printf "%s\n" "Options {" >> dftb_in.hsd
-    printf "%s\n" "WriteDetailedXML = Yes" >> dftb_in.hsd
-    printf "%s\n" "WriteChargesAsText = Yes }" >> dftb_in.hsd
-  fi
 }
 
 scc () {
@@ -217,75 +196,7 @@ scc () {
         echo "$3 is running..."
       elif [[ $size2 == $size ]]; then
         sleep 30s
-        if [[ $5 == 'stacking' ]]; then
-          if [[ $3 == *"Mono"* ]] || [[ $3 == *"Final"* ]]; then
-            if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
-              echo "$2 Monolayer is fully relaxed!"
-              STALL='none'
-              break
-            elif grep -q "SCC is NOT converged" $3.log; then
-              printf "$2 Monolayer did NOT converge.\n User trouble-shoot required." 
-              exit
-            elif grep -q "ERROR!" $3.log; then
-              echo "DFTB+ Error. User trouble-shoot required."
-              exit
-            else
-              log_size3=($(ls -l "$3.log"))
-              size3=(${log_size3[4]})
-              if [[ $size3 == $size2 ]]; then
-                echo "$3 has stalled. Restarting..."
-                qdel $JOBID
-                STALL='stacking'
-                break
-              fi
-            fi
-          else
-            if  grep -q "SCC did NOT converge" detailed.out || grep -q "SCC converged" detailed.out; then
-              if grep -q "SCC did NOT converge" detailed.out; then
-                echo "$3 SCC did NOT converge." 
-              fi
-              cp detailed.out $3-detailed.out
-              if [[ $3 == *"Stack1"* ]]; then
-                if [[ $4 == *"gen"* ]]; then
-                  GEO=Input2.gen
-                else
-                  GEO=Input2-POSCAR
-                fi
-                JOBNAME="$2-Stack2"
-                echo "$3 is complete. Starting $JOBNAME..."
-                STALL='none'
-                break
-              elif [[ $3 == *"Stack2"* ]]; then
-                if [[ $4 == *"gen"* ]]; then
-                  GEO=Input3.gen
-                else
-                  GEO=Input3-POSCAR
-                fi
-                JOBNAME="$2-Stack3"
-                echo "$3 is complete. Starting $JOBNAME..."
-                STALL='none'
-                break
-              else 
-                echo "Static stacked calculations for $2 are complete! Beginning energy analysis..."
-                STALL='none'
-                break
-              fi
-            elif 
-              grep -q "ERROR!" $3.log; then
-              echo "DFTB+ Error. User trouble-shoot required."
-              exit
-            else
-              log_size3=($(ls -l "$3.log"))
-              size3=(${log_size3[4]})
-              if [[ $size3 == $size2 ]]; then
-                echo "$3 has stalled. Restarting..."
-                qdel $JOBID
-                STALL='stacking'
-                break
-              fi
-            fi
-          fi
-        elif [[ $5 == "bands" ]]; then
+        if [[ $5 == "bands" ]]; then
           if grep -q "SCC is NOT converged" $3.log; then
             echo "Band.out has been generated for $2. Converting to data file..."
             STALL='none'
