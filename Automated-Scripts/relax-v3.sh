@@ -42,24 +42,32 @@ MOMENTUM[Zn]=d
 # fail3 = fail SCC2
 
 ncores () {
-# $1 = $NO_ATOMS
-# $2 = $STALL
-# $3 = $CORES
-  if [[ $2 != 'none' ]]; then
-    if (($3 == 16)); then
+# $1 = $PARTITION
+# $2 = $N_ATOMS
+# $3 = $STALL
+# $4 = $CORES
+  if [[ $1 == 'teton' ]]; then
+    if (($2 < 80)); then
+      CORES=4
+    elif (($2 >= 80)); then
+      CORES=8
+    fi
+    CORE_TYPE='CPUS'
+  else
+    if [[ $3 != 'none' ]] && (($4 = 16)); then
       CORES=8
       CORE_TYPE='TASKS'
-    elif (($3 == 8)); then
-      if (($1 < 80)); then
+    elif [[ $3 != 'none' ]] && (($4 == 8)); then
+      if (($2 < 80)); then
         CORES=4
-      elif (($1 >= 80)); then
+      elif (($2 >= 80)); then
         CORES=8
       fi
       CORE_TYPE='CPUS'
+    else
+      CORES=16
+      CORE_TYPE='TASKS'
     fi
-  else
-    CORES=16
-    CORE_TYPE='TASKS'
   fi
 }
 
@@ -256,7 +264,7 @@ Options {
             log_size3=($(ls -l "$3.log"))
             size3=(${log_size3[4]})
             if [[ $size3 == $size2 ]]; then
-              echo "$3 has stalled. Restarting..."
+              echo "$JOBID has stalled. Restarting..."
               qdel $JOBID
               STALL='scc1'
               RESULT='none'
@@ -370,7 +378,7 @@ Options {
             log_size3=($(ls -l "$3.log"))
             size3=(${log_size3[4]})
             if [[ $size3 == $size2 ]]; then
-              echo "$3 has stalled. Restarting..."
+              echo "$JOBID has stalled. Restarting..."
               qdel $JOBID
               STALL='scc2'
               RESULT='none'
@@ -518,8 +526,10 @@ echo "What is your input geometry file called?"
 read GEO
 echo "Is this a restart calculation? yes/no"
 read RESTART
+echo "Which partition is this submitting to?"
+read PARTITION
+
 STALL='none'
-CORES=16
 JOBNAME="$COF-scc-$TOL"
 id=$$
 
@@ -562,6 +572,9 @@ for element in ${ATOM_TYPES[@]}; do
   myMOMENTUM[$element]="$element = ${MOMENTUM[$element]}"
 done
 
+# Calculate the number of cores, based on which partition is being used
+ncores $PARTITION $N_ATOMS $STALL $CORES
+
 # Write dftb_in.hsd for the first calculation
 scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
 
@@ -569,7 +582,7 @@ scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
 # submit the first calculation
 scc1 $CORES $COF $JOBNAME $TOL $CORE_TYPE
 if [[ $STALL == 'scc1' ]]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   scc1 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 else
   if [ $RESULT == 'success1' ]; then
@@ -585,13 +598,13 @@ fi
 
 #LOOP 2 (LIGHTGREEN) RESULTS, SUBMITTING LOOP 3 (LIGHTYELLOW) CALCULATIONS 
 if [ $STALL == 'scc1' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   scc1 $CORES $COF $JOBNAME $TOL $CORE_TYPE
 elif [ $STALL == 'scc2' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 else
   if [ $RESULT == 'success1' ]; then
@@ -618,10 +631,10 @@ fi
 
 # LOOP 3 (LIGHTYELLOW) RESULTS, SUBMITTING LOOP 4 (LIGHTRED)
 if [ $STALL == 'scc2' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 else
   if [ $RESULT == 'success1' ]; then
@@ -646,10 +659,10 @@ fi
 
 # LOOP 4 (LIGHTRED) RESULTS, SUBMITTING LOOP 5 (LIGHTPURPLE)
 if [ $STALL == 'scc2' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 else
   if [ $RESULT == 'success1' ]; then
@@ -674,10 +687,10 @@ fi
 
 # LOOP 5 (LIGHTPURPLE) RESULTS, SUBMITTING LOOP 6 (KELLYGREEN)
 if [ $STALL == 'scc2' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 else
   if [ $RESULT == 'success1' ]; then
@@ -702,10 +715,10 @@ fi
 
 # LOOP 6 (KELLYGREEN) RESULTS, SUBMITTING LOOP 7 (SKYBLUE)
 if [ $STALL == 'scc2' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 else
   if [ $RESULT == 'success1' ]; then
@@ -730,10 +743,10 @@ fi
 
 # LOOP 7 (SKYBLUE) RESULTS, SUBMITTING LOOP 8 (BRIGHTPURPLE)
 if [ $STALL == 'scc2' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 else
   if [ $RESULT == 'success1' ]; then
@@ -758,10 +771,10 @@ fi
 
 # LOOP 8 (BRIGHTPURPLE) RESULTS, SUBMITTING LOOP 9 (FUSCHIA)
 if [ $STALL == 'scc2' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 else
   if [ $RESULT == 'success1' ]; then
@@ -786,10 +799,10 @@ fi
 
 # LOOP 9 (FUSCHIA) RESULTS, SUBMITTING LOOP 10 (ORANGE)
 if [ $STALL == 'scc2' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 else
   if [ $RESULT == 'success1' ]; then
@@ -814,10 +827,10 @@ fi
 
 # LOOP 10 (ORANGE) RESULTS, SUBMITTING LOOP 11 (MUSTARD YELLOW)
 if [ $STALL == 'scc2' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 else
   if [ $RESULT == 'success1' ]; then
@@ -842,10 +855,10 @@ fi
 
 # LOOP 11 (MUSTARD YELLOW) RESULTS, SUBMITTING LOOP 12 (EGGPLANT)
 if [ $STALL == 'scc2' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 else
   if [ $RESULT == 'success1' ]; then
@@ -870,10 +883,10 @@ fi
 
 # LOOP 12 (EGGPLANT) RESULTS, SUBMITTING LOOP 13 (PERIWINKLE)
 if [ $STALL == 'scc2' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 else
   if [ $RESULT == 'success1' ]; then
@@ -898,10 +911,10 @@ fi
 
 # LOOP 13 (PERIWINKLE) RESULTS
 if [ $STALL == 'scc2' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
 elif [ $STALL == 'forces' ]; then
-  ncores $N_ATOMS $STALL $CORES
+  ncores $N_ATOMS $STALL $CORES $PARTITION
   forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
 else
   if [ $RESULT == 'success1' ]; then
