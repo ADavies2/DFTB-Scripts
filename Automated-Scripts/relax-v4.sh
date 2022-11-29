@@ -437,3 +437,169 @@ Options {
   done  
 }
 
+forces_dftb_in () {
+# $1 = $GEO
+# $2 = $TOL
+# $3 = myMOMENTUM
+  if [ $1 == *"gen"* ]; then
+    cat > dftb_in.hsd <<!
+Geometry = GenFormat {
+  <<< "$1"
+}
+!
+  else
+    cat > dftb_in.hsd <<!
+Geometry = VASPFormat {
+  <<< "$1"
+}
+!
+  fi
+  cat >> dftb_in.hsd <<!
+Driver = ConjugateGradient {
+  MovedAtoms = 1:-1
+  MaxSteps = 100000
+  LatticeOpt = Yes
+  AppendGeometries = No
+!
+  if [ $2 == '1e-5' ]; then
+    printf "  MaxForceComponent = 1e-4\n" >> dftb_in.hsd
+    printf "  OutputPrefix = 1e-4-Forces-Out }\n" >> dftb_in.hsd
+  else
+    printf  "  MaxForceComponent = $2\n" >> dftb_in.hsd
+    printf " OutputPrefix = $2-Forces-Out }\n" >> dftb_in.hsd
+  fi
+  momentum=$3[@]
+  forcesMOMENTUM=("${!momentum}")
+  cat >> dftb_in.hsd <<!
+Hamiltonian = DFTB {
+SCC = No
+SlaterKosterFiles = Type2FileNames {
+  Prefix = "/project/designlab/Shared/Codes/dftb+sk/3ob-3-1/"
+  Separator = "-"
+  Suffix = ".skf" }
+KPointsAndWeights = SupercellFolding {
+  4 0 0
+  0 4 0
+  0 0 4
+  0.5 0.5 0.5 }
+MaxAngularMomentum {
+!
+  printf "%s\n" "${forcesMOMENTUM[@]} }" >> dftb_in.hsd
+  cat >> dftb_in.hsd <<!
+Filling = Fermi {
+  Temperature [Kelvin] = 0 } }
+Analysis = {
+  MullikenAnalysis = Yes }
+Parallel = {
+  Groups = 1
+  UseOmpThreads = Yes }
+ParserOptions {
+  ParserVersion = 10 }
+!
+}
+
+forces () {
+# $1 = $PARTITION
+# $2 = $NO_ATOMS
+# $3 = $JOBNAME
+# $4 = $STALL
+# $5 = $TASK
+# $6 = $CPUS
+# $7 = $TOL
+# $8 = $COF
+# $9 = $RESULT
+  if [[ $1 == 'teton' ]]; then
+    if (($2 <= 80)); then
+      TASK=4
+      CPUS=1
+      submit_dftb_teton $TASK $CPUS $3
+    elif (($2 > 80)); then
+      if [[ $4 != 'none' ]]: then
+        if (($5 == 16)) && (($6 == 1)); then
+          CPUS=2
+          submit_dftb_teton $5 $CPUS $3
+        elif (($5 == 16)) && (($6 == 2)); then
+          TASK=8
+          submit_dftb_teton $TASK $6 $3
+        elif (($5 == 8)) && (($6 == 2)); then
+          CPUS=1
+          submit_dftb_teton $5 $CPUS $3
+        elif (($5 == 8)) && (($6 == 1)); then
+          CPUS=4
+          submit_dftb_teton $5 $CPUS $3
+        fi
+      else
+        TASK=16
+        CPUS=1
+        submit_dftb_teton $TASK $CPUS $3
+      fi
+    fi
+  elif [[ $1 == 'inv-desousa' ]]; then
+    if [[ $4 != 'none' ]]; then
+      if (($5 == 16)) && (($6 == 1)); then
+        TASK=8
+        submit_dftb_desousa $TASK $6 $3
+      elif (($5 == 8)) && (($6 == 1)); then
+        TASK=4
+        submit_dftb_desousa $TASK $6 $3 
+      elif (($5 == 4)) && (($6 == 1)); then
+        CPU=5
+        submit_dftb_desousa $5 $CPUS $3
+      fi
+    else
+      TASK=16
+      CPUS=1
+      submit_dftb_desousa $TASK $CPUS $3
+    fi
+  fi
+  while :
+  do
+    stat=($(squeue -n $3))
+    jobstat=(${stat[12]})
+    JOBID=(${stat[8]})
+      if [ "$jobstat" == "PD" ]; then
+        echo "$3 is pending..."
+        sleep 3s 
+      else
+        echo "$3 is running..."
+        log_size=($(ls -l "$3.log"))
+        size=(${log_size[4]})
+        sleep 30s
+        log_size2=($(ls -l "$3.log"))
+        size2=(${log_size2[4]})
+        if [[ $size2 > $size ]]; then
+          echo "$3 is running..."
+        elif [[ $size2 == $size ]]; then
+          sleep 30s
+          if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
+            echo "$3 converged. Attemping SCC again at $7..."
+            JOBNAME="$8-scc-$7"
+            RESTART='no'
+            RESULT='success3'
+            STALL='none'
+            break
+          elif grep -q "Geometry did NOT converge" detailed.out && grep -q "Geometry did NOT converge" $3.log; then
+            echo "$8 at $7 SCC did NOT converge..."
+            echo "$8 at $7 Forces did NOT converge..."
+            RESULT='fail2'
+            STALL='none'
+            break
+          elif grep -q "ERROR!" $3.log; then
+            echo "DFTB+ Error. User trouble-shoot required."
+            exit
+          else
+            log_size3=($(ls -l "$3.log"))
+            size3=(${log_size3[4]})
+            if [[ $size3 == $size2 ]]; then
+              echo "$3 has stalled. Restarting..."
+              qdel $JOBID 
+              STALL='forces'
+              RESULT='none'
+              break
+            fi
+          fi
+        fi
+      fi
+  done      
+}
+
