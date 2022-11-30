@@ -603,3 +603,10 @@ forces () {
   done      
 }
 
+# Read the input file for the COF name, starting tolerance, restart calculation, input structure file, and partition
+COF=($(sed -n 2p relax.in))
+TOL=($(sed -n 4p relax.in))
+GEO=($(sed -n 6p relax.in))
+RESTART=($(sed -n 8p relax.in))
+PARTITION=($(sed -n 10p relax.in))
+
