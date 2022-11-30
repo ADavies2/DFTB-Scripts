@@ -196,16 +196,16 @@ scc1 () {
         echo "$3 is pending..."
         sleep 3s
       else
-        echo "$3 is running..."
         log_size=($(ls -l "$3.log"))
         size=(${log_size[4]})
         sleep 30s
         log_size2=($(ls -l "$3.log"))
-        size2=(${log_size2[4]}) 
+        size2=(${log_size2[4]})
+        echo "$size"
+        echo "$size2"
         if [[ $size2 > $size ]]; then
           echo "$3 is running..."
         elif [[ $size2 == $size ]]; then
-          sleep 30s
           if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
             if [ $4 == '1e-5' ]; then
               if [ ! -d "1e-4-Outputs" ]; then
@@ -347,7 +347,6 @@ scc2 () {
         echo "$3 is pending..."
         sleep 3s
       else
-        echo "$3 is running..."
         log_size=($(ls -l "$3.log"))
         size=(${log_size[4]})
         sleep 30s
@@ -563,7 +562,6 @@ forces () {
         echo "$3 is pending..."
         sleep 3s 
       else
-        echo "$3 is running..."
         log_size=($(ls -l "$3.log"))
         size=(${log_size[4]})
         sleep 30s
@@ -861,20 +859,18 @@ fi
 
 # LOOP 9 (FUSCHIA) RESULTS, SUBMITTING LOOP 10 (ORANGE)
 if [ $STALL == 'scc2' ]; then
-  ncores $N_ATOMS $STALL $CORES $PARTITION
-  scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+  scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 elif [ $STALL == 'forces' ]; then
-  ncores $N_ATOMS $STALL $CORES $PARTITION
-  forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+  forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
-    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
   elif [ $RESULT == 'success3' ]; then
     scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
   elif [ $RESULT == 'fail2' ]; then
     echo "User trouble-shoot required."
     exit
@@ -883,26 +879,24 @@ else
     exit
   elif [ $RESULT == 'fail1' ]; then
     forces_dftb_in $GEO $TOL myMOMENTUM
-    forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+    forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
   fi
 fi
 
 # LOOP 10 (ORANGE) RESULTS, SUBMITTING LOOP 11 (MUSTARD YELLOW)
 if [ $STALL == 'scc2' ]; then
-  ncores $N_ATOMS $STALL $CORES $PARTITION
-  scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+  scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 elif [ $STALL == 'forces' ]; then
-  ncores $N_ATOMS $STALL $CORES $PARTITION
-  forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+  forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
-    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
   elif [ $RESULT == 'success3' ]; then
     scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
   elif [ $RESULT == 'fail2' ]; then
     echo "User trouble-shoot required."
     exit
@@ -911,26 +905,24 @@ else
     exit
   elif [ $RESULT == 'fail1' ]; then
     forces_dftb_in $GEO $TOL myMOMENTUM
-    forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+    forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
   fi
 fi
 
 # LOOP 11 (MUSTARD YELLOW) RESULTS, SUBMITTING LOOP 12 (EGGPLANT)
 if [ $STALL == 'scc2' ]; then
-  ncores $N_ATOMS $STALL $CORES $PARTITION
-  scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+  scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 elif [ $STALL == 'forces' ]; then
-  ncores $N_ATOMS $STALL $CORES $PARTITION
-  forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+  forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
-    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
   elif [ $RESULT == 'success3' ]; then
     scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
   elif [ $RESULT == 'fail2' ]; then
     echo "User trouble-shoot required."
     exit
@@ -939,26 +931,24 @@ else
     exit
   elif [ $RESULT == 'fail1' ]; then
     forces_dftb_in $GEO $TOL myMOMENTUM
-    forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+    forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
   fi
 fi
 
 # LOOP 12 (EGGPLANT) RESULTS, SUBMITTING LOOP 13 (PERIWINKLE)
 if [ $STALL == 'scc2' ]; then
-  ncores $N_ATOMS $STALL $CORES $PARTITION
-  scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+  scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 elif [ $STALL == 'forces' ]; then
-  ncores $N_ATOMS $STALL $CORES $PARTITION
-  forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+  forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
-    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
   elif [ $RESULT == 'success3' ]; then
     scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
   elif [ $RESULT == 'fail2' ]; then
     echo "User trouble-shoot required."
     exit
@@ -967,26 +957,24 @@ else
     exit
   elif [ $RESULT == 'fail1' ]; then
     forces_dftb_in $GEO $TOL myMOMENTUM
-    forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+    forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
   fi
 fi
 
 # LOOP 13 (PERIWINKLE) RESULTS
 if [ $STALL == 'scc2' ]; then
-  ncores $N_ATOMS $STALL $CORES $PARTITION
-  scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+  scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 elif [ $STALL == 'forces' ]; then
-  ncores $N_ATOMS $STALL $CORES $PARTITION
-  forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+  forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
-    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
   elif [ $RESULT == 'success3' ]; then
     scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
   elif [ $RESULT == 'fail2' ]; then
     echo "User trouble-shoot required."
     exit
@@ -995,6 +983,6 @@ else
     exit
   elif [ $RESULT == 'fail1' ]; then
     forces_dftb_in $GEO $TOL myMOMENTUM
-    forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+    forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
   fi
 fi
