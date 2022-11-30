@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Declare an associative array for the Hubbard derivatives of each element for the 3ob parameters
 declare -A HUBBARD
 HUBBARD[Br]=-0.0573
@@ -147,7 +149,7 @@ scc1 () {
       CPUS=1
       submit_dftb_teton $TASK $CPUS $3
     elif (($2 > 80)); then
-      if [[ $4 != 'none' ]]: then
+      if [[ $4 != 'none' ]]; then
         if (($5 == 16)) && (($6 == 1)); then
           CPUS=2
           submit_dftb_teton $5 $CPUS $3
@@ -298,7 +300,7 @@ scc2 () {
       CPUS=1
       submit_dftb_teton $TASK $CPUS $3
     elif (($2 > 80)); then
-      if [[ $4 != 'none' ]]: then
+      if [[ $4 != 'none' ]]; then
         if (($5 == 16)) && (($6 == 1)); then
           CPUS=2
           submit_dftb_teton $5 $CPUS $3
@@ -514,7 +516,7 @@ forces () {
       CPUS=1
       submit_dftb_teton $TASK $CPUS $3
     elif (($2 > 80)); then
-      if [[ $4 != 'none' ]]: then
+      if [[ $4 != 'none' ]]; then
         if (($5 == 16)) && (($6 == 1)); then
           CPUS=2
           submit_dftb_teton $5 $CPUS $3
@@ -603,10 +605,396 @@ forces () {
   done      
 }
 
-# Read the input file for the COF name, starting tolerance, restart calculation, input structure file, and partition
-COF=($(sed -n 2p relax.in))
-TOL=($(sed -n 4p relax.in))
-GEO=($(sed -n 6p relax.in))
-RESTART=($(sed -n 8p relax.in))
-PARTITION=($(sed -n 10p relax.in))
+# The instruction file is passed as an arguement when the job is submitted
+INSTRUCT=$1
 
+# Read the input file for the COF name, starting tolerance, restart calculation, input structure file, and partition
+COF=($(sed -n 2p $INSTRUCT))
+TOL=($(sed -n 4p $INSTRUCT))
+GEO=($(sed -n 6p $INSTRUCT))
+RESTART=($(sed -n 8p $INSTRUCT))
+PARTITION=($(sed -n 10p $INSTRUCT))
+
+STALL='none'
+JOBNAME="$COF-scc-$TOL"
+
+if [ ! -d "Relax" ]; then
+  mkdir Relax
+  cp $GEO Relax
+  rm $GEO
+  if [[ $RESTART == 'yes' ]]; then
+    cp charges.bin Relax
+    rm charges.bin 
+  fi
+fi
+cd Relax # Change to the working directory for the following calculations
+
+# Read input geometry file to get atom types and number of atoms  
+if [[ $GEO == *"gen"* ]]; then
+  ATOM_TYPES=($(sed -n 2p $GEO))
+  N_ATOMS=($(sed -n 1p $GEO))
+  N_ATOMS=${N_ATOMS[0]}
+else
+  ATOM_TYPES=($(sed -n 6p $GEO))
+  POSCAR_ATOMS=($(sed -n 7p $GEO))
+  N_ATOMS=0
+  for i in ${POSCAR_ATOMS[@]}; do
+    let N_ATOMS+=$i
+  done
+!
+fi
+
+# Read atom types into a function for angular momentum and Hubbard derivative values
+declare -A myHUBBARD
+declare -A myMOMENTUM
+nl=$'\n'
+for element in ${ATOM_TYPES[@]}; do
+  myHUBBARD[$element]="$element = ${HUBBARD[$element]}"
+  myMOMENTUM[$element]="$element = ${MOMENTUM[$element]}"
+done
+
+# Write dftb_in.hsd for the first calculation
+scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+
+# LOOP 1 (LIGHTBLUE) RESULTS, SUBMITTING LOOP 2 (LIGHTGREEN) CALCULATIONS
+# submit the first calculation
+scc1 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF
+if [[ $STALL == 'scc1' ]]; then
+  scc1 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF
+else
+  if [ $RESULT == 'success1' ]; then
+    echo "$COF is fully relaxed!"
+    exit
+  elif [ $RESULT == 'success2' ]; then
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  elif [ $RESULT == 'fail1' ]; then
+    forces_dftb_in $GEO $TOL myMOMENTUM
+    forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  fi
+fi
+
+#LOOP 2 (LIGHTGREEN) RESULTS, SUBMITTING LOOP 3 (LIGHTYELLOW) CALCULATIONS 
+if [ $STALL == 'scc1' ]; then
+  scc1 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF
+elif [ $STALL == 'scc2' ]; then
+  scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+elif [ $STALL == 'forces' ]; then
+  forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+else
+  if [ $RESULT == 'success1' ]; then
+    echo "$COF is fully relaxed!"
+    exit
+  elif [ $RESULT == 'success2' ]; then
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  elif [ $RESULT == 'success3' ]; then
+    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  elif [ $RESULT == 'fail2' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail3' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail1' ]; then
+    forces_dftb_in $GEO $TOL myMOMENTUM
+    forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  fi
+fi
+
+# Repeat these if statements until all loops on the flowchart are accounted for
+
+# LOOP 3 (LIGHTYELLOW) RESULTS, SUBMITTING LOOP 4 (LIGHTRED)
+if [ $STALL == 'scc2' ]; then
+  scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+elif [ $STALL == 'forces' ]; then
+  forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+else
+  if [ $RESULT == 'success1' ]; then
+    echo "$COF is fully relaxed!"
+    exit
+  elif [ $RESULT == 'success2' ]; then
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  elif [ $RESULT == 'success3' ]; then
+    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  elif [ $RESULT == 'fail2' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail3' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail1' ]; then
+    forces_dftb_in $GEO $TOL myMOMENTUM
+    forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  fi
+fi
+
+# LOOP 4 (LIGHTRED) RESULTS, SUBMITTING LOOP 5 (LIGHTPURPLE)
+if [ $STALL == 'scc2' ]; then
+  scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+elif [ $STALL == 'forces' ]; then
+  forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+else
+  if [ $RESULT == 'success1' ]; then
+    echo "$COF is fully relaxed!"
+    exit
+  elif [ $RESULT == 'success2' ]; then
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  elif [ $RESULT == 'success3' ]; then
+    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  elif [ $RESULT == 'fail2' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail3' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail1' ]; then
+    forces_dftb_in $GEO $TOL myMOMENTUM
+    forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  fi
+fi
+
+# LOOP 5 (LIGHTPURPLE) RESULTS, SUBMITTING LOOP 6 (KELLYGREEN)
+if [ $STALL == 'scc2' ]; then
+  scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+elif [ $STALL == 'forces' ]; then
+  forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+else
+  if [ $RESULT == 'success1' ]; then
+    echo "$COF is fully relaxed!"
+    exit
+  elif [ $RESULT == 'success2' ]; then
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  elif [ $RESULT == 'success3' ]; then
+    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  elif [ $RESULT == 'fail2' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail3' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail1' ]; then
+    forces_dftb_in $GEO $TOL myMOMENTUM
+    forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  fi
+fi
+
+# LOOP 6 (KELLYGREEN) RESULTS, SUBMITTING LOOP 7 (SKYBLUE)
+if [ $STALL == 'scc2' ]; then
+  scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+elif [ $STALL == 'forces' ]; then
+  forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+else
+  if [ $RESULT == 'success1' ]; then
+    echo "$COF is fully relaxed!"
+    exit
+  elif [ $RESULT == 'success2' ]; then
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  elif [ $RESULT == 'success3' ]; then
+    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  elif [ $RESULT == 'fail2' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail3' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail1' ]; then
+    forces_dftb_in $GEO $TOL myMOMENTUM
+    forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  fi
+fi
+
+# LOOP 7 (SKYBLUE) RESULTS, SUBMITTING LOOP 8 (BRIGHTPURPLE)
+if [ $STALL == 'scc2' ]; then
+  scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+elif [ $STALL == 'forces' ]; then
+  forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+else
+  if [ $RESULT == 'success1' ]; then
+    echo "$COF is fully relaxed!"
+    exit
+  elif [ $RESULT == 'success2' ]; then
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  elif [ $RESULT == 'success3' ]; then
+    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  elif [ $RESULT == 'fail2' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail3' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail1' ]; then
+    forces_dftb_in $GEO $TOL myMOMENTUM
+    forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  fi
+fi
+
+# LOOP 8 (BRIGHTPURPLE) RESULTS, SUBMITTING LOOP 9 (FUSCHIA)
+if [ $STALL == 'scc2' ]; then
+  scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+elif [ $STALL == 'forces' ]; then
+  forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+else
+  if [ $RESULT == 'success1' ]; then
+    echo "$COF is fully relaxed!"
+    exit
+  elif [ $RESULT == 'success2' ]; then
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  elif [ $RESULT == 'success3' ]; then
+    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+    scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  elif [ $RESULT == 'fail2' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail3' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail1' ]; then
+    forces_dftb_in $GEO $TOL myMOMENTUM
+    forces $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+  fi
+fi
+
+# LOOP 9 (FUSCHIA) RESULTS, SUBMITTING LOOP 10 (ORANGE)
+if [ $STALL == 'scc2' ]; then
+  ncores $N_ATOMS $STALL $CORES $PARTITION
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+elif [ $STALL == 'forces' ]; then
+  ncores $N_ATOMS $STALL $CORES $PARTITION
+  forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+else
+  if [ $RESULT == 'success1' ]; then
+    echo "$COF is fully relaxed!"
+    exit
+  elif [ $RESULT == 'success2' ]; then
+    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+  elif [ $RESULT == 'success3' ]; then
+    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+  elif [ $RESULT == 'fail2' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail3' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail1' ]; then
+    forces_dftb_in $GEO $TOL myMOMENTUM
+    forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+  fi
+fi
+
+# LOOP 10 (ORANGE) RESULTS, SUBMITTING LOOP 11 (MUSTARD YELLOW)
+if [ $STALL == 'scc2' ]; then
+  ncores $N_ATOMS $STALL $CORES $PARTITION
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+elif [ $STALL == 'forces' ]; then
+  ncores $N_ATOMS $STALL $CORES $PARTITION
+  forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+else
+  if [ $RESULT == 'success1' ]; then
+    echo "$COF is fully relaxed!"
+    exit
+  elif [ $RESULT == 'success2' ]; then
+    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+  elif [ $RESULT == 'success3' ]; then
+    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+  elif [ $RESULT == 'fail2' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail3' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail1' ]; then
+    forces_dftb_in $GEO $TOL myMOMENTUM
+    forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+  fi
+fi
+
+# LOOP 11 (MUSTARD YELLOW) RESULTS, SUBMITTING LOOP 12 (EGGPLANT)
+if [ $STALL == 'scc2' ]; then
+  ncores $N_ATOMS $STALL $CORES $PARTITION
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+elif [ $STALL == 'forces' ]; then
+  ncores $N_ATOMS $STALL $CORES $PARTITION
+  forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+else
+  if [ $RESULT == 'success1' ]; then
+    echo "$COF is fully relaxed!"
+    exit
+  elif [ $RESULT == 'success2' ]; then
+    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+  elif [ $RESULT == 'success3' ]; then
+    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+  elif [ $RESULT == 'fail2' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail3' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail1' ]; then
+    forces_dftb_in $GEO $TOL myMOMENTUM
+    forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+  fi
+fi
+
+# LOOP 12 (EGGPLANT) RESULTS, SUBMITTING LOOP 13 (PERIWINKLE)
+if [ $STALL == 'scc2' ]; then
+  ncores $N_ATOMS $STALL $CORES $PARTITION
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+elif [ $STALL == 'forces' ]; then
+  ncores $N_ATOMS $STALL $CORES $PARTITION
+  forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+else
+  if [ $RESULT == 'success1' ]; then
+    echo "$COF is fully relaxed!"
+    exit
+  elif [ $RESULT == 'success2' ]; then
+    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+  elif [ $RESULT == 'success3' ]; then
+    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+  elif [ $RESULT == 'fail2' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail3' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail1' ]; then
+    forces_dftb_in $GEO $TOL myMOMENTUM
+    forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+  fi
+fi
+
+# LOOP 13 (PERIWINKLE) RESULTS
+if [ $STALL == 'scc2' ]; then
+  ncores $N_ATOMS $STALL $CORES $PARTITION
+  scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+elif [ $STALL == 'forces' ]; then
+  ncores $N_ATOMS $STALL $CORES $PARTITION
+  forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+else
+  if [ $RESULT == 'success1' ]; then
+    echo "$COF is fully relaxed!"
+    exit
+  elif [ $RESULT == 'success2' ]; then
+    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+  elif [ $RESULT == 'success3' ]; then
+    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
+    scc2 $CORES $COF $JOBNAME $TOL $RESULT $CORE_TYPE
+  elif [ $RESULT == 'fail2' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail3' ]; then
+    echo "User trouble-shoot required."
+    exit
+  elif [ $RESULT == 'fail1' ]; then
+    forces_dftb_in $GEO $TOL myMOMENTUM
+    forces $CORES $COF $JOBNAME $TOL $CORE_TYPE
+  fi
+fi
