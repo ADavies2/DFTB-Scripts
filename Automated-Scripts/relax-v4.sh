@@ -275,6 +275,11 @@ Options {
               qdel $JOBID
               STALL='scc1'
               RESULT='none'
+              if [[ $7 == '1e-5' ]]; then
+                sed -i "s/.*<<<.*/   <<< '1e-4-Out.gen'/g" dftb_in.hsd
+              else
+                sed -u "s/.*<<<.*/   <<< '$7-Out.gen'/g" dftb_in.hsd
+              fi
               break
             fi 
           fi
@@ -429,6 +434,11 @@ Options {
               qdel $JOBID
               STALL='scc2'
               RESULT='none'
+              if [[ $7 == '1e-5' ]]; then
+                sed -i "s/.*<<<.*/   <<< '1e-4-Out.gen'/g" dftb_in.hsd
+              else
+                sed -u "s/.*<<<.*/   <<< '$7-Out.gen'/g" dftb_in.hsd
+              fi
               break
             fi
           fi
@@ -594,6 +604,11 @@ forces () {
               qdel $JOBID 
               STALL='forces'
               RESULT='none'
+              if [[ $7 == '1e-5' ]]; then
+                sed -i "s/.*<<<.*/   <<< '1e-4-Out.gen'/g" dftb_in.hsd
+              else
+                sed -u "s/.*<<<.*/   <<< '$7-Out.gen'/g" dftb_in.hsd
+              fi
               break
             fi
           fi
