@@ -201,13 +201,12 @@ scc1 () {
         sleep 30s
         log_size2=($(ls -l "$3.log"))
         size2=(${log_size2[4]})
-        echo "$size"
-        echo "$size2"
         if [[ $size2 > $size ]]; then
           echo "$3 is running..."
         elif [[ $size2 == $size ]]; then
+          sleep 15s
           if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
-            if [ $4 == '1e-5' ]; then
+            if [[ $7 == '1e-5' ]]; then
               if [ ! -d "1e-4-Outputs" ]; then
                 mkdir '1e-4-Outputs'
               fi
@@ -217,7 +216,7 @@ scc1 () {
               RESULT='success1'
               STALL='none'
               break
-            elif [[ $7 == '1e-1' || $4 = '1e-2' || $4 = '1e-3' ]]; then
+            elif [[ $7 == '1e-1' || $7 = '1e-2' || $7 = '1e-3' ]]; then
               if [ ! -d "$7-Outputs" ]; then
                 mkdir $7-Outputs
               fi
@@ -355,9 +354,9 @@ scc2 () {
         if [[ $size2 > $size ]]; then
           echo "$3 is running..."
         elif [[ $size2 == $size ]]; then 
-          sleep 30s      
+          sleep 15s      
           if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $3.log; then
-            if [ $7 == '1e-5' ]; then
+            if [[ $7 == '1e-5' ]]; then
               if [ ! -d "1e-4-Outputs" ]; then
                 mkdir '1e-4-Outputs'
               fi
@@ -368,7 +367,7 @@ scc2 () {
               STALL='none'
               break
             elif [[ $7 = '1e-2' || $7 = '1e-3' ]]; then
-              if [ ! -d "$4-Outputs" ]; then
+              if [ ! -d "$7-Outputs" ]; then
                 mkdir $7-Outputs
               fi
               cp detailed.out $3.log $7-Out.gen $7-Out.xyz charges.bin submit_$3 $7-Outputs/
@@ -614,6 +613,8 @@ RESTART=($(sed -n 8p $INSTRUCT))
 PARTITION=($(sed -n 10p $INSTRUCT))
 
 STALL='none'
+TASK=16
+CPUS=1
 JOBNAME="$COF-scc-$TOL"
 
 if [ ! -d "Relax" ]; then
@@ -625,6 +626,7 @@ if [ ! -d "Relax" ]; then
     rm charges.bin 
   fi
 fi
+
 cd Relax # Change to the working directory for the following calculations
 
 # Read input geometry file to get atom types and number of atoms  
