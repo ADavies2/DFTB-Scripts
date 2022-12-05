@@ -278,7 +278,7 @@ Options {
               if [[ $7 == '1e-5' ]]; then
                 sed -i "s/.*<<<.*/   <<< '1e-4-Out.gen'/g" dftb_in.hsd
               else
-                sed -u "s/.*<<<.*/   <<< '$7-Out.gen'/g" dftb_in.hsd
+                sed -i "s/.*<<<.*/   <<< '$7-Out.gen'/g" dftb_in.hsd
               fi
               break
             fi 
@@ -437,7 +437,7 @@ Options {
               if [[ $7 == '1e-5' ]]; then
                 sed -i "s/.*<<<.*/   <<< '1e-4-Out.gen'/g" dftb_in.hsd
               else
-                sed -u "s/.*<<<.*/   <<< '$7-Out.gen'/g" dftb_in.hsd
+                sed -i "s/.*<<<.*/   <<< '$7-Out.gen'/g" dftb_in.hsd
               fi
               break
             fi
@@ -607,7 +607,7 @@ forces () {
               if [[ $7 == '1e-5' ]]; then
                 sed -i "s/.*<<<.*/   <<< '1e-4-Out.gen'/g" dftb_in.hsd
               else
-                sed -u "s/.*<<<.*/   <<< '$7-Out.gen'/g" dftb_in.hsd
+                sed -i "s/.*<<<.*/   <<< '$7-Out.gen'/g" dftb_in.hsd
               fi
               break
             fi
