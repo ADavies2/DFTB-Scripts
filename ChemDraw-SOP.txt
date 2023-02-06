@@ -1,0 +1,10 @@
+This text file is a standard operating procedure for producing COF unit cells, beginning with ChemDraw. 
+
+1. Draw the full pore COF structure in ChemDraw.
+  a. Be sure to include each hydrogen explicitly. Charge balance carbon and nitrogen atoms, in particular. 
+  b. Use the "3D Structure Clean-Up" feature when complete. 
+2. Export the drawn structure as a .mol file. 
+3. Read this .mol file into VESTA in order to convert into a .vasp file format. 
+4. Read this .vasp file into OVITO.
+  a. Determine the unit cell. Be sure to delete any overlapping atoms. 
+5. Export this unit cell structure as a .vasp file format and optimize with DFTB+.
