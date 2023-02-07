@@ -14,3 +14,8 @@ This standard operating procedure details the steps for generating a system cons
   b. FixAngles = Yes
   c. Use the optimization thresholds of 1e-5 for SCC and 1e-4 for forces. 
 5. Your resultant optimized rectangular/square unit cell should lay almost identically over your original triclinic unit cell. 
+6. Using a .xyz format of your rectangular/square unit cell, generate a solvated system using PACKMOL. 
+  a. Use the example 'packmol-cof.inp' file as a reference for how to write your COF and water inputs. 
+  b. The coordinates for the 'fixed' command with the COF should be 0.5 of the x- and y- simulation cell parameters of your optimized rectangular COF.
+  c. The coordinates for the 'inside box' command wih the water/NaCl should be '0 0 0' and 2 minus the x-, y-, and z- of your optimized rectangular COF.
+  d. The final output structure from PACKMOL will not have the correct simulation cell parameters. Edit the output .xyz file to have the same x- and y- simulation cell parameters are your optimized rectangular/square unit cell, and 2 plus the original z- cell parameters. 
