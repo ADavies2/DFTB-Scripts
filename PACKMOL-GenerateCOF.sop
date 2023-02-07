@@ -1,0 +1,16 @@
+This standard operating procedure details the steps for generating a system consisting of a COF monolayer, water, and 0.5 M NaCl using the software packages, PACKMOL and DFTB+.
+
+1. Optimize a monolayer of the COF of interest using DFTB+. Use the optimization thresholds 1e-5 for SCC and 1e-4 for forces. 
+  a. It is likely that the unit cell you previously optimized is triclinic. PACKMOL does not currently work with triclinic cells.
+  b. In order to solvate this COF monolayer using PACKMOL, you must convert the triclinc unit cell into a rectangular unit cell.
+2. Within OVITO, replicate your optimized monolayer unit cell 2×2. 
+  a. Manually select the atoms that would fall within a rectangular/square unit cell from this supercell. 
+  b. Invert this selection and delete all other atoms. 
+  c. Apply an AffineTransformation to the simulation cell only. Change the simulation cell parameters to be 0 in any off-diagonal indices. 
+  d. Change the diagonal values of the simulation cell such that the replicated square cell results in a continuous COF. 
+3. Export this structure as a .vasp file from OVITO. 
+4. Optimize your rectangular/square unit cell with DFTB+. 
+  a. Turn LatticeOpt = Yes
+  b. FixAngles = Yes
+  c. Use the optimization thresholds of 1e-5 for SCC and 1e-4 for forces. 
+5. Your resultant optimized rectangular/square unit cell should lay almost identically over your original triclinic unit cell. 
