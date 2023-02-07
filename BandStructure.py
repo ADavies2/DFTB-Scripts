@@ -18,14 +18,14 @@ sns.set_context("notebook",rc={"grid.linewidth": 0,
 colors = sns.color_palette("colorblind", 12) 
 
 COF_Name = 'COF141'
-
 Fermi = -5.7803 # eV
 Bands = np.array(np.loadtxt('bands_tot.dat'))
 
 fig = plt.figure(figsize=(12,8))
 plt.plot(Bands-Fermi, color='k')
-plt.ylim(-1,1)
+plt.ylim(-1.8,1)
+ply.xlim(0,60)
 plt.xlabel('K-Point Path', labelpad=10)
 plt.ylabel('Energy (eV)', labelpad=10)
 plt.xticks([0,20,40,60], ['\u0393', 'K', 'M', '\u0393'])
-plt.savefig('s%-BandStructure.jpeg' % COF_NAME, bbox_inches='tight', pad_inches=0.5, dpi=400)
+plt.savefig('%s-BandStructure.jpeg' % COF_NAME, bbox_inches='tight', pad_inches=0.5, dpi=400)
