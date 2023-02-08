@@ -1,0 +1,16 @@
+tolerance 2.0
+
+filetype xyz
+
+output cof139-water.xyz
+
+structure cof.xyz
+  number 1
+  center
+  fixed 10.5 18. 0. 0. 0. 0.
+end structure
+
+structure water.xyz
+  number 408
+  inside box 0. 0. 0. 19.0 34.0 15.0
+end structure
