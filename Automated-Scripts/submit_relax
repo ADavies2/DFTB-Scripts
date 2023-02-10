@@ -1,0 +1,51 @@
+#!/bin/bash
+# How to use script: submit_bash <input-file> <job-name>
+
+args=("$@")
+
+if ! ((${#args[@]}==2)); then
+  echo -e "Error: Need 2 arguments --- suggested usage\nsubmit_bash <input-file> <job-name> \n"
+  exit 64
+fi
+
+# Input variables
+# Python code
+# What is the name of your input file, which includes the COF name, starting tolerance, etc.
+INPUT_FILE=${args[0]}
+# What you'd like your job to be called (e.g. final_final_job_v4):
+JOB_NAME=${args[1]}
+
+# Other variables
+# Number of nodes intended:
+NODE=1
+# memory per core:
+MEM=2G
+# Time for the job:
+TIME=48:00:00
+
+# Generate particular job submit script
+SCRIPT_NAME=submit_$JOB_NAME
+
+cat > $SCRIPT_NAME<<!
+#!/bin/bash
+#SBATCH --nodes=$NODE
+#SBATCH --ntasks-per-node=1
+#SBATCH --account=designlab
+#SBATCH --time=$TIME
+#SBATCH --job-name=$JOB_NAME
+#SBATCH --output=$JOB_NAME.out
+#SBATCH --partition=inv-desousa
+#SBATCH --mem=$MEM
+
+cd \$SLURM_SUBMIT_DIR
+
+relax-v4.sh $INPUT_FILE
+!
+
+JOBID=$(sbatch $SCRIPT_NAME)
+printf "\n"
+echo "  job is queued. Job ID is: $JOBID"
+
+cat >> $SCRIPT_NAME<<!
+$JOBID
+!
