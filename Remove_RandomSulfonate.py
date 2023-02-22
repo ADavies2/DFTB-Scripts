@@ -1,13 +1,13 @@
-# This Python script will randomly select 10 sulfonate groups from the COF-141 structure. These randomly selected sulfonate groups will be removed and replaced with hydrogen atoms.
-# A POSCAR file is produced for each new set of COF-141 structures.
-
 import numpy as np
 import pandas as pd
 import random
 import math
 import os
 
-def Remove_Sulfonate(Original, Iteration):
+def Remove_Sulfonate(Iteration):
+    
+    Original = pd.read_csv('COF141-60S.xyz', header=None, skiprows=[0,1], delimiter=' ', names=['Atom','X','Y','Z'])
+    
     Sulfur = Original['Atom'].str.find('S')
     Oxygen = Original['Atom'].str.find('O')
     Hydrogen = Original['Atom'].str.find('H')
@@ -24,11 +24,9 @@ def Remove_Sulfonate(Original, Iteration):
     
     Sulfur_ToRemove = random.sample(Sulfur_Indices, 10)
     
-    Sulfur_Coords = [] # The coordinates of the sulfur atoms to remove
     Oxygen_ToRemove = [] # The indices of the oxygen atoms to remove 
     Hydrogen_ToRemove = [] # The indices of the hydrogen atoms to remove
     for i in range(0,len(Sulfur_ToRemove)):
-        Sulfur_Coords.append([Original.iloc[Sulfur_ToRemove[i]]['X'], Original.iloc[Sulfur_ToRemove[i]]['Y'], Original.iloc[Sulfur_ToRemove[i]]['Z']])
         icoord = [Original.iloc[Sulfur_ToRemove[i]]['X'], Original.iloc[Sulfur_ToRemove[i]]['Y'], Original.iloc[Sulfur_ToRemove[i]]['Z']]
         for j in Oxygen_Indices:
             if abs(icoord[0]-Original.iloc[j]['X']) <= 2:
@@ -41,6 +39,10 @@ def Remove_Sulfonate(Original, Iteration):
                             
     New = []
     # Do multiple loops in order to append all atom types at once
+    for i in range(0,len(Original)):
+        if i in (Sulfur_ToRemove):
+            Original.loc[i,'Atom'] = 'H' # Replace sulfur from Sulfur_ToRemove with Hydrogen
+            
     for i in range(0,len(Original)): # Carbon first
         dict = {}
         if Original.iloc[i]['Atom'] == 'C':
@@ -90,8 +92,5 @@ def Remove_Sulfonate(Original, Iteration):
     
     os.remove('COF141-50S.xyz')
     
-Original = pd.read_csv('COF141-60S.xyz', header=None, skiprows=[0,1], delimiter=' ', names=['Atom','X','Y','Z'])
-
-for i in range(1,11):
-    Remove_Sulfonate(Original, i)
-    
+    for i in range(1,11):
+    Remove_Sulfonate(i)
