@@ -106,6 +106,8 @@ Parallel = {
   UseOmpThreads = Yes }
 ParserOptions {
   ParserVersion = 11 }
+Options {
+  TimingVerbosity = 2 }
 !
 }
 
@@ -144,6 +146,16 @@ check_status () {
 # 1 = JOBID
 # 2 = COF_NAME
 # 3 = ITER
+
+#SCCClock(s) ${DFTB[2]}
+#Diagonalisation(s) ${DFTB[9]}
+#DensityMatrix(s) ${DFTB[18]}
+#PostSCCClock(s) ${DFTB[27]}
+#EnergyDensity(s) ${DFTB[36]}
+#Force(s) ${DFTB[44]}
+#Stress(s) ${DFTB[52]}
+#TotalClockTime(s) ${DFTB[69]}
+
   while :
   do
     qstat=($(qstat $1))
@@ -153,19 +165,21 @@ check_status () {
       sleep 20s
     elif [ "$jobstat" == "C" ]; then
       echo "$1 has completed."
-      DFTB=($(tail -n 11 $2-$3.log))
       SACCT=($(sacct -j $1 --format=jobid,jobname,maxdiskread,maxdiskwrite,maxrss,maxvmsize,totalcpu,ncpus,ntasks,nnodes | grep dftb+))
       CPUEff=($(seff $1 | grep "CPU Efficiency"))
-      cat > $1-stats.dat <<!
+      if grep -q "Post-geometry optimisation" $2-$3.log; then
+        DFTB=($(tail -n 13 $2-$3.log))
+        cat > $1-stats.dat <<!
 JOBID $1
-SCCClock(s) ${DFTB[2]}
-Diagonalisation(s) ${DFTB[9]}
-DensityMatrix(s) ${DFTB[18]}
-PostSCCClock(s) ${DFTB[27]}
-EnergyDensity(s) ${DFTB[36]}
-Force(s) ${DFTB[44]}
-Stress(s) ${DFTB[52]}
-TotalClockTime(s) ${DFTB[69]}
+PreSCC(s) ${DFTB[3]}
+SCC(s) ${DFTB[11]}
+Diagonalisation(s) ${DFTB[18]}
+DensityMatrix(s) ${DFTB[27]}
+PostSCC(s) ${DFTB[36]}
+Force(s) ${DFTB[53]}
+Stress(s) ${DFTB[61]}
+PostGeom(s) ${DFTB[70]}
+TotalClock(s) ${DFTB[87]}
 DiskRead(bytes) ${SACCT[2]}
 DiskWrite(bytes) ${SACCT[3]}
 RSS(bytes) ${SACCT[4]}
@@ -175,6 +189,28 @@ NTasks ${SACCT[8]}
 NNodes ${SACCT[9]}
 CPUEfficiency ${CPUEff[2]}
 !
+      else
+        DFTB=($(tail -n 12 $2-$3.log))
+        cat > $1-stats.dat <<!
+JOBID $1
+PreSCC(s) ${DFTB[3]}
+SCC(s) ${DFTB[11]}
+Diagonalisation(s) ${DFTB[18]}
+DensityMatrix(s) ${DFTB[27]}
+PostSCC(s) ${DFTB[36]}
+Force(s) ${DFTB[53]}
+Stress(s) ${DFTB[61]}
+TotalClock(s) ${DFTB[78]}
+DiskRead(bytes) ${SACCT[2]}
+DiskWrite(bytes) ${SACCT[3]}
+RSS(bytes) ${SACCT[4]}
+VMS(bytes) ${SACCT[5]}
+NCPUS ${SACCT[7]}
+NTasks ${SACCT[8]}
+NNodes ${SACCT[9]}
+CPUEfficiency ${CPUEff[2]}
+!
+      fi
     break
     elif [ "$jobstat" == "R" ]; then
       echo "$1 is running..."
@@ -185,18 +221,22 @@ CPUEfficiency ${CPUEff[2]}
       size2=(${log_size2[4]})
       if [[ $size == $size2 ]]; then
         echo "$1 has stalled and is being cancelled."
-        qdel $1 
-        cat > $1-stats.dat <<!
+        qdel $1
+        SACCT=($(sacct -j $1 --format=jobid,jobname,maxdiskread,maxdiskwrite,maxrss,maxvmsize,totalcpu,ncpus,ntasks,nnodes | grep dftb+))
+        CPUEff=($(seff $1 | grep "CPU Efficiency"))
+        if grep -q "Post-geometry optimisation" $2-$3.log; then
+          DFTB=($(tail -n 13 $2-$3.log))
+          cat > $1-stats.dat <<!
 JOBID $1
-STALL YES
-SCCClock(s) ${DFTB[2]}
-Diagonalisation(s) ${DFTB[9]}
-DensityMatrix(s) ${DFTB[18]}
-PostSCCClock(s) ${DFTB[27]}
-EnergyDensity(s) ${DFTB[36]}
-Force(s) ${DFTB[44]}
-Stress(s) ${DFTB[52]}
-TotalClockTime(s) ${DFTB[69]}
+PreSCC(s) ${DFTB[3]}
+SCC(s) ${DFTB[11]}
+Diagonalisation(s) ${DFTB[18]}
+DensityMatrix(s) ${DFTB[27]}
+PostSCC(s) ${DFTB[36]}
+Force(s) ${DFTB[53]}
+Stress(s) ${DFTB[61]}
+PostGeom(s) ${DFTB[70]}
+TotalClock(s) ${DFTB[87]}
 DiskRead(bytes) ${SACCT[2]}
 DiskWrite(bytes) ${SACCT[3]}
 RSS(bytes) ${SACCT[4]}
@@ -206,6 +246,28 @@ NTasks ${SACCT[8]}
 NNodes ${SACCT[9]}
 CPUEfficiency ${CPUEff[2]}
 !
+        else
+          DFTB=($(tail -n 12 $2-$3.log))
+          cat > $1-stats.dat <<!
+JOBID $1
+PreSCC(s) ${DFTB[3]}
+SCC(s) ${DFTB[11]}
+Diagonalisation(s) ${DFTB[18]}
+DensityMatrix(s) ${DFTB[27]}
+PostSCC(s) ${DFTB[36]}
+Force(s) ${DFTB[53]}
+Stress(s) ${DFTB[61]}
+TotalClock(s) ${DFTB[78]}
+DiskRead(bytes) ${SACCT[2]}
+DiskWrite(bytes) ${SACCT[3]}
+RSS(bytes) ${SACCT[4]}
+VMS(bytes) ${SACCT[5]}
+NCPUS ${SACCT[7]}
+NTasks ${SACCT[8]}
+NNodes ${SACCT[9]}
+CPUEfficiency ${CPUEff[2]}
+!
+        fi
       break
       else
         echo "$1 is running..."
@@ -271,7 +333,6 @@ $JOBID5
   rm -r Test1 Test2 Test3 Test4 Test5
 
   echo "$1 tasks and $2 CPUs complete for $3"
-  echo "\n"
 }
 
 benchmark () {
