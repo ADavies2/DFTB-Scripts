@@ -106,8 +106,6 @@ Parallel = {
   UseOmpThreads = Yes }
 ParserOptions {
   ParserVersion = 11 }
-Options {
-  TimingVerbosity = 2 }
 !
 }
 
