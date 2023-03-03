@@ -133,8 +133,6 @@ gen_submit () {
 #SBATCH --output=$3-$4.out
 #SBATCH --partition=inv-desousa
 #SBATCH --mem=$MEM
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=adavies2@uwyo.edu
 cd \$SLURM_SUBMIT_DIR
 export OMP_NUM_THREADS=$THREADS
 module load arcc/1.0 gcc/12.2.0 dftb/22.1-ompi
