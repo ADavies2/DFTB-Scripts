@@ -226,6 +226,7 @@ CPUEfficiency ${CPUEff[2]}
           DFTB=($(tail -n 13 $2-$3.log))
           cat > $1-stats.dat <<!
 JOBID $1
+STALL YES
 PreSCC(s) ${DFTB[3]}
 SCC(s) ${DFTB[11]}
 Diagonalisation(s) ${DFTB[18]}
@@ -248,6 +249,7 @@ CPUEfficiency ${CPUEff[2]}
           DFTB=($(tail -n 12 $2-$3.log))
           cat > $1-stats.dat <<!
 JOBID $1
+STALL YES
 PreSCC(s) ${DFTB[3]}
 SCC(s) ${DFTB[11]}
 Diagonalisation(s) ${DFTB[18]}
