@@ -144,16 +144,6 @@ check_status () {
 # 1 = JOBID
 # 2 = COF_NAME
 # 3 = ITER
-
-#SCCClock(s) ${DFTB[2]}
-#Diagonalisation(s) ${DFTB[9]}
-#DensityMatrix(s) ${DFTB[18]}
-#PostSCCClock(s) ${DFTB[27]}
-#EnergyDensity(s) ${DFTB[36]}
-#Force(s) ${DFTB[44]}
-#Stress(s) ${DFTB[52]}
-#TotalClockTime(s) ${DFTB[69]}
-
   while :
   do
     qstat=($(qstat $1))
