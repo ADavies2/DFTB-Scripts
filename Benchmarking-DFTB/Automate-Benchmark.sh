@@ -118,7 +118,7 @@ gen_submit () {
 # 4 = ITER
   THREADS=$(($1 * $2))
   NODE=1
-  MEM=20G
+  MEM=10G
   TIME=72:00:00
   SCRIPT_NAME=submit_$3
   
@@ -375,34 +375,10 @@ done
 
 scc_dftb_in $GEO myHUBBARD myMOMENTUM
 
-TASKS=28
+TASKS=56
 CPUS=1
 benchmark $TASKS $CPUS $COF_NAME
 
 TASKS=1
-CPUS=28
-benchmark $TASKS $CPUS $COF_NAME
-
-TASKS=20
-CPUS=1
-benchmark $TASKS $CPUS $COF_NAME
-
-TASKS=1
-CPUS=20
-benchmark $TASKS $CPUS $COF_NAME
-
-TASKS=14
-CPUS=1
-benchmark $TASKS $CPUS $COF_NAME
-
-TASKS=1
-CPUS=14
-benchmark $TASKS $CPUS $COF_NAME
-
-TASKS=6
-CPUS=1
-benchmark $TASKS $CPUS $COF_NAME
-
-TASKS=1
-CPUS=6
+CPUS=56
 benchmark $TASKS $CPUS $COF_NAME
