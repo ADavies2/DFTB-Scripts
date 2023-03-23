@@ -1,0 +1,15 @@
+TpTt - 54 atoms
+Test all CPU/Task configurations
+Get data and average for each configuration
+
+COF-66 - 210 atoms
+Test all CPU/Task configuration
+Get data and average for each configuration
+
+COF-141 2x2x1 Random 1 - 500 atoms
+Test all CPU/Task configuration
+Get data and average for each configuration
+
+TO DO:
+Write Python script to average all data 
+Run all configurations for all geometries
