@@ -21,3 +21,5 @@ This standard operating procedure details the steps for generating a system cons
   d. The final output structure from PACKMOL will not have the correct simulation cell parameters. Edit the output .xyz file to have the same x- and y- simulation cell parameters are your optimized rectangular/square unit cell, and 2 plus the original z- cell parameters. 
 
 NOTE: Previous MD error "-> Failure in determining optimal alpha for Ewaldsum. Error code:   2" and very large MD temperatures (1000 K)
+
+Currently testing: 1e-2 geometry optimization of system prior to NPT MD with deprotonated COF-139, NaCl, H2O
