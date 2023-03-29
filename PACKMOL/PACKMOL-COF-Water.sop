@@ -24,3 +24,4 @@ NOTE: Previous MD error "-> Failure in determining optimal alpha for Ewaldsum. E
 
 Currently testing: 1e-2 geometry optimization prior to NPT MD
 Now running NPT MD
+NOTE: Decarboxylation occurred during 1e-2 pre-MD geometry optimization
