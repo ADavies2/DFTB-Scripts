@@ -22,4 +22,5 @@ This standard operating procedure details the steps for generating a system cons
 
 NOTE: Previous MD error "-> Failure in determining optimal alpha for Ewaldsum. Error code:   2" and very large MD temperatures (1000 K)
 
-Currently testing: 1e-2 geometry optimization of system prior to NPT MD with deprotonated COF-139, NaCl, H2O
+Currently testing: 1e-2 geometry optimization prior to NPT MD
+Now running NPT MD
