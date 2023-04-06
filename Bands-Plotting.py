@@ -1,22 +1,11 @@
-
-import subprocess
 import numpy as np
 import seaborn as sns
-
-import scipy as sp 
 
 import matplotlib.pylab as plt
 from matplotlib import rcParams
 import matplotlib.colors as colors
 import matplotlib.cbook as cbook
 from matplotlib.lines import Line2D
-
-from scipy.signal import butter,filtfilt
-from scipy.signal import savgol_filter as savgol
-from scipy.fftpack import fft, dct, ifft, idct 
-
-import itertools
-from itertools import groupby, repeat, islice
 
 rcParams.update({'figure.autolayout': True})
 sns.set_style("whitegrid", rc={"axes.edgecolor": "k"})
@@ -25,7 +14,6 @@ sns.set_style("ticks", {"xtick.major.size":8,"ytick.major.size":8})
 sns.set_context("notebook",rc={"grid.linewidth": 0, 
                             "font.family":"Helvetica", "axes.labelsize":24.,"xtick.labelsize":24., 
                             "ytick.labelsize":24., "legend.fontsize":20.})
-
 
 colors = sns.color_palette("colorblind", 12)
 
