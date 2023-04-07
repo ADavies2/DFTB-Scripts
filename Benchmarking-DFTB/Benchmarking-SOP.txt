@@ -1,4 +1,8 @@
-TpTt - 54 atoms
+COF-141 - 90 atoms
+Test all CPU/Task configurations
+Get data and average for each configuration
+
+COF-B1 - 156 atoms
 Test all CPU/Task configurations
 Get data and average for each configuration
 
