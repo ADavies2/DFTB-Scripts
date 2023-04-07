@@ -105,7 +105,7 @@ Parallel = {
   Groups = 1
   UseOmpThreads = Yes }
 ParserOptions {
-  ParserVersion = 11 }
+  ParserVersion = 12 }
 Options {
   TimingVerbosity = 2 }
 !
@@ -116,11 +116,11 @@ gen_submit () {
 # 2 = CPUS
 # 3 = COF_NAME
 # 4 = ITER
-  THREADS=$(($1 * $2))
   NODE=1
   MEM=10G
-  TIME=72:00:00
+  TIME=48:00:00
   SCRIPT_NAME=submit_$3
+  PROCS=$(($1 * NODE))
   
   cat > $SCRIPT_NAME<<!
 #!/bin/bash
@@ -135,8 +135,8 @@ gen_submit () {
 #SBATCH --mem=$MEM
 cd \$SLURM_SUBMIT_DIR
 export OMP_NUM_THREADS=$THREADS
-module load arcc/1.0 gcc/12.2.0 dftb/22.1-ompi
-srun dftb+ > $3-$4.log
+module load arcc/1.0 dftb/22.2
+mpirun -n $PROCS dftb+ > $3-$4.log
 !
 }
 
@@ -204,7 +204,7 @@ CPUEfficiency ${CPUEff[2]}
       echo "$1 is running..."
       log_size=($(ls -l "$2-$3.log"))
       size=(${log_size[4]})
-      sleep 60s
+      sleep 90s
       log_size2=($(ls -l "$2-$3.log"))
       size2=(${log_size2[4]})
       if [[ $size == $size2 ]]; then
@@ -375,10 +375,6 @@ done
 
 scc_dftb_in $GEO myHUBBARD myMOMENTUM
 
-TASKS=56
-CPUS=1
-benchmark $TASKS $CPUS $COF_NAME
-
 TASKS=1
-CPUS=56
+CPUS=1
 benchmark $TASKS $CPUS $COF_NAME
