@@ -1,0 +1,18 @@
+This file is a standard operating procedure for generating systems with multiple layers of COF and solvating the pores with water or ions. 
+
+Currently, this methodology only covers AA stacked COFs and assumes that you have...
+a) Optimized the triclinical primitive unit cell of the COF
+b) Determined the "square" unit cell of the COF and optimized that
+
+1. Stack your "square" COF in order to have ~ 20 Ang in the z-direction. Your x- and y-direction cell dimensions should be close to 20 Ang. 
+2. Determine the volume of your stacked "square" cell. 
+3. Using the van der Waals radii of the atoms in your cell and the number of each atom, determine the volume in your cell occupied by the COF.
+4. Determine the "void" volume of your unit cell. 
+5. Using the Water-Calculation.py script, estimate the number of water molecules that would fit within this void volume at 300 K. This is the number of molecules you will use as an input for PACKMOL.
+6. Feed PACKMOL, your stacked "square" COF and the number of water molecules for your void fraction. 
+  a. Your x- and y-dimensions for the water should be 2 less than the stacked "square" COF dimensions. 
+  b. The z-dimension for the water should also be 2 less than the COF dimensions. However, the beginning coordinate will be in the negative dimension. 
+  For instance, if I have a height of 20 Ang for my COF, then the water will fill 18 Ang. The starting z-coordinate will be -6 and the ending z-coordinate will be 6. 
+7. The output from PACKMOL may have slightly different simulation cell dimensions and origins. Be sure to update your DFTB+ input file to have the same dimensions as your optimized stacked "square" COF. 
+8. Conduct a pre-MD geometry optimization at 1e-2 MaxForceComponent and 1e-5 SCCTolerance.
+9. Begin your MD simulation. 
