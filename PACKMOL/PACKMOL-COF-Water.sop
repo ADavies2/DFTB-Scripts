@@ -19,7 +19,10 @@ This standard operating procedure details the steps for generating a system cons
   b. The coordinates for the 'fixed' command with the COF should be 0.5 of the x- and y- simulation cell parameters of your optimized rectangular COF.
   c. The coordinates for the 'inside box' command wih the water/NaCl should be '0 0 0' and 2 minus the x-, y-, and z- of your optimized rectangular COF.
   d. The final output structure from PACKMOL will not have the correct simulation cell parameters. Edit the output .xyz file to have the same x- and y- simulation cell parameters are your optimized rectangular/square unit cell, and 2 plus the original z- cell parameters. 
+7. Conduct a geometry optimisation of this structure prior to starting the molecular dynamics. This will allow the periodic boundary conditions of the water to equilibrate. 
+  a. A 1e-2 tolerance for forces should be adequate. If your system correctly includes all atoms, then a 1e-5 SCC tolerance should not be hard to achieve. 
+8. Once the pre-MD optimization is complete, run a MD simulation. 
+  a. Begin with the NPT ensemble for however long is required to reach equilibrium. 
+  b. End with the NVE ensemble to reach equilibrium and the required time for the needed calculations (radial distribution, hydrogen bond lifetimes, etc.)
 
 NOTE: Previous MD error "-> Failure in determining optimal alpha for Ewaldsum. Error code:   2" and very large MD temperatures (1000 K)
-
-Currently testing: square COF 141 on both Beartooth and Cheyenne
