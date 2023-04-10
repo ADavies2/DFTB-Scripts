@@ -210,7 +210,8 @@ CPUEfficiency ${CPUEff[2]}
       if [[ $size == $size2 ]]; then
         echo "$1 has stalled and is being cancelled."
         qdel $1
-        SACCT=($(sacct -j $1 --format=jobid,jobname,maxdiskread,maxdiskwrite,maxrss,maxvmsize,totalcpu,ncpus,ntasks,nnodes | grep dftb+))
+        SACCT=($(sacct -j $1 --format=jobid,jobname,maxdiskread,maxdiskwrite,maxrss,maxvmsize,totalcpu,ncpus,ntasks,nnodes | grep hydra))
+        # grep hydra when using versions built with the conda environment
         CPUEff=($(seff $1 | grep "CPU Efficiency"))
         cat > $1-stats.dat <<!
 JOBID $1
