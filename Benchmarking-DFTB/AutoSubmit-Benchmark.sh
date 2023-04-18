@@ -114,7 +114,7 @@ gen_submit () {
 # 4 = ITER
   NODE=1
   MEM=10G
-  TIME=48:00:00
+  TIME=12:00:00
   SCRIPT_NAME=submit_$3
   PROCS=$(($1 * NODE))
   
