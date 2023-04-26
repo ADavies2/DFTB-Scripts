@@ -144,29 +144,17 @@ scc1 () {
 # $7 = $TOL
 # $8 = $COF
   if [[ $1 == 'teton' ]]; then
-    if (($2 <= 80)); then
-      TASK=4
+    if [[ $4 != 'none' ]]; then
+      if (($5 == 16)) && (($6 == 1)); then
+        TASK=8
+        submit_dftb_teton $TASK $6 $3
+      elif (($5 == 8)) && (($6 == 1)); then
+        TASK=4
+        submit_dftb_teton $TASK $6 $3 
+    else
+      TASK=16
       CPUS=1
       submit_dftb_teton $TASK $CPUS $3
-    elif (($2 > 80)); then
-      if [[ $4 != 'none' ]]; then
-        if (($5 == 16)) && (($6 == 1)); then
-          CPUS=2
-          submit_dftb_teton $5 $CPUS $3
-        elif (($5 == 16)) && (($6 == 2)); then
-          TASK=8
-          submit_dftb_teton $TASK $6 $3
-        elif (($5 == 8)) && (($6 == 2)); then
-          CPUS=1
-          submit_dftb_teton $5 $CPUS $3
-        elif (($5 == 8)) && (($6 == 1)); then
-          CPUS=4
-          submit_dftb_teton $5 $CPUS $3
-        fi
-      else
-        TASK=16
-        CPUS=1
-        submit_dftb_teton $TASK $CPUS $3
       fi
     fi
   elif [[ $1 == 'inv-desousa' ]]; then
@@ -177,10 +165,6 @@ scc1 () {
       elif (($5 == 8)) && (($6 == 1)); then
         TASK=4
         submit_dftb_desousa $TASK $6 $3 
-      elif (($5 == 4)) && (($6 == 1)); then
-        CPU=5
-        submit_dftb_desousa $5 $CPUS $3
-      fi
     else
       TASK=16
       CPUS=1
@@ -194,11 +178,11 @@ scc1 () {
     JOBID=(${stat[8]})
       if [ "$jobstat" == "PD" ]; then
         echo "$3 is pending..."
-        sleep 3s
+        sleep 5s
       else
         log_size=($(ls -l "$3.log"))
         size=(${log_size[4]})
-        sleep 30s
+        sleep 60s
         log_size2=($(ls -l "$3.log"))
         size2=(${log_size2[4]})
         if [[ $size2 > $size ]]; then
