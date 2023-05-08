@@ -28,12 +28,11 @@ def Remove_Sulfonate(Iteration, Filename):
     for i in range(0,len(Sulfur_ToRemove)):
         icoord = [Original.iloc[Sulfur_ToRemove[i]]['X'], Original.iloc[Sulfur_ToRemove[i]]['Y'], Original.iloc[Sulfur_ToRemove[i]]['Z']]
         for j in Oxygen_Indices:
-            if abs(icoord[0]-Original.iloc[j]['X']) <= 1.3:
-                if abs(icoord[1]-Original.iloc[j]['Y']) <= 1.3:
-                    Oxygen_ToRemove.append(j)
-                    for k in Hydrogen_Indices:
-                        if (math.sqrt((abs(Original.iloc[j]['X']-Original.iloc[k]['X'])**2)+(abs(Original.iloc[j]['Y']-Original.iloc[k]['Y'])**2)+(abs(Original.iloc[j]['Z']-Original.iloc[k]['Z'])**2))) <= 1:
-                            Hydrogen_ToRemove.append(k)
+            if (math.sqrt((abs(icoord[0]-Original.iloc[j]['X'])**2)+(abs(icoord[1]-Original.iloc[j]['Y'])**2)+(abs(icoord[2]-Original.iloc[j]['Z'])**2))) <= 1.7:
+                Oxygen_ToRemove.append(j)
+                for k in Hydrogen_Indices:
+                    if (math.sqrt((abs(Original.iloc[j]['X']-Original.iloc[k]['X'])**2)+(abs(Original.iloc[j]['Y']-Original.iloc[k]['Y'])**2)+(abs(Original.iloc[j]['Z']-Original.iloc[k]['Z'])**2))) <= 1.1:
+                        Hydrogen_ToRemove.append(k)
                             
     New = []
     for i in range(0,len(Original)):
@@ -84,7 +83,6 @@ def Remove_Sulfonate(Iteration, Filename):
         NewCoords = New.to_string(header=False, index=False)
         f.write(NewCoords)
     
-    from ase.io import read
     convert = read('tmp.xyz').write('Random%s.vasp' % Iteration)
     
     os.remove('tmp.xyz')
