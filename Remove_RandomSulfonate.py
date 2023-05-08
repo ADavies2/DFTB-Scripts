@@ -3,10 +3,10 @@ import pandas as pd
 import random
 import math
 import os
+from ase.io import read, write
 
-def Remove_Sulfonate(Iteration):
-    
-    Original = pd.read_csv('COF141-60S.xyz', header=None, skiprows=[0,1], delimiter=' ', names=['Atom','X','Y','Z'])
+def Remove_Sulfonate(Iteration, Filename):
+    Original = pd.read_csv(Filename, header=None, skiprows=[0,1], delimiter=' ', names=['Atom','X','Y','Z'])
     
     Sulfur = Original['Atom'].str.find('S')
     Oxygen = Original['Atom'].str.find('O')
@@ -20,7 +20,6 @@ def Remove_Sulfonate(Iteration):
             Oxygen_Indices.append(i)
         if Hydrogen[i] == 0:
             Hydrogen_Indices.append(i)
-        
     
     Sulfur_ToRemove = random.sample(Sulfur_Indices, 10)
     
@@ -29,16 +28,14 @@ def Remove_Sulfonate(Iteration):
     for i in range(0,len(Sulfur_ToRemove)):
         icoord = [Original.iloc[Sulfur_ToRemove[i]]['X'], Original.iloc[Sulfur_ToRemove[i]]['Y'], Original.iloc[Sulfur_ToRemove[i]]['Z']]
         for j in Oxygen_Indices:
-            if abs(icoord[0]-Original.iloc[j]['X']) <= 2:
-                if abs(icoord[1]-Original.iloc[j]['Y']) <= 2:
-                    Oxygen_ToRemove.append(j) # If an oxygen atom is within 2 Å in x and y of the sulfur atom to remove, append
+            if abs(icoord[0]-Original.iloc[j]['X']) <= 1.3:
+                if abs(icoord[1]-Original.iloc[j]['Y']) <= 1.3:
+                    Oxygen_ToRemove.append(j)
                     for k in Hydrogen_Indices:
-                        if (math.sqrt((abs(Original.iloc[j]['X']-Original.iloc[k]['X'])**2)+(abs(Original.iloc[j]['Y']-Original.iloc[k]['Y'])**2)\
-                                      +(abs(Original.iloc[j]['Z']-Original.iloc[k]['Z'])**2))) <= 1:
+                        if (math.sqrt((abs(Original.iloc[j]['X']-Original.iloc[k]['X'])**2)+(abs(Original.iloc[j]['Y']-Original.iloc[k]['Y'])**2)+(abs(Original.iloc[j]['Z']-Original.iloc[k]['Z'])**2))) <= 1:
                             Hydrogen_ToRemove.append(k)
                             
     New = []
-    # Do multiple loops in order to append all atom types at once
     for i in range(0,len(Original)):
         if i in (Sulfur_ToRemove):
             Original.loc[i,'Atom'] = 'H' # Replace sulfur from Sulfur_ToRemove with Hydrogen
@@ -75,22 +72,22 @@ def Remove_Sulfonate(Iteration):
 
     New = pd.DataFrame(New)
     
-    with open('COF141-60S.xyz') as f:
+    with open(Filename) as f:
         no_atoms = f.readline()
         header = f.readline()
     
-    with open('COF141-50S.xyz', 'w') as f:
+    with open('tmp.xyz', 'w') as f:
         f.write('500\n')
         f.write(header)
     
-    with open('COF141-50S.xyz', 'a') as f:
+    with open('tmp.xyz', 'a') as f:
         NewCoords = New.to_string(header=False, index=False)
         f.write(NewCoords)
     
     from ase.io import read
-    convert = read('COF141-50S.xyz').write('Random%s.vasp' % Iteration)
+    convert = read('tmp.xyz').write('Random%s.vasp' % Iteration)
     
-    os.remove('COF141-50S.xyz')
+    os.remove('tmp.xyz')
     
-    for i in range(1,11):
+for i in range(1,11):
     Remove_Sulfonate(i)
