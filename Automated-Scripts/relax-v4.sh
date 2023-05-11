@@ -151,10 +151,10 @@ scc1 () {
       elif (($5 == 8)) && (($6 == 1)); then
         TASK=4
         submit_dftb_teton $TASK $6 $3 
-    else
-      TASK=16
-      CPUS=1
-      submit_dftb_teton $TASK $CPUS $3
+      else
+        TASK=16
+        CPUS=1
+        submit_dftb_teton $TASK $CPUS $3
       fi
     fi
   elif [[ $1 == 'inv-desousa' ]]; then
@@ -165,6 +165,7 @@ scc1 () {
       elif (($5 == 8)) && (($6 == 1)); then
         TASK=4
         submit_dftb_desousa $TASK $6 $3 
+      fi
     else
       TASK=16
       CPUS=1
@@ -283,30 +284,18 @@ scc2 () {
 # $8 = $COF
 # $9 = $RESULT
   if [[ $1 == 'teton' ]]; then
-    if (($2 <= 80)); then
-      TASK=4
+    if [[ $4 != 'none' ]]; then
+      if (($5 == 16)) && (($6 == 1)); then
+        TASK=8
+        submit_dftb_teton $TASK $6 $3
+      elif (($5 == 8)) && (($6 == 1)); then
+        TASK=4
+        submit_dftb_teton $TASK $6 $3 
+      fi
+    else
+      TASK=16
       CPUS=1
       submit_dftb_teton $TASK $CPUS $3
-    elif (($2 > 80)); then
-      if [[ $4 != 'none' ]]; then
-        if (($5 == 16)) && (($6 == 1)); then
-          CPUS=2
-          submit_dftb_teton $5 $CPUS $3
-        elif (($5 == 16)) && (($6 == 2)); then
-          TASK=8
-          submit_dftb_teton $TASK $6 $3
-        elif (($5 == 8)) && (($6 == 2)); then
-          CPUS=1
-          submit_dftb_teton $5 $CPUS $3
-        elif (($5 == 8)) && (($6 == 1)); then
-          CPUS=4
-          submit_dftb_teton $5 $CPUS $3
-        fi
-      else
-        TASK=16
-        CPUS=1
-        submit_dftb_teton $TASK $CPUS $3
-      fi
     fi
   elif [[ $1 == 'inv-desousa' ]]; then
     if [[ $4 != 'none' ]]; then
@@ -316,9 +305,6 @@ scc2 () {
       elif (($5 == 8)) && (($6 == 1)); then
         TASK=4
         submit_dftb_desousa $TASK $6 $3 
-      elif (($5 == 4)) && (($6 == 1)); then
-        CPU=5
-        submit_dftb_desousa $5 $CPUS $3
       fi
     else
       TASK=16
@@ -615,18 +601,6 @@ STALL='none'
 TASK=16
 CPUS=1
 JOBNAME="$COF-scc-$TOL"
-
-if [ ! -d "Relax" ]; then
-  mkdir Relax
-  cp $GEO Relax
-  rm $GEO
-  if [[ $RESTART == 'yes' ]]; then
-    cp charges.bin Relax
-    rm charges.bin 
-  fi
-fi
-
-cd Relax # Change to the working directory for the following calculations
 
 # Read input geometry file to get atom types and number of atoms  
 if [[ $GEO == *"gen"* ]]; then
