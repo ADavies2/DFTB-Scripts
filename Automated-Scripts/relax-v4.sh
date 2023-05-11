@@ -197,7 +197,7 @@ scc1 () {
               fi
               cp detailed* $3.log '1e-4-Out.gen' '1e-4-Out.xyz' charges.bin eigenvec.bin submit_$3 '1e-4-Outputs/'
               cp charges.dat "1e-4-Outputs/$COF-charges.dat"
-              rm *out *log *xyz *gen *bin submit* *dat *xml
+              rm $3.out *log *xyz *gen *bin submit* *dat *xml
               RESULT='success1'
               STALL='none'
               break
@@ -206,7 +206,7 @@ scc1 () {
                 mkdir $7-Outputs
               fi
               cp detailed.out $3.log $7-Out.gen $7-Out.xyz charges.bin submit_$3 $7-Outputs/
-              rm *out *xyz submit*
+              rm $3.out *xyz submit*
               sed -i 's/.*Geometry.*/Geometry = GenFormat {/g' dftb_in.hsd
               sed -i "s/.*<<<.*/  <<< ""$7-Out.gen""/g" dftb_in.hsd
               sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd           
@@ -337,7 +337,7 @@ scc2 () {
               fi
               cp detailed* $3.log '1e-4-Out.gen' '1e-4-Out.xyz' eigenvec.bin charges.bin submit_$3 '1e-4-Outputs/'
               cp charges.dat "1e-4-Outputs/$COF-charges.dat"
-              rm *out *log *xyz *gen charges* submit* *bin *xml
+              rm $3.out *log *xyz *gen charges* submit* *bin *xml
               RESULT='success1'
               STALL='none'
               break
@@ -346,7 +346,7 @@ scc2 () {
                 mkdir $7-Outputs
               fi
               cp detailed.out $3.log $7-Out.gen $7-Out.xyz charges.bin submit_$3 $7-Outputs/
-              rm *out *xyz submit*
+              rm $3.out *xyz submit*
               sed -i 's/.*Geometry.*/Geometry = GenFormat {/g' dftb_in.hsd
               sed -i "s/.*<<<.*/  <<< ""$7-Out.gen""/g" dftb_in.hsd
               sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd
