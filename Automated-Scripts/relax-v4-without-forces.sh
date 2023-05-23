@@ -151,11 +151,11 @@ scc1 () {
       elif (($5 == 8)) && (($6 == 1)); then
         TASK=4
         submit_dftb_teton $TASK $6 $3 
-      else
-        TASK=16
-        CPUS=1
-        submit_dftb_teton $TASK $CPUS $3
       fi
+    else
+      TASK=16
+      CPUS=1
+      submit_dftb_teton $TASK $CPUS $3
     fi
   elif [[ $1 == 'inv-desousa' ]]; then
     if [[ $4 != 'none' ]]; then
