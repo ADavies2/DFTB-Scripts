@@ -38,7 +38,25 @@ MOMENTUM[Zn]=d
 
 # Declare an associative array for the atomic/gaseous phase energy for each element (calculated so far)
 declare -A ATOMIC_ENERGY
-ATOMIC_ENERGY[C]=
+ATOMIC_ENERGY[C]=-38.055
+ATOMIC_ENERGY[H]=-6.4926
+ATOMIC_ENERGY[N]=-57.2033
+ATOMIC_ENERGY[O]=-83.9795
+ATOMIC_ENERGY[S]=-62.3719
+ATOMIC_ENERGY[Br]=-79.5349
+ATOMIC_ENERGY[F]=-115.2462
+ATOMIC_ENERGY[Cl]=-84.1056
+
+# Declare an associative array for the reference state energy for each element (calculated so far)
+declare -A REFERENCE_ENERGY
+REFERENCE_ENERGY[C]=-44.1197
+REFERENCE_ENERGY[H]=-9.1083
+REFERENCE_ENERGY[N]=-65.4249
+REFERENCE_ENERGY[O]=-87.7172
+REFERENCE_ENERGY[S]=-65.7086
+REFERENCE_ENERGY[Br]=-81.167
+REFERENCE_ENERGY[F]=-117.3936
+REFERENCE_ENERGY[Cl]=-86.2041
 
 scc_dftb_in () {
 # 1 = $GEO
@@ -138,9 +156,46 @@ ParserOptions {
   fi 
 }
 
+calculate_energies () {
+# $1 = $GEO
+  if [[ $1 == *"gen"* ]]; then
+    module load arcc/1.0 python/2.7.18
+    printf "$1\ntmp-POSCAR" | gen-to-POSCAR.py
+    GEO='tmp-POSCAR'
+  fi
+  ATOM_TYPES=($(sed -n 6p $GEO))
+  N_TYPES=($(sed -n 7p $GEO))
+  N_ATOMS=0
+  for i in ${N_TYPES[@]}; do
+    let N_ATOMS+=$i
+    done
+
+  E_atom=0
+  E_ref=0
+  count=0
+  for element in ${ATOM_TYPES[@]}; do
+    E_atom=$(echo $E_atom+${ATOMIC_ENERGY[$element]}*${N_TYPES[$count]} | bc)
+    E_ref=$(echo $E_ref+${REFERENCE_ENERGY[$element]}*${N_TYPES[$count]} | bc)
+    ((count++))
+  done
+
+  DETAILED=($(grep "Total energy" detailed.out))
+  TOTAL_ENERGY=${DETAILED[4]}
+
+  COHESIVE=$(echo "scale=3; ($E_atom - $TOTAL_ENERGY) / $N_ATOMS" | bc)
+  ENTHALPY=$(echo "scale=3; ($TOTAL_ENERGY - $E_ref) / $N_ATOMS" | bc)
+
+  cat > Energies.dat <<!
+E(COH) $COHESIVE eV
+H(f) $ENTHALPY eV
+!
+
+  rm tmp-POSCAR
+}
+
 scc1 () {
 # $1 = $PARTITION
-# $2 = $NO_ATOMS
+# $2 = $N_ATOMS
 # $3 = $JOBNAME
 # $4 = $STALL
 # $5 = $TASK
@@ -452,6 +507,9 @@ if [[ $STALL == 'scc1' ]]; then
   scc1 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF
 else
   if [ $RESULT == 'success1' ]; then
+    cd 1e-4-Outputs
+    calculate_energies '1e-4-Out.gen'
+    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -466,6 +524,9 @@ elif [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
+    cd 1e-4-Outputs
+    calculate_energies '1e-4-Out.gen'
+    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -489,6 +550,9 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
+    cd 1e-4-Outputs
+    calculate_energies '1e-4-Out.gen'
+    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -510,6 +574,9 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
+    cd 1e-4-Outputs
+    calculate_energies '1e-4-Out.gen'
+    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -531,6 +598,9 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
+    cd 1e-4-Outputs
+    calculate_energies '1e-4-Out.gen'
+    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -552,6 +622,9 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
+    cd 1e-4-Outputs
+    calculate_energies '1e-4-Out.gen'
+    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -573,6 +646,9 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
+    cd 1e-4-Outputs
+    calculate_energies '1e-4-Out.gen'
+    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -594,6 +670,9 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
+    cd 1e-4-Outputs
+    calculate_energies '1e-4-Out.gen'
+    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -615,6 +694,9 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
+    cd 1e-4-Outputs
+    calculate_energies '1e-4-Out.gen'
+    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -636,6 +718,9 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
+    cd 1e-4-Outputs
+    calculate_energies '1e-4-Out.gen'
+    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -657,6 +742,9 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
+    cd 1e-4-Outputs
+    calculate_energies '1e-4-Out.gen'
+    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -678,6 +766,9 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
+    cd 1e-4-Outputs
+    calculate_energies '1e-4-Out.gen'
+    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -699,6 +790,9 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $N_ATOMS $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
+    cd 1e-4-Outputs
+    calculate_energies '1e-4-Out.gen'
+    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
