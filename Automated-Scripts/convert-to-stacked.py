@@ -23,7 +23,7 @@ if SimCell.iloc[2,0] > SimCell.iloc[2,1]:
 else:
     AB_Shift = -1*SimCell.iloc[2,0]
 
-lines = open('Input.gen', 'r').readlines()
+lines = open('1e-4-Out.gen', 'r').readlines()
 
 AB_new_line = ['', str(SimCell.iloc[3,0]), str(AB_Shift), str(LayerSpacing)]
 AA_new_line = ['', str(SimCell.iloc[3,0]), str(SimCell.iloc[3,1]), str(LayerSpacing)]
