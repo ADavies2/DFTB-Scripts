@@ -18,10 +18,23 @@ MinZ = min(Coordinates['Z'])
 LowestZ_Allowed = MaxZ+2
 LayerSpacing = LowestZ_Allowed-MinZ
 
-lines = open('1e-4-Out.gen', 'r').readlines()
+if SimCell.iloc[2,0] > SimCell.iloc[2,1]:
+    AB_Shift = -1*SimCell.iloc[2,1]
+else:
+    AB_Shift = -1*SimCell.iloc[2,0]
 
-new_line = [' ', str(SimCell.iloc[3,0]), str(SimCell.iloc[3,1]), str(SimCell.iloc[3,2])]
-converted_new_line = convert(new_line)
-lines[-1] = str(converted_new_line)
+lines = open('Input.gen', 'r').readlines()
 
-open('Stacked-Input.gen', 'w').writelines(lines)
+AB_new_line = ['', str(SimCell.iloc[3,0]), str(AB_Shift), str(LayerSpacing)]
+AA_new_line = ['', str(SimCell.iloc[3,0]), str(SimCell.iloc[3,1]), str(LayerSpacing)]
+
+converted_AB = convert(AB_new_line)
+converted_AA = convert(AA_new_line)
+
+lines[-1] = converted_AA
+
+open('AA-Input.gen', 'w').writelines(lines)
+
+lines[-1] = converted_AB
+
+open('AB-Input.gen', 'w').writelines(lines)
