@@ -15,7 +15,7 @@ SimCell = SimCell[-4:]
 MaxZ = max(Coordinates['Z'])
 MinZ = min(Coordinates['Z'])
 
-LowestZ_Allowed = MaxZ+2
+LowestZ_Allowed = MaxZ+1.5
 LayerSpacing = LowestZ_Allowed-MinZ
 
 if SimCell.iloc[2,0] > SimCell.iloc[2,1]:
