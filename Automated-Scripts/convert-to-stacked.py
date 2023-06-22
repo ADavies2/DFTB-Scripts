@@ -18,10 +18,12 @@ MinZ = min(Coordinates['Z'])
 LowestZ_Allowed = MaxZ+1.5
 LayerSpacing = LowestZ_Allowed-MinZ
 
-if SimCell.iloc[2,0] > SimCell.iloc[2,1]:
-    AB_Shift = -1*SimCell.iloc[2,1]
-else:
-    AB_Shift = -1*SimCell.iloc[2,0]
+AB_Shift = -1*SimCell.iloc[2,1]/2 # Shift the zy index by this value for AB
+
+#if SimCell.iloc[2,0] > SimCell.iloc[2,1]:
+#    AB_Shift = -1*SimCell.iloc[2,1]
+#else:
+#    AB_Shift = -1*SimCell.iloc[2,0]
 
 lines = open('1e-4-Out.gen', 'r').readlines()
 
