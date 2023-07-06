@@ -1,0 +1,27 @@
+This is a standard operating procedure for restarting DFTB+ MD calculations
+
+After your first calculation has finished or timed-out, you will need the following files:
+    md.out
+    geo-end.xyz
+    geo-end.gen
+    charges.bin
+    <jobname>.log
+
+1. Save md.out and geo-end.xyz in a separate directory under unique names. You will need the md.out file to extract the lattice parameters for each timestep, required for proper construction of the .xyz file
+2. Copy geo-end.gen into a file called 'Input.gen'. This will be your initial geometry for the restart calculation.
+3. Look in <jobname>.log for the line 'Specified random seed:'
+    a. Copy the number from that line
+4. Now, we will edit dftb_in.hsd in order to read in the proper information for a restart calculation
+    a. Add the following lines of data to dftb_in.hsd...
+Options {
+  RandomSeed = <Specified random seed number>
+}
+    ... where you will put the copied random seed number from <jobname>.log into the value "RandomSeed"
+    b. Change the geometry command to the following...
+Geometry = GenFormat {
+  <<< Input.gen
+}
+    c. Include "ReadInitialCharges = Yes" under the "Hamiltonian = DFTB {}" block of script
+    d. For an NVE calculation, you will do the following...
+        I. Under the "Driver = VelocityVerlet {}" block of script, you will keep MovedAtoms, Steps, Timestep, OutputPrefix, and MDRestartFrequency. 
+        II. You will include the command Velocities [AA/ps]
