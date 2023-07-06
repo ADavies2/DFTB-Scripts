@@ -256,7 +256,7 @@ scc1 () {
               fi
               cp detailed* $3.log '1e-4-Out.gen' '1e-4-Out.xyz' charges.bin eigenvec.bin submit_$3 '1e-4-Outputs/'
               cp charges.dat "1e-4-Outputs/$COF-charges.dat"
-              rm $3.out *log *xyz *gen *bin submit_$3 *dat *xml detailed.out band.out dftb*
+              rm $3.out *log *xyz *gen *bin submit_$3 *dat *xml detailed.out band.out
               RESULT='success1'
               STALL='none'
               break
@@ -391,7 +391,7 @@ scc2 () {
               fi
               cp detailed* $3.log '1e-4-Out.gen' '1e-4-Out.xyz' eigenvec.bin charges.bin submit_$3 '1e-4-Outputs/'
               cp charges.dat "1e-4-Outputs/$COF-charges.dat"
-              rm $3.out *log *xyz *gen *bin submit_$3 *dat *xml detailed.out band.out dftb*
+              rm $3.out *log *xyz *gen *bin submit_$3 *dat *xml detailed.out band.out
               RESULT='success1'
               STALL='none'
               break
