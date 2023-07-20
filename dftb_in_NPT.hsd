@@ -1,0 +1,69 @@
+Geometry = VASPFormat {
+  <<< Input-POSCAR
+}
+
+Driver = VelocityVerlet {
+  TimeStep [fs] = 1.0
+  MovedAtoms = 1:-1
+  Steps = 1000
+  MDRestartFrequency = 20
+  OutputPrefix = NPT1
+  Thermostat = NoseHoover {
+    Temperature [Kelvin] = 600
+    CouplingStrength [cm^-1] = 3200 }
+  Barostat = {
+    Pressure [Pa] = 101325
+    Timescale [fs] = 50
+    Isotropic = No
+  }
+}
+
+Hamiltonian = DFTB {
+  SCC = Yes
+  MaxSCCIterations = 2000
+  ReadInitialCharges = No
+  Dispersion = LennardJones {
+    Parameters = UFFParameters {}
+  }
+  ThirdOrderFull = Yes
+  HCorrection = Damping {
+    Exponent = 4.05
+  }
+  HubbardDerivs {
+  H = -0.07
+  C = -0.1492
+  N = -0.1535
+  Br = -0.0573
+  O = -0.1575
+  F = -0.1623
+}
+  SlaterKosterFiles = Type2FileNames {
+    Prefix = "/project/designlab/Shared/Codes/dftb+sk/3ob-3-1/"
+    Separator = "-"
+    Suffix = ".skf"
+  }
+  KPointsAndWeights = {
+    0.0 0.0 0.0 1.0
+  }
+  MaxAngularMomentum = {
+    H = "s"
+    C = "p"
+    N = "p"
+    Br = "d"
+    O = "p"
+    F = "p"
+  }
+}
+
+Parallel {
+  Groups = 1
+  UseOmpThreads = Yes
+}
+
+ParserOptions {
+  ParserVersion = 12
+}
+
+Options {
+  RandomSeed = 0
+}
