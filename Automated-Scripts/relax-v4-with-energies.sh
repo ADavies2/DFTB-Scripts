@@ -46,6 +46,7 @@ ATOMIC_ENERGY[S]=-62.3719
 ATOMIC_ENERGY[Br]=-79.5349
 ATOMIC_ENERGY[F]=-115.2462
 ATOMIC_ENERGY[Cl]=-84.1056
+ATOMIC_ENERGY[K]=-2.3186
 
 # Declare an associative array for the reference state energy for each element (calculated so far)
 declare -A REFERENCE_ENERGY
@@ -57,6 +58,7 @@ REFERENCE_ENERGY[S]=-65.7086
 REFERENCE_ENERGY[Br]=-81.167
 REFERENCE_ENERGY[F]=-117.3936
 REFERENCE_ENERGY[Cl]=-86.2041
+REFERENCE_ENERGY[K]=-3.4933
 
 scc_dftb_in () {
 # 1 = $GEO
