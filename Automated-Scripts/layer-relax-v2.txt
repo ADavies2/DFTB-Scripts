@@ -1,0 +1,16 @@
+# Test for XYZ scanning
+
+## PSEUDO CODE
+
+1. Input.vasp with AA stacked COF
+    a. Read Input.vasp and set-up dftb_in.hsd for single-point calculation at z = 6 Ang
+    b. Run single-point DFTB calculation
+    c. Copy Total Energy to .dat file (X Y Z Energy)
+    d. Repeat single point for z = 5, 4, and 3 Ang
+
+2. Change zy by 10% simulation cell (x = AA or 0%)
+    a. Run single-point DFTB calculation at z = 6 Ang
+    b. Copy Total Energy to .dat file
+    c. Repeat for z = 5, 4 and 3 Ang
+
+3. Continue repeating for zy = 0% - 50% 
