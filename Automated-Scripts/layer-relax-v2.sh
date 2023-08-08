@@ -36,6 +36,7 @@ MOMENTUM[P]=d
 MOMENTUM[S]=d
 MOMENTUM[Zn]=d
 
+# Write a dftb_in.hsd file for a single-point calculation
 dftb_in () {
 # 1 = $GEO
 # 2 = myHUBBARD
@@ -90,3 +91,17 @@ ParserOptions {
   ParserVersion = 12 }
 !
 
+# Read in starting structure file, which should be an optimized monolayer
+# Set-up the dftb_in.hsd file 
+# Submit the calculation and check for completion
+# Grep the total energy value from detailed.out and save to a .dat file
+
+# Repeat this process for varying values of Z, X%, and Y%
+
+# Instruction file containing the name of the initial structure file and COF name
+INSTRUCT=$1
+
+COF=($(sed -n 1p $INSTRUCT))
+GEO=($(sed -n 2p $INSTRUCT))
+
+# Generate geometry and tests for the Z scanning

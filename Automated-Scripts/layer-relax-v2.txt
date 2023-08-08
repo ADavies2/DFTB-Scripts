@@ -6,7 +6,7 @@
 2. Replicate to two layers of COF
     a. Scan XYZ stacking and offset to determine PES
         I. When scanning in Z, the simulation cell in Z is changed to a set length and the cell is replicated
-        Lengths that will be tested are 2, 3, 4, and 6 angstroms above the MAX Z coordinate
+        Lengths that will be tested are 2, 4, 6 and 8 angstroms above the MAX Z coordinate
         II. When scanning in X, the simulation cell is replicated and the atom positions of the second layer are shifted by a percent of the simulation cell
         III. When scanning in Y, perform same as in X but with Y simulation cell
         NOTE: Scanning will be done in increments of 20%
