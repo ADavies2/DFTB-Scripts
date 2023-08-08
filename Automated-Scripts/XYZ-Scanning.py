@@ -16,7 +16,10 @@ def Generate_New_VASP(Filename, COF, Axis, Change):
 # Change the cell parameter in the decided axis by the given amount
 # If changing Z, change the simulation cell parameters
     if Axis == 'Z':
-        Cell[2,2] = Change
+        Change = float(Change)
+        Positions = Monolayer.get_positions()
+        MaxZ = max(Positions[:,2])
+        Cell[2,2] = Change+MaxZ
         Monolayer.set_cell(Cell)
         TwoLayer = Monolayer.repeat([1,1,2])
 # If changing X or Y, shift the positions of the second layer of atoms
@@ -33,6 +36,7 @@ def Generate_New_VASP(Filename, COF, Axis, Change):
                 TwoLayer[i].position[1] += y_shift
 # At this point, either the system has been replicated (in the case of Z scanning) or the coordinates of the replicated atoms have been shifted (in the case of X and Y scanning)
     ase.io.write(f'{COF}-{Change}{Axis}-POSCAR', images=TwoLayer, format='vasp')
+    print(f'{COF}-{Change}{Axis}-POSCAR')
 
 Filename = input('Filename: ')
 COF = input('COF: ')

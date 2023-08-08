@@ -58,7 +58,7 @@ HCorrection = Damping {
   Exponent = 4.05 }
 HubbardDerivs {
 !
-  hubbard=$4[@]
+  hubbard=$2[@]
   sccHUBBARD=("${!hubbard}")
   printf "%s\n" "${sccHUBBARD[@]} }" >> dftb_in.hsd
   cat >> dftb_in.hsd <<!
@@ -73,7 +73,7 @@ KPointsAndWeights = SupercellFolding {
   0.5 0.5 0.5 }
 MaxAngularMomentum {
 !
-  momentum=$5[@]
+  momentum=$3[@]
   sccMOMENTUM=("${!momentum}")
   printf "%s\n" "${sccMOMENTUM[@]} }" >> dftb_in.hsd
   cat >> dftb_in.hsd <<!
@@ -90,9 +90,72 @@ Parallel = {
 ParserOptions {
   ParserVersion = 12 }
 !
+}
+
+submit_calculation () {
+# 1 = $GEO
+# 2 = $COF
+# 3 = $AXIS
+# 4 = $CHANGE
+# 5 = $PARTITION
+
+# Generate geometry file for testing from monolayer
+  NewFILE=($(printf "$1\n$2\n$3\n$4\n" | XYZ-Scanning.py))
+  NewFILE=(${NewFILE[7]})
+  ATOM_TYPES=($(sed -n 6p $NewFILE))
+
+# Read atom types into a function for angular momentum and Hubbard derivative values
+  declare -A myHUBBARD
+  declare -A myMOMENTUM
+  nl=$'\n'
+  for element in ${ATOM_TYPES[@]}; do
+    myHUBBARD[$element]="$element = ${HUBBARD[$element]}"
+    myMOMENTUM[$element]="$element = ${MOMENTUM[$element]}"
+  done
+
+# Write dftb_in.hsd reading in NewFILE
+  dftb_in $NewFILE myHUBBARD myMOMENTUM
+
+# Submit calculation
+  TASK=8
+  CPU=1
+  JOBNAME="$2-$4$3"
+  if [[ $5 == 'teton' ]]; then
+    submit_dftb_teton $TASK $CPU $JOBNAME
+    sleep 5s
+  elif [[ $5 == 'inv-desousa' ]]; then
+    submit_dftb_desousa $TASK $CPU $JOBNAME
+    sleep 5s
+  fi
+  while :
+  do
+    stat=($(squeue -n $JOBNAME))
+    jobstat=(${stat[12]})
+    JOBID=(${stat[8]})
+    if [ "$jobstat" == "PD" ]; then
+      echo "$JOBNAME is pending..."
+      sleep 5s
+    else
+      if grep -q "SCC converged" detailed.out; then
+        DETAILED=($(grep "Total energy" detailed.out))
+        TOTAL_ENERGY=${DETAILED[4]}
+        cat >> Z.dat <<!
+$4 $TOTAL_ENERGY
+!
+        break
+      elif grep -q "SCC is NOT converged" $JOBNAME.log; then
+        echo "SCC did not converge. User-trouble shoot required."
+        exit
+      else
+        echo "$JOBNAME is running..."
+        sleep 10s
+      fi
+    fi
+  done
+}
 
 # Read in starting structure file, which should be an optimized monolayer
-# Set-up the dftb_in.hsd file 
+# Set-up the dftb_in.hsd file
 # Submit the calculation and check for completion
 # Grep the total energy value from detailed.out and save to a .dat file
 
@@ -101,7 +164,26 @@ ParserOptions {
 # Instruction file containing the name of the initial structure file and COF name
 INSTRUCT=$1
 
-COF=($(sed -n 1p $INSTRUCT))
-GEO=($(sed -n 2p $INSTRUCT))
+GEO=($(sed -n 1p $INSTRUCT))
+COF=($(sed -n 2p $INSTRUCT))
+PARTITION=($(sed -n 3p $INSTRUCT))
 
-# Generate geometry and tests for the Z scanning
+# Conduct Z scanning first
+AXIS='Z'
+CHANGE=0
+submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION
+
+CHANGE=1
+submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION
+
+CHANGE=2
+submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION
+
+CHANGE=4
+submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION
+
+CHANGE=6
+submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION
+
+CHANGE=8
+submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION

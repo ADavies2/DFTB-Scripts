@@ -12,6 +12,14 @@
         NOTE: Scanning will be done in increments of 20%
         QUESTION: Does 50% in X == 50% in Y?
     b. Optimize at this position
+        I. Generate geomtry
+        II. Generate dftb_in.hsd
+        
+        III. Submit calculation and check completed status
+        IV. Write 'Total energy' to .dat file
+        V. Change the value of 'Change' and re-run
+
+
 3. Calculate stacking energy, enthalpy of formation, and cohesive energy
     a. Enthalpy of formation for two layers in unit cell
     b. Cohesive energy for two layers in unit cell
