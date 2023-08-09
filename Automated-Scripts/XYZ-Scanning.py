@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # This is a Python function that generates the .vasp file for single-point calculation scanning of the X, Y, Z offset and layer stacking in order to generate a potential energy surface and determine a starting configuration with the most favorable potential energy
+# NOTE: In order for this script to work correctly with the automated bash scripts, Python version 3 MUST be used for ASE
 
 import ase.io
 

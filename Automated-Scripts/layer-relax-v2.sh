@@ -50,7 +50,7 @@ Driver = { }
 
 Hamiltonian = DFTB {
 SCC = Yes
-MaxSCCIterations = 5000
+MaxSCCIterations = 100
 ThirdOrderFull = Yes
 Dispersion = LennardJones {
   Parameters = UFFParameters{} }
@@ -117,7 +117,7 @@ submit_calculation () {
   dftb_in $NewFILE myHUBBARD myMOMENTUM
 
 # Submit calculation
-  TASK=8
+  TASK=16
   CPU=1
   JOBNAME="$2-$4$3"
   if [[ $5 == 'teton' ]]; then
@@ -144,8 +144,11 @@ $4 $TOTAL_ENERGY
 !
         break
       elif grep -q "SCC is NOT converged" $JOBNAME.log; then
-        echo "SCC did not converge. User-trouble shoot required."
-        exit
+        echo "SCC did not converge."
+        cat >> Z.dat <<!
+$4 SCC did NOT converge
+!
+        break
       else
         echo "$JOBNAME is running..."
         sleep 10s
@@ -170,9 +173,6 @@ PARTITION=($(sed -n 3p $INSTRUCT))
 
 # Conduct Z scanning first
 AXIS='Z'
-CHANGE=0
-submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION
-
 CHANGE=1
 submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION
 
