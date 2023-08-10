@@ -104,10 +104,8 @@ submit_calculation () {
   NewFILE=($(printf "$1\n$2\n$3\n$4\n$6\n" | XYZ-Scanning.py))
   if [[ $3 == 'Z' ]]; then
     NewFILE=(${NewFILE[7]})
-    echo "$NewFILE"
-  else
+  elif [[ $3 == 'X' || $3 == 'Y' ]]; then
     NewFILE=(${NewFILE[9]})
-    echo "$NewFILE"
   fi
   ATOM_TYPES=($(sed -n 6p $NewFILE))
 
@@ -191,6 +189,6 @@ if [[ $AXIS == 'Z' ]]; then
   OPTZ=0
   submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION $OPTZ
 elif [[ $AXIS == 'X' || $AXIS == 'Y' ]]; then
-  OPTZ='1.8'
+  OPTZ=($(sed -n 4p $INSTRUCT))
   submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION $OPTZ
 fi

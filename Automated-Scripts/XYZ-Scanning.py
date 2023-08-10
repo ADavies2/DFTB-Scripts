@@ -48,8 +48,10 @@ def Generate_New_VASP(Filename, COF, Axis, Change, Optimized_Z):
 Filename = input('Filename: ')
 COF = input('COF: ')
 Axis = input('Axis: ').upper()
+Change = input('Integer or Percent Decimal: ')
 if Axis == 'X' or Axis == 'Y':
     OptZ = input('Optimized Z: ')
-Change = input('Integer or Percent Decimal: ')
+else:
+    OptZ = 0
 
 Generate_New_VASP(Filename, COF, Axis, Change, OptZ)
