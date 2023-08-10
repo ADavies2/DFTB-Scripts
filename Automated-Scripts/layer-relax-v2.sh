@@ -137,6 +137,7 @@ submit_calculation () {
       sleep 5s
     else
       if grep -q "SCC converged" detailed.out; then
+        echo "Job complete."
         DETAILED=($(grep "Total energy" detailed.out))
         TOTAL_ENERGY=${DETAILED[4]}
         cat >> Z.dat <<!
@@ -149,6 +150,9 @@ $4 $TOTAL_ENERGY
 $4 SCC did NOT converge
 !
         break
+      elif grep -q "ERROR!" $JOBNAME.log; then
+        echo "DFTB+ Error. User trouble-shoot required."
+        exit
       else
         echo "$JOBNAME is running..."
         sleep 10s
@@ -163,6 +167,9 @@ $4 SCC did NOT converge
 # Grep the total energy value from detailed.out and save to a .dat file
 
 # Repeat this process for varying values of Z, X%, and Y%
+
+# Must be used with Python 3. Automatically load modules.
+module load gcc/11.2.0 python/3.10.8
 
 # Instruction file containing the name of the initial structure file and COF name
 INSTRUCT=$1
