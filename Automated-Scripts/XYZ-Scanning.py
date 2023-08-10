@@ -5,19 +5,20 @@
 
 import ase.io
 
-def Generate_New_VASP(Filename, COF, Axis, Change):
+def Generate_New_VASP(Filename, COF, Axis, Change, Optimized_Z):
 # Filename should be either a path to a VASP file or the VASP filename if located in directory
 # Axis should be X, Y, or Z, which indicates which cell parameter will be changed
 # Change should be either an integer (for Z) or a decimal indicating a percent of the simulation cell (for X and Y)
+# If the Z scanning has been done, an optimum Z spacing has been determined. This script will ask for that optimized framework before moving into generating the X and Y scanning geometries.
 # Provided with the filename (assuming a VASP file) of a COF monolayer, read the file in as an Atoms object
     import ase.io
     Monolayer = ase.io.read(Filename, format='vasp')
     Cell = Monolayer.get_cell()
     Total_Atoms = len(Monolayer)
+    Change = float(Change)
 # Change the cell parameter in the decided axis by the given amount
 # If changing Z, change the simulation cell parameters
     if Axis == 'Z':
-        Change = float(Change)
         Positions = Monolayer.get_positions()
         MaxZ = max(Positions[:,2])
         Cell[2,2] = Change+MaxZ
@@ -26,6 +27,11 @@ def Generate_New_VASP(Filename, COF, Axis, Change):
 # If changing X or Y, shift the positions of the second layer of atoms
 # This is assuming that the Z has already been scanned at AA stacking
     if Axis == 'X' or Axis == 'Y':
+        Optimized_Z = float(Optimized_Z)
+        Positions = Monolayer.get_positions()
+        MaxZ = max(Positions[:,2])
+        Cell[2,2] = Optimized_Z+MaxZ
+        Monolayer.set_cell(Cell)
         TwoLayer = Monolayer.repeat([1,1,2])
         if Axis == 'X':
             x_shift = Change*Cell[0,0] # Shift coordinates by Change % of the unit cell in X
@@ -42,6 +48,8 @@ def Generate_New_VASP(Filename, COF, Axis, Change):
 Filename = input('Filename: ')
 COF = input('COF: ')
 Axis = input('Axis: ').upper()
+if Axis == 'X' or Axis == 'Y':
+    OptZ = input('Optimized Z: ')
 Change = input('Integer or Percent Decimal: ')
 
-Generate_New_VASP(Filename, COF, Axis, Change)
+Generate_New_VASP(Filename, COF, Axis, Change, OptZ)

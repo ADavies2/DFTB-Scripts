@@ -98,10 +98,17 @@ submit_calculation () {
 # 3 = $AXIS
 # 4 = $CHANGE
 # 5 = $PARTITION
+# 6 = $OPTZ
 
 # Generate geometry file for testing from monolayer
-  NewFILE=($(printf "$1\n$2\n$3\n$4\n" | XYZ-Scanning.py))
-  NewFILE=(${NewFILE[7]})
+  NewFILE=($(printf "$1\n$2\n$3\n$4\n$6\n" | XYZ-Scanning.py))
+  if [[ $3 == 'Z' ]]; then
+    NewFILE=(${NewFILE[7]})
+    echo "$NewFILE"
+  else
+    NewFILE=(${NewFILE[9]})
+    echo "$NewFILE"
+  fi
   ATOM_TYPES=($(sed -n 6p $NewFILE))
 
 # Read atom types into a function for angular momentum and Hubbard derivative values
@@ -140,13 +147,13 @@ submit_calculation () {
         echo "Job complete."
         DETAILED=($(grep "Total energy" detailed.out))
         TOTAL_ENERGY=${DETAILED[4]}
-        cat >> Z.dat <<!
+        cat >> $3.dat <<!
 $4 $TOTAL_ENERGY
 !
         break
       elif grep -q "SCC is NOT converged" $JOBNAME.log; then
         echo "SCC did not converge."
-        cat >> Z.dat <<!
+        cat >> $3.dat <<!
 $4 SCC did NOT converge
 !
         break
@@ -168,7 +175,6 @@ $4 SCC did NOT converge
 
 # Repeat this process for varying values of Z, X%, and Y%
 
-# Must be used with Python 3. Automatically load modules.
 module load gcc/11.2.0 python/3.10.8
 
 # Instruction file containing the name of the initial structure file and COF name
@@ -179,18 +185,12 @@ COF=($(sed -n 2p $INSTRUCT))
 PARTITION=($(sed -n 3p $INSTRUCT))
 
 # Conduct Z scanning first
-AXIS='Z'
-CHANGE=1
-submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION
-
-CHANGE=2
-submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION
-
-CHANGE=4
-submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION
-
-CHANGE=6
-submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION
-
-CHANGE=8
-submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION
+AXIS='X'
+CHANGE='0.1'
+if [[ $AXIS == 'Z' ]]; then
+  OPTZ=0
+  submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION $OPTZ
+elif [[ $AXIS == 'X' || $AXIS == 'Y' ]]; then
+  OPTZ='1.8'
+  submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION $OPTZ
+fi
