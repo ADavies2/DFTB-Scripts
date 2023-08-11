@@ -94,8 +94,8 @@ ParserOptions {
 
 submit_calculation () {
 # 1 = $COF
-# 2 = $AXIS
-# 3 = $CHANGE
+# 2 = $CHANGE
+# 3 = $AXIS
 # 4 = $PARTITION
 # Submit calculation
   TASK=8
@@ -193,4 +193,4 @@ PARTITION=($(sed -n 3p $INSTRUCT))
 AXIS='X'
 CHANGE='0.1'
 set_up_calculation $GEO $COF $AXIS $CHANGE
-submit_calculation $COF $AXIS $CHANGE $PARTITION
+submit_calculation $COF $CHANGE $AXIS $PARTITION
