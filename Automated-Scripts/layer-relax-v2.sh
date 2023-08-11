@@ -50,7 +50,7 @@ Driver = { }
 
 Hamiltonian = DFTB {
 SCC = Yes
-MaxSCCIterations = 100
+MaxSCCIterations = 50
 ThirdOrderFull = Yes
 Dispersion = LennardJones {
   Parameters = UFFParameters{} }
@@ -93,42 +93,18 @@ ParserOptions {
 }
 
 submit_calculation () {
-# 1 = $GEO
-# 2 = $COF
-# 3 = $AXIS
-# 4 = $CHANGE
-# 5 = $PARTITION
-# 6 = $OPTZ
-
-# Generate geometry file for testing from monolayer
-  NewFILE=($(printf "$1\n$2\n$3\n$4\n$6\n" | XYZ-Scanning.py))
-  if [[ $3 == 'Z' ]]; then
-    NewFILE=(${NewFILE[7]})
-  elif [[ $3 == 'X' || $3 == 'Y' ]]; then
-    NewFILE=(${NewFILE[9]})
-  fi
-  ATOM_TYPES=($(sed -n 6p $NewFILE))
-
-# Read atom types into a function for angular momentum and Hubbard derivative values
-  declare -A myHUBBARD
-  declare -A myMOMENTUM
-  nl=$'\n'
-  for element in ${ATOM_TYPES[@]}; do
-    myHUBBARD[$element]="$element = ${HUBBARD[$element]}"
-    myMOMENTUM[$element]="$element = ${MOMENTUM[$element]}"
-  done
-
-# Write dftb_in.hsd reading in NewFILE
-  dftb_in $NewFILE myHUBBARD myMOMENTUM
-
+# 1 = $COF
+# 2 = $AXIS
+# 3 = $CHANGE
+# 4 = $PARTITION
 # Submit calculation
-  TASK=16
+  TASK=8
   CPU=1
-  JOBNAME="$2-$4$3"
-  if [[ $5 == 'teton' ]]; then
+  JOBNAME="$1-$2$3"
+  if [[ $4 == 'teton' ]]; then
     submit_dftb_teton $TASK $CPU $JOBNAME
     sleep 5s
-  elif [[ $5 == 'inv-desousa' ]]; then
+  elif [[ $4 == 'inv-desousa' ]]; then
     submit_dftb_desousa $TASK $CPU $JOBNAME
     sleep 5s
   fi
@@ -145,13 +121,13 @@ submit_calculation () {
         echo "Job complete."
         DETAILED=($(grep "Total energy" detailed.out))
         TOTAL_ENERGY=${DETAILED[4]}
-        cat >> $3.dat <<!
+        cat >> $2.dat <<!
 $4 $TOTAL_ENERGY
 !
         break
       elif grep -q "SCC is NOT converged" $JOBNAME.log; then
         echo "SCC did not converge."
-        cat >> $3.dat <<!
+        cat >> $2.dat <<!
 $4 SCC did NOT converge
 !
         break
@@ -164,6 +140,37 @@ $4 SCC did NOT converge
       fi
     fi
   done
+}
+
+set_up_calculation () {
+# 1 = $GEO 
+# 2 = $COF
+# 3 = $AXIS
+# 5 = $CHANGE 
+
+# Generate geometry from XYZ-Scanning
+  if [[ $3 == 'Z' ]]; then
+    OPTZ=0
+    NewFILE=($(printf "$1\n$2\n$3\n$4\n$OPTZ\n" | XYZ-Scanning.py))
+    NewFILE=(${NewFILE[7]})
+  elif [[ $3 == 'X' || $3 == 'Y' ]]; then
+    OPTZ=($(sed -n 4p $INSTRUCT))
+    NewFILE=($(printf "$1\n$2\n$3\n$4\n$OPTZ\n" | XYZ-Scanning.py))
+    NewFILE=(${NewFILE[9]})
+  fi
+  ATOM_TYPES=($(sed -n 6p $NewFILE))
+
+# Read atom types into a function for angular momentum and Hubbard derivative values
+  declare -A myHUBBARD
+  declare -A myMOMENTUM
+  nl=$'\n'
+  for element in ${ATOM_TYPES[@]}; do
+    myHUBBARD[$element]="$element = ${HUBBARD[$element]}"
+    myMOMENTUM[$element]="$element = ${MOMENTUM[$element]}"
+  done
+
+# Write dftb_in.hsd reading in NewFILE
+  dftb_in $NewFILE myHUBBARD myMOMENTUM
 }
 
 # Read in starting structure file, which should be an optimized monolayer
@@ -185,10 +192,5 @@ PARTITION=($(sed -n 3p $INSTRUCT))
 # Conduct Z scanning first
 AXIS='X'
 CHANGE='0.1'
-if [[ $AXIS == 'Z' ]]; then
-  OPTZ=0
-  submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION $OPTZ
-elif [[ $AXIS == 'X' || $AXIS == 'Y' ]]; then
-  OPTZ=($(sed -n 4p $INSTRUCT))
-  submit_calculation $GEO $COF $AXIS $CHANGE $PARTITION $OPTZ
-fi
+set_up_calculation $GEO $COF $AXIS $CHANGE
+submit_calculation $COF $AXIS $CHANGE $PARTITION
