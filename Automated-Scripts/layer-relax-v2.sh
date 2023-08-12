@@ -121,14 +121,14 @@ submit_calculation () {
         echo "Job complete."
         DETAILED=($(grep "Total energy" detailed.out))
         TOTAL_ENERGY=${DETAILED[4]}
-        cat >> $2.dat <<!
-$4 $TOTAL_ENERGY
+        cat >> $3.dat <<!
+$2 $TOTAL_ENERGY
 !
         break
       elif grep -q "SCC is NOT converged" $JOBNAME.log; then
         echo "SCC did not converge."
-        cat >> $2.dat <<!
-$4 SCC did NOT converge
+        cat >> $3.dat <<!
+$2 SCC did NOT converge
 !
         break
       elif grep -q "ERROR!" $JOBNAME.log; then
@@ -147,16 +147,24 @@ set_up_calculation () {
 # 2 = $COF
 # 3 = $AXIS
 # 5 = $CHANGE 
+# 6 = $OPTZ
+# 7 = $OPTX
 
 # Generate geometry from XYZ-Scanning
   if [[ $3 == 'Z' ]]; then
-    OPTZ=0
-    NewFILE=($(printf "$1\n$2\n$3\n$4\n$OPTZ\n" | XYZ-Scanning.py))
+    OPTX=0
+    NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n$OPTX\n" | XYZ-Scanning.py))
     NewFILE=(${NewFILE[7]})
-  elif [[ $3 == 'X' || $3 == 'Y' ]]; then
+  elif [[ $3 == 'X' ]]; then
     OPTZ=($(sed -n 4p $INSTRUCT))
-    NewFILE=($(printf "$1\n$2\n$3\n$4\n$OPTZ\n" | XYZ-Scanning.py))
+    OPTX=0
+    NewFILE=($(printf "$1\n$2\n$3\n$4\n$OPTZ\n$OPTX\n" | XYZ-Scanning.py))
     NewFILE=(${NewFILE[9]})
+  elif [[ $3 == 'Y' ]]; then
+    OPTZ=($(sed -n 4p $INSTRUCT))
+    OPTX=($(sed -n 5p $INSTRUCT))
+    NewFILE=($(printf "$1\n$2\n$3\n$4\n$OPTZ\n$OPTX\n" | XYZ-Scanning.py))
+    NewFILE=(${NewFILE[11]})
   fi
   ATOM_TYPES=($(sed -n 6p $NewFILE))
 
@@ -190,7 +198,7 @@ COF=($(sed -n 2p $INSTRUCT))
 PARTITION=($(sed -n 3p $INSTRUCT))
 
 # Conduct Z scanning first
-AXIS='X'
+AXIS='Y'
 CHANGE='0.1'
 set_up_calculation $GEO $COF $AXIS $CHANGE
 submit_calculation $COF $CHANGE $AXIS $PARTITION

@@ -5,7 +5,7 @@
 
 import ase.io
 
-def Generate_New_VASP(Filename, COF, Axis, Change, Optimized_Z):
+def Generate_New_VASP(Filename, COF, Axis, Change, Optimized_Z, Optimized_X):
 # Filename should be either a path to a VASP file or the VASP filename if located in directory
 # Axis should be X, Y, or Z, which indicates which cell parameter will be changed
 # Change should be either an integer (for Z) or a decimal indicating a percent of the simulation cell (for X and Y)
@@ -38,6 +38,10 @@ def Generate_New_VASP(Filename, COF, Axis, Change, Optimized_Z):
             for i in range(Total_Atoms, len(TwoLayer)):
                 TwoLayer[i].position[0] += x_shift
         if Axis == 'Y':
+            Optimized_X = float(Optimized_X)
+            x_shift = Optimized_X*Cell[0,0]
+            for i in range(Total_Atoms, len(TwoLayer)):
+                TwoLayer[i].position[0] += x_shift
             y_shift = Change*Cell[1,1]
             for i in range(Total_Atoms, len(TwoLayer)):
                 TwoLayer[i].position[1] += y_shift
@@ -49,9 +53,13 @@ Filename = input('Filename: ')
 COF = input('COF: ')
 Axis = input('Axis: ').upper()
 Change = input('Integer or Percent Decimal: ')
-if Axis == 'X' or Axis == 'Y':
+if Axis == 'X':
     OptZ = input('Optimized Z: ')
+if Axis == 'Y':
+    OptZ = input('Optimized Z: ')
+    OptX = input('Optimized X: ')
 else:
     OptZ = 0
+    OptX = 0
 
-Generate_New_VASP(Filename, COF, Axis, Change, OptZ)
+Generate_New_VASP(Filename, COF, Axis, Change, OptZ, OptX)
