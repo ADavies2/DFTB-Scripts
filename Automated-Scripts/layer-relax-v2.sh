@@ -50,6 +50,7 @@ Driver = { }
 
 Hamiltonian = DFTB {
 SCC = Yes
+ReadInitialCharges = Yes
 MaxSCCIterations = 50
 ThirdOrderFull = Yes
 Dispersion = LennardJones {
