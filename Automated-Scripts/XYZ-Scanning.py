@@ -26,7 +26,7 @@ def Generate_New_VASP(Filename, COF, Axis, Change, Optimized_Z, Optimized_X):
         TwoLayer = Monolayer.repeat([1,1,2])
 # If changing X or Y, shift the positions of the second layer of atoms
 # This is assuming that the Z has already been scanned at AA stacking
-    if Axis == 'X' or Axis == 'Y':
+    elif Axis == 'X' or Axis == 'Y':
         Optimized_Z = float(Optimized_Z)
         Positions = Monolayer.get_positions()
         MaxZ = max(Positions[:,2])
@@ -34,14 +34,10 @@ def Generate_New_VASP(Filename, COF, Axis, Change, Optimized_Z, Optimized_X):
         Monolayer.set_cell(Cell)
         TwoLayer = Monolayer.repeat([1,1,2])
         if Axis == 'X':
-            x_shift = Change*Cell[0,0] # Shift coordinates by Change % of the unit cell in X
+            x_shift = Change*Cell[0,0]
             for i in range(Total_Atoms, len(TwoLayer)):
                 TwoLayer[i].position[0] += x_shift
-        if Axis == 'Y':
-            Optimized_X = float(Optimized_X)
-            x_shift = Optimized_X*Cell[0,0]
-            for i in range(Total_Atoms, len(TwoLayer)):
-                TwoLayer[i].position[0] += x_shift
+        elif Axis == 'Y':
             y_shift = Change*Cell[1,1]
             for i in range(Total_Atoms, len(TwoLayer)):
                 TwoLayer[i].position[1] += y_shift
@@ -55,7 +51,8 @@ Axis = input('Axis: ').upper()
 Change = input('Integer or Percent Decimal: ')
 if Axis == 'X':
     OptZ = input('Optimized Z: ')
-if Axis == 'Y':
+    OptX = 0
+elif Axis == 'Y':
     OptZ = input('Optimized Z: ')
     OptX = input('Optimized X: ')
 else:
