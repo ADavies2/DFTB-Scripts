@@ -38,6 +38,10 @@ def Generate_New_VASP(Filename, COF, Axis, Change, Optimized_Z, Optimized_X):
             for i in range(Total_Atoms, len(TwoLayer)):
                 TwoLayer[i].position[0] += x_shift
         elif Axis == 'Y':
+            Optimized_X = float(Optimized_X)
+            x_shift = Optimized_X*Cell[0,0]
+            for i in range(Total_Atoms, len(TwoLayer)):
+                TwoLayer[i].position[0] += x_shift
             y_shift = Change*Cell[1,1]
             for i in range(Total_Atoms, len(TwoLayer)):
                 TwoLayer[i].position[1] += y_shift
