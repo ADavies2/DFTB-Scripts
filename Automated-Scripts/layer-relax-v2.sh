@@ -241,12 +241,13 @@ if [[ $AXIS == 'Z' ]]; then
 elif [[ $AXIS == 'X' ]]; then
 # If beginning with X offset, it is assumed an optimum Z has been determined
   OPTZ=($(sed -n 5p $INSTRUCT))
+  # Using the optimum Z, get the Z height for +/- 0.25
+  ZReturn=($(printf "$OPTZ" | Return-NewZ.py))
+  Z1=(${ZReturn[5]}) # OPTZ - 0.25
+  Z2=(${ZReturn[6]}) # OPTZ + 0.25
+  # Now, using these three heights, test a different X offset
   for i in '0.1' '0.2' '0.3' '0.4' '0.5'
   do
-    ZReturn=($(printf "$OPTZ" | Return-NewZ.py))
-    Z1=(${ZReturn[5]}) # OPTZ - 0.25
-    Z2=(${ZReturn[6]}) # OPTZ + 0.25
-
     set_up_calculation $GEO $COF $AXIS $i $Z1
     submit_calculation $COF $i $AXIS $PARTITION $Z1
     # Now run OPTZ from the instruction file
