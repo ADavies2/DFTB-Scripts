@@ -14,10 +14,14 @@ for i in l:
 
 Axis = Instructions[2].upper()
 
-Data = pd.read_csv(f'{Axis}.dat', header=None, delim_whitespace=True, names=['Value','Energy'])
-Sorted = Data.sort_values(by=['Energy'])
+if Axis == 'Z':
+    Data = pd.read_csv(f'{Axis}.dat', header=None, delim_whitespace=True, names=['Z','Energy'])
+    Sorted = Data.sort_values(by=['Energy'])
+    print(Sorted.iloc[0]['Z'])
 
-print(Sorted.iloc[0]['Value'])
-
-NewZ = Sorted.iloc[0]['Value']-abs((Sorted.iloc[0]['Value']-Sorted.iloc[1]['Value'])/2)
-print(NewZ)
+    NewZ = Sorted.iloc[0]['Z']-abs((Sorted.iloc[0]['Z']-Sorted.iloc[1]['Z'])/2)
+    print(NewZ)
+elif Axis == 'X':
+    Data = pd.read_csv(f'{Axis}-Z.dat', header=None, delim_whitespace=True, names=['X','Z','Energy'])
+    Sorted = Data.sort_values(by=['Energy'])
+    print(Sorted.iloc[0]['X'], Sorted.iloc[0]['Z'])
