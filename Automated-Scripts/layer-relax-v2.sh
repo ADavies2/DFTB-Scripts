@@ -50,7 +50,7 @@ Driver = { }
 
 Hamiltonian = DFTB {
 SCC = Yes
-ReadInitialCharges = Yes
+ReadInitialCharges = No
 MaxSCCIterations = 50
 ThirdOrderFull = Yes
 Dispersion = LennardJones {
@@ -98,6 +98,7 @@ submit_calculation () {
 # 2 = $CHANGE
 # 3 = $AXIS
 # 4 = $PARTITION
+# 5 = $Z
 # Submit calculation
   TASK=8
   CPU=1
@@ -122,15 +123,18 @@ submit_calculation () {
         echo "Job complete."
         DETAILED=($(grep "Total energy" detailed.out))
         TOTAL_ENERGY=${DETAILED[4]}
-        cat >> $3.dat <<!
+        if [[ $3 == 'Z' || $3 == 'z' ]]; then
+          cat >> $3.dat <<!
 $2 $TOTAL_ENERGY
 !
+        else
+          cat >> $3-Z.dat <<!
+$2 $5 $TOTAL_ENERGY
+!
+        fi
         break
       elif grep -q "SCC is NOT converged" $JOBNAME.log; then
-        echo "SCC did not converge."
-        cat >> $3.dat <<!
-$2 SCC did NOT converge
-!
+        echo "At $3 = $2 SCC did not converge."
         break
       elif grep -q "ERROR!" $JOBNAME.log; then
         echo "DFTB+ Error. User trouble-shoot required."
@@ -147,24 +151,22 @@ set_up_calculation () {
 # 1 = $GEO 
 # 2 = $COF
 # 3 = $AXIS
-# 5 = $CHANGE 
-# 6 = $OPTZ
-# 7 = $OPTX
+# 4 = $CHANGE 
+# 5 = $OPTZ
+# 6 = $OPTX
 
 # Generate geometry from XYZ-Scanning
   if [[ $3 == 'Z' ]]; then
+    OPTZ=0
     OPTX=0
-    NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n$OPTX\n" | XYZ-Scanning.py))
+    NewFILE=($(printf "$1\n$2\n$3\n$4\n$OPTZ\n$OPTX\n" | XYZ-Scanning.py))
     NewFILE=(${NewFILE[7]})
   elif [[ $3 == 'X' ]]; then
-    OPTZ=($(sed -n 4p $INSTRUCT))
     OPTX=0
-    NewFILE=($(printf "$1\n$2\n$3\n$4\n$OPTZ\n$OPTX\n" | XYZ-Scanning.py))
+    NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n$OPTX\n" | XYZ-Scanning.py))
     NewFILE=(${NewFILE[9]})
   elif [[ $3 == 'Y' ]]; then
-    OPTZ=($(sed -n 4p $INSTRUCT))
-    OPTX=($(sed -n 5p $INSTRUCT))
-    NewFILE=($(printf "$1\n$2\n$3\n$4\n$OPTZ\n$OPTX\n" | XYZ-Scanning.py))
+    NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n$6\n" | XYZ-Scanning.py))
     NewFILE=(${NewFILE[11]})
   fi
   ATOM_TYPES=($(sed -n 6p $NewFILE))
@@ -194,12 +196,43 @@ module load gcc/11.2.0 python/3.10.8
 # Instruction file containing the name of the initial structure file and COF name
 INSTRUCT=$1
 
-GEO=($(sed -n 1p $INSTRUCT))
-COF=($(sed -n 2p $INSTRUCT))
-PARTITION=($(sed -n 3p $INSTRUCT))
+COF=($(sed -n 1p $INSTRUCT))
+GEO=($(sed -n 2p $INSTRUCT))
+AXIS=($(sed -n 3p $INSTRUCT))
+AXIS=${AXIS^}
+PARTITION=($(sed -n 4p $INSTRUCT))
 
-# Conduct Z scanning first
-AXIS='Y'
-CHANGE='0.1'
-set_up_calculation $GEO $COF $AXIS $CHANGE
-submit_calculation $COF $CHANGE $AXIS $PARTITION
+if [[ $AXIS == 'Z' ]]; then
+  for i in 1 2 3 4 5 # Where i = CHANGE
+  do
+    set_up_calculation $GEO $COF $AXIS $i
+    submit_calculation $COF $i $AXIS $PARTITION
+  done
+
+  MinReturn=($(printf "$INSTRUCT" | Find-Minimum.py))
+  MIN1=(${MinReturn[5]}) # Minimum Z value from tested values
+  Z1=(${MinReturn[6]}) # New Z value that is halfway between two lowest values
+  set_up_calculation $GEO $COF $AXIS $Z1
+  submit_calculation $COF $Z1 $AXIS $PARTITION
+
+  MinReturn=($(printf "$INSTRUCT" | Find-Minimum.py))
+  MIN2=(${MinReturn[5]}) # Minimum Z value, including new test
+  Z2=(${MinReturn[6]})
+
+  if [[ $MIN2 != $MIN1 ]]; then
+    set_up_calculation $GEO $COF $AXIS $Z2
+    submit_calculation $COF $Z2 $AXIS $PARTITION
+
+    MinReturn=($(printf "$INSTRUCT" | Find-Minimum.py))
+    OPTZ=(${MinReturn[5]}) # Close enough to finding minimum, take this as the final "optimized Z"
+
+  elif [[ $MIN2 == $MIN1 ]]; then
+    OPTZ=$MIN2
+  fi
+elif [[ $AXIS == 'X' ]]; then
+  for i in '0.1'
+  do
+    set_up_calculation $GEO $COF $AXIS $i $OPTZ
+    submit_calculation $COF $OPTZ $AXIS $PARTITION $OPTZ
+  done
+fi
