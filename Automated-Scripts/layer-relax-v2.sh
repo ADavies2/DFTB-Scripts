@@ -234,7 +234,7 @@ if [[ $AXIS == 'Z' ]]; then
 # At each X offset, test the previously optimized Z height, +0.25, and +0.5
 # Each of these are appended to an XY.dat file, to find if there are Z heights that result in lower energie X offsets
   AXIS='X'
-  sed -i '3s/.*/X/' $INSTRUCT # Change the testing axis in the instruction file to X
+  sed -i "3s/.*/$AXIS/" $INSTRUCT # Change the testing axis in the instruction file to X
   cat >> $INSTRUCT <<! # Write the optimum Z to the instruction file
 $OPTZ
 !
@@ -258,7 +258,13 @@ $OPTZ
   MinReturn=($(printf "$INSTRUCT" | Find-Minimum.py))
   OPTX=(${MinReturn[5]}) # Optimum X from test
   OPTZ=(${MinReturn[6]}) # Corresponding optimum Z from test
-
+  # Write these to the $INSTRUCT file for the Y testing
+  AXIS='Y'
+  sed -i "3s/.*/$AXIS/" $INSTRUCT
+  sed -i "5s/.*/$OPTZ/" $INSTRUCT
+  cat >> $INSTRUCT <<!
+$OPTX
+!
 elif [[ $AXIS == 'X' ]]; then
 # If beginning with X offset, it is assumed an optimum Z has been determined
   OPTZ=($(sed -n 5p $INSTRUCT))
@@ -278,9 +284,16 @@ elif [[ $AXIS == 'X' ]]; then
     set_up_calculation $GEO $COF $AXIS $i $Z2
     submit_calculation $COF $i $AXIS $PARTITION $Z2
   done
-  
+
   # Now, find the minimum X and minimum Z from this test
   MinReturn=($(printf "$INSTRUCT" | Find-Minimum.py))
   OPTX=(${MinReturn[5]}) # Optimum X from test
   OPTZ=(${MinReturn[6]}) # Corresponding optimum Z from test
+  # Write these to the $INSTRUCT file for the Y testing
+  AXIS='Y'
+  sed -i "3s/.*/$AXIS/" $INSTRUCT
+  sed -i "5s/.*/$OPTZ/" $INSTRUCT
+  cat >> $INSTRUCT <<!
+$OPTX
+!
 fi
