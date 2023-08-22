@@ -123,7 +123,7 @@ submit_calculation () {
         echo "Job complete."
         DETAILED=($(grep "Total energy" detailed.out))
         TOTAL_ENERGY=${DETAILED[4]}
-        if [[ $3 == 'Z' || $3 == 'z' ]]; then
+        if [[ $3 == 'Z' ]]; then
           cat >> $3.dat <<!
 $2 $TOTAL_ENERGY
 !
@@ -203,6 +203,7 @@ AXIS=${AXIS^}
 PARTITION=($(sed -n 4p $INSTRUCT))
 
 if [[ $AXIS == 'Z' ]]; then
+# First, run an optimization for Z height
   for i in 1 2 3 4 5 # Where i = CHANGE
   do
     set_up_calculation $GEO $COF $AXIS $i
@@ -229,10 +230,30 @@ if [[ $AXIS == 'Z' ]]; then
   elif [[ $MIN2 == $MIN1 ]]; then
     OPTZ=$MIN2
   fi
-elif [[ $AXIS == 'X' ]]; then
-  for i in '0.1'
+# After Z height has been optimized, begin testing X offset
+# At each X offset, test the previously optimized Z height, +0.25, and +0.5
+# Each of these are appended to an XY.dat file, to find if there are Z heights that result in lower energie X offsets
+  for i in '0.1' '0.2' '0.3' '0.4' '0.5'
   do
     set_up_calculation $GEO $COF $AXIS $i $OPTZ
-    submit_calculation $COF $OPTZ $AXIS $PARTITION $OPTZ
+    submit_calculation $COF $i $AXIS $PARTITION $OPTZ
+  done
+elif [[ $AXIS == 'X' ]]; then
+# If beginning with X offset, it is assumed an optimum Z has been determined
+  OPTZ=($(sed -n 5p $INSTRUCT))
+  for i in '0.1' '0.2' '0.3' '0.4' '0.5'
+  do
+    ZReturn=($(printf "$OPTZ" | Return-NewZ.py))
+    Z1=(${ZReturn[5]}) # OPTZ - 0.25
+    Z2=(${ZReturn[6]}) # OPTZ + 0.25
+
+    set_up_calculation $GEO $COF $AXIS $i $Z1
+    submit_calculation $COF $i $AXIS $PARTITION $Z1
+    # Now run OPTZ from the instruction file
+    set_up_calculation $GEO $COF $AXIS $i $OPTZ
+    submit_calculation $COF $i $AXIS $PARTITION $OPTZ
+    # Finally, run Z1 and Z2 which are added values 
+    set_up_calculation $GEO $COF $AXIS $i $Z2
+    submit_calculation $COF $i $AXIS $PARTITION $Z2
   done
 fi
