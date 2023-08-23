@@ -99,6 +99,8 @@ submit_calculation () {
 # 3 = $AXIS
 # 4 = $PARTITION
 # 5 = $Z
+# 6 = $X
+
 # Submit calculation
   TASK=8
   CPU=1
@@ -127,14 +129,16 @@ submit_calculation () {
           cat >> $3.dat <<!
 $2 $TOTAL_ENERGY
 !
-        else
-          cat >> $3-Z.dat <<!
-$2 $5 $TOTAL_ENERGY
+        elif [[ $3 == 'Y' || $3 == 'X' ]]; then
+          cat >> XY.dat <<!
+$6 $2 $5 $TOTAL_ENERGY
 !
         fi
+        rm submit_$JOBNAME $JOBNAME.log $JOBNAME.out *bin dftb* band.out detailed.out
         break
       elif grep -q "SCC is NOT converged" $JOBNAME.log; then
         echo "At $3 = $2 SCC did not converge."
+        rm submit_$JOBNAME $JOBNAME.log $JOBNAME.out *bin dftb* band.out detailed.out
         break
       elif grep -q "ERROR!" $JOBNAME.log; then
         echo "DFTB+ Error. User trouble-shoot required."
@@ -153,7 +157,6 @@ set_up_calculation () {
 # 3 = $AXIS
 # 4 = $CHANGE 
 # 5 = $OPTZ
-# 6 = $OPTX
 
 # Generate geometry from XYZ-Scanning
   if [[ $3 == 'Z' ]]; then
@@ -161,13 +164,19 @@ set_up_calculation () {
     OPTX=0
     NewFILE=($(printf "$1\n$2\n$3\n$4\n$OPTZ\n$OPTX\n" | XYZ-Scanning.py))
     NewFILE=(${NewFILE[7]})
-  elif [[ $3 == 'X' ]]; then
-    OPTX=0
-    NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n$OPTX\n" | XYZ-Scanning.py))
-    NewFILE=(${NewFILE[9]})
   elif [[ $3 == 'Y' ]]; then
-    NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n$6\n" | XYZ-Scanning.py))
+    NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n0\n" | XYZ-Scanning.py))
     NewFILE=(${NewFILE[11]})
+  elif [[ $3 == 'X' ]]; then
+    NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n$4\n" | XYZ-Scanning.py))
+    NewFILE=(${NewFILE[11]})
+  #elif [[ $3 == 'X' ]]; then
+    #OPTX=0
+    #NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n$OPTX\n" | XYZ-Scanning.py))
+    #NewFILE=(${NewFILE[9]})
+  #elif [[ $3 == 'Y' ]]; then
+    #NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n$6\n" | XYZ-Scanning.py))
+    #NewFILE=(${NewFILE[11]})
   fi
   ATOM_TYPES=($(sed -n 6p $NewFILE))
 
@@ -199,7 +208,7 @@ INSTRUCT=$1
 COF=($(sed -n 1p $INSTRUCT))
 GEO=($(sed -n 2p $INSTRUCT))
 AXIS=($(sed -n 3p $INSTRUCT))
-AXIS=${AXIS^}
+AXIS=${AXIS^^}
 PARTITION=($(sed -n 4p $INSTRUCT))
 
 if [[ $AXIS == 'Z' ]]; then
@@ -232,68 +241,42 @@ if [[ $AXIS == 'Z' ]]; then
   fi
 # After Z height has been optimized, begin testing X offset
 # At each X offset, test the previously optimized Z height, +0.25, and +0.5
-# Each of these are appended to an XY.dat file, to find if there are Z heights that result in lower energie X offsets
-  AXIS='X'
-  sed -i "3s/.*/$AXIS/" $INSTRUCT # Change the testing axis in the instruction file to X
-  cat >> $INSTRUCT <<! # Write the optimum Z to the instruction file
+# Each of these are appended to an X-Y.dat file, to find if there are Z heights that result in lower energie X offsets
+  echo "Optimum Z from Z-scanning is $OPTZ"
+  echo "Beginning XY-scanning..."
+  AXIS='XY'
+  sed -i "3s/.*/$AXIS" $INSTRUCT # Change the testing axis in the instruction file to XY
+  cat >> $INSTRUCT <<!
 $OPTZ
 !
   ZReturn=($(printf "$OPTZ" | Return-NewZ.py))
   Z1=(${ZReturn[5]}) # OPTZ - 0.25
   Z2=(${ZReturn[6]}) # OPTZ + 0.25
-  # Now, using these three heights, test a different X offset
-  for i in '0.1' '0.2' '0.3' '0.4' '0.5'
+
+  # Now, "stair step" test X and Y, with the previous Z values
+  for i in '0.1'
   do
+    AXIS='Y'
     set_up_calculation $GEO $COF $AXIS $i $Z1
-    submit_calculation $COF $i $AXIS $PARTITION $Z1
-    # Now run OPTZ from the instruction file
-    set_up_calculation $GEO $COF $AXIS $i $OPTZ
-    submit_calculation $COF $i $AXIS $PARTITION $OPTZ
-    # Finally, run Z1 and Z2 which are added values 
-    set_up_calculation $GEO $COF $AXIS $i $Z2
-    submit_calculation $COF $i $AXIS $PARTITION $Z2
+    AXIS='X'
+    set_up_calculation $GEO $COF $AXIS $i $Z1
   done
 
-  # Now, find the minimum X and minimum Z from this test
-  MinReturn=($(printf "$INSTRUCT" | Find-Minimum.py))
-  OPTX=(${MinReturn[5]}) # Optimum X from test
-  OPTZ=(${MinReturn[6]}) # Corresponding optimum Z from test
-  # Write these to the $INSTRUCT file for the Y testing
-  AXIS='Y'
-  sed -i "3s/.*/$AXIS/" $INSTRUCT
-  sed -i "5s/.*/$OPTZ/" $INSTRUCT
-  cat >> $INSTRUCT <<!
-$OPTX
-!
-elif [[ $AXIS == 'X' ]]; then
-# If beginning with X offset, it is assumed an optimum Z has been determined
+elif [[ $AXIS == 'XY' ]]; then
   OPTZ=($(sed -n 5p $INSTRUCT))
-  # Using the optimum Z, get the Z height for +/- 0.25
+
   ZReturn=($(printf "$OPTZ" | Return-NewZ.py))
   Z1=(${ZReturn[5]}) # OPTZ - 0.25
   Z2=(${ZReturn[6]}) # OPTZ + 0.25
-  # Now, using these three heights, test a different X offset
-  for i in '0.1' '0.2' '0.3' '0.4' '0.5'
-  do
-    set_up_calculation $GEO $COF $AXIS $i $Z1
-    submit_calculation $COF $i $AXIS $PARTITION $Z1
-    # Now run OPTZ from the instruction file
-    set_up_calculation $GEO $COF $AXIS $i $OPTZ
-    submit_calculation $COF $i $AXIS $PARTITION $OPTZ
-    # Finally, run Z1 and Z2 which are added values 
-    set_up_calculation $GEO $COF $AXIS $i $Z2
-    submit_calculation $COF $i $AXIS $PARTITION $Z2
-  done
 
-  # Now, find the minimum X and minimum Z from this test
-  MinReturn=($(printf "$INSTRUCT" | Find-Minimum.py))
-  OPTX=(${MinReturn[5]}) # Optimum X from test
-  OPTZ=(${MinReturn[6]}) # Corresponding optimum Z from test
-  # Write these to the $INSTRUCT file for the Y testing
-  AXIS='Y'
-  sed -i "3s/.*/$AXIS/" $INSTRUCT
-  sed -i "5s/.*/$OPTZ/" $INSTRUCT
-  cat >> $INSTRUCT <<!
-$OPTX
-!
+  # Now, "stair step" test X and Y, with the previous Z values
+  for i in '0.1'
+  do
+    AXIS='Y'
+    set_up_calculation $GEO $COF $AXIS $i $Z1
+    submit_calculation $COF $i $AXIS $PARTITION $Z1 0
+    AXIS='X'
+    set_up_calculation $GEO $COF $AXIS $i $Z1
+    submit_calculation $COF $i $AXIS $PARTITION $Z1 $i
+  done
 fi

@@ -53,10 +53,7 @@ Filename = input('Filename: ')
 COF = input('COF: ')
 Axis = input('Axis: ').upper()
 Change = input('Integer or Percent Decimal: ')
-if Axis == 'X':
-    OptZ = input('Optimized Z: ')
-    OptX = 0
-elif Axis == 'Y':
+if Axis == 'Y' or Axis == 'X':
     OptZ = input('Optimized Z: ')
     OptX = input('Optimized X: ')
 else:
