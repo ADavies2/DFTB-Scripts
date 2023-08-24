@@ -273,7 +273,4 @@ elif [[ $AXIS == 'XY' ]]; then
     set_up_calculation $GEO $COF $AXIS $i $Z2 $i
     submit_calculation $COF $i $AXIS $PARTITION $Z2 $i
   done
-
-  # Find the minimum X, Y, Z combo based on energy
-  MinReturn=($(printf "$INSTRUCT" | Find-Minimum.py))
 fi
