@@ -21,11 +21,7 @@ if Axis == 'Z':
 
     NewZ = Sorted.iloc[0]['Z']-abs((Sorted.iloc[0]['Z']-Sorted.iloc[1]['Z'])/2)
     print(NewZ)
-elif Axis == 'X':
-    Data = pd.read_csv(f'{Axis}.dat', header=None, delim_whitespace=True, names=['X','Z','Energy'])
-    Sorted = Data.sort_values(by=['Energy'])
-    print(Sorted.iloc[0]['X'], Sorted.iloc[0]['Z'])
-elif Axis == 'Y':
+elif Axis == 'XY':
     Data = pd.read_csv(f'{Axis}.dat', header=None, delim_whitespace=True, names=['Y','Z','X','Energy'])
     Sorted = Data.sort_values(by=['Energy'])
-    print(Sorted)
+    print(Sorted.loc[0]['X'], Sorted.loc[0]['Y'], Sorted.loc[0]['Z'])

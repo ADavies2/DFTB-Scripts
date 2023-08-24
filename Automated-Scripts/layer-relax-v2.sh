@@ -242,15 +242,6 @@ $OPTZ
   Z1=(${ZReturn[5]}) # OPTZ - 0.25
   Z2=(${ZReturn[6]}) # OPTZ + 0.25
 
-  # Now, "stair step" test X and Y, with the previous Z values
-  for i in '0.1'
-  do
-    AXIS='Y'
-    set_up_calculation $GEO $COF $AXIS $i $Z1
-    AXIS='X'
-    set_up_calculation $GEO $COF $AXIS $i $Z1
-  done
-
 elif [[ $AXIS == 'XY' ]]; then
   OPTZ=($(sed -n 5p $INSTRUCT))
 
@@ -259,13 +250,30 @@ elif [[ $AXIS == 'XY' ]]; then
   Z2=(${ZReturn[6]}) # OPTZ + 0.25
 
   # Now, "stair step" test X and Y, with the previous Z values
-  for i in '0.1'
+  for i in '0.1' '0.2' '0.3' '0.4' '0.5'
   do
-    # Y-shift
+    # Y-shift at OPTZ - 0.25
     set_up_calculation $GEO $COF $AXIS $i $Z1 0
     submit_calculation $COF $i $AXIS $PARTITION $Z1 0
     # X and Y-shift
-    #set_up_calculation $GEO $COF $AXIS $i $Z1 $i
-    #submit_calculation $COF $i $AXIS $PARTITION $Z1 $i
+    set_up_calculation $GEO $COF $AXIS $i $Z1 $i
+    submit_calculation $COF $i $AXIS $PARTITION $Z1 $i
+
+    # Y-shift at OPTZ
+    set_up_calculation $GEO $COF $AXIS $i $OPTZ 0
+    submit_calculation $COF $i $AXIS $PARTITION $OPTZ 0
+    # X and Y-shift
+    set_up_calculation $GEO $COF $AXIS $i $OPTZ $i
+    submit_calculation $COF $vii $AXIS $PARTITION $OPTZ $i
+
+    # Y-shift at OPTZ + 0.25
+    set_up_calculation $GEO $COF $AXIS $i $Z2 0
+    submit_calculation $COF $i $AXIS $PARTITION $Z2 0
+    # X and Y-shift
+    set_up_calculation $GEO $COF $AXIS $i $Z2 $i
+    submit_calculation $COF $i $AXIS $PARTITION $Z2 $i
   done
+
+  # Find the minimum X, Y, Z combo based on energy
+  MinReturn=($(printf "$INSTRUCT" | Find-Minimum.py))
 fi
