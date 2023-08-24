@@ -24,5 +24,5 @@ if Axis == 'Z':
 elif Axis == 'XY':
     Data = pd.read_csv(f'{Axis}.dat', header=None, delim_whitespace=True, names=['X','Y','Z','Energy'])
     Sorted = Data.sort_values(by=['Energy'])
-    print(Sorted)
+    #print(Sorted)
     #print(Sorted.loc[0]['X'], Sorted.loc[0]['Y'], Sorted.loc[0]['Z'])
