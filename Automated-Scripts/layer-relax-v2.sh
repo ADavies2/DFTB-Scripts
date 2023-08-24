@@ -129,8 +129,8 @@ submit_calculation () {
           cat >> $3.dat <<!
 $2 $TOTAL_ENERGY
 !
-        elif [[ $3 == 'Y' || $3 == 'X' ]]; then
-          cat >> XY.dat <<!
+        elif [[ $3 == 'XY' ]]; then
+          cat >> $3.dat <<!
 $6 $2 $5 $TOTAL_ENERGY
 !
         fi
@@ -157,26 +157,15 @@ set_up_calculation () {
 # 3 = $AXIS
 # 4 = $CHANGE 
 # 5 = $OPTZ
+# 6 = $X-SHIFT
 
 # Generate geometry from XYZ-Scanning
   if [[ $3 == 'Z' ]]; then
-    OPTZ=0
-    OPTX=0
-    NewFILE=($(printf "$1\n$2\n$3\n$4\n$OPTZ\n$OPTX\n" | XYZ-Scanning.py))
+    NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n$6\n" | XYZ-Scanning.py))
     NewFILE=(${NewFILE[7]})
-  elif [[ $3 == 'Y' ]]; then
-    NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n0\n" | XYZ-Scanning.py))
+  else
+    NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n$6\n" | XYZ-Scanning.py))
     NewFILE=(${NewFILE[11]})
-  elif [[ $3 == 'X' ]]; then
-    NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n$4\n" | XYZ-Scanning.py))
-    NewFILE=(${NewFILE[11]})
-  #elif [[ $3 == 'X' ]]; then
-    #OPTX=0
-    #NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n$OPTX\n" | XYZ-Scanning.py))
-    #NewFILE=(${NewFILE[9]})
-  #elif [[ $3 == 'Y' ]]; then
-    #NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n$6\n" | XYZ-Scanning.py))
-    #NewFILE=(${NewFILE[11]})
   fi
   ATOM_TYPES=($(sed -n 6p $NewFILE))
 
@@ -272,11 +261,11 @@ elif [[ $AXIS == 'XY' ]]; then
   # Now, "stair step" test X and Y, with the previous Z values
   for i in '0.1'
   do
-    AXIS='Y'
-    set_up_calculation $GEO $COF $AXIS $i $Z1
+    # Y-shift
+    set_up_calculation $GEO $COF $AXIS $i $Z1 0
     submit_calculation $COF $i $AXIS $PARTITION $Z1 0
-    AXIS='X'
-    set_up_calculation $GEO $COF $AXIS $i $Z1
-    submit_calculation $COF $i $AXIS $PARTITION $Z1 $i
+    # X and Y-shift
+    #set_up_calculation $GEO $COF $AXIS $i $Z1 $i
+    #submit_calculation $COF $i $AXIS $PARTITION $Z1 $i
   done
 fi

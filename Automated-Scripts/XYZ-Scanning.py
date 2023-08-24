@@ -5,7 +5,7 @@
 
 import ase.io
 
-def Generate_New_VASP(Filename, COF, Axis, Change, Optimized_Z, Optimized_X):
+def Generate_New_VASP(Filename, COF, Axis, Change, Optimized_Z, X_Shift):
 # Filename should be either a path to a VASP file or the VASP filename if located in directory
 # Axis should be X, Y, or Z, which indicates which cell parameter will be changed
 # Change should be either an integer (for Z) or a decimal indicating a percent of the simulation cell (for X and Y)
@@ -26,25 +26,21 @@ def Generate_New_VASP(Filename, COF, Axis, Change, Optimized_Z, Optimized_X):
         TwoLayer = Monolayer.repeat([1,1,2])
 # If changing X or Y, shift the positions of the second layer of atoms
 # This is assuming that the Z has already been scanned at AA stacking
-    elif Axis == 'X' or Axis == 'Y':
+    elif Axis == 'XY':
+# Set the replicated layer at Z spacing that has been previously optimized
         Optimized_Z = float(Optimized_Z)
+        X_Shift = float(X_Shift)
         Positions = Monolayer.get_positions()
         MaxZ = max(Positions[:,2])
         Cell[2,2] = Optimized_Z+MaxZ
         Monolayer.set_cell(Cell)
         TwoLayer = Monolayer.repeat([1,1,2])
-        if Axis == 'X':
-            x_shift = Change*Cell[0,0]
-            for i in range(Total_Atoms, len(TwoLayer)):
-                TwoLayer[i].position[0] += x_shift
-        elif Axis == 'Y':
-            Optimized_X = float(Optimized_X)
-            x_shift = Optimized_X*Cell[0,0]
-            for i in range(Total_Atoms, len(TwoLayer)):
-                TwoLayer[i].position[0] += x_shift
-            y_shift = Change*Cell[1,1]
-            for i in range(Total_Atoms, len(TwoLayer)):
-                TwoLayer[i].position[1] += y_shift
+# Now set-up X and Y shift
+        y_shift = Change*Cell[1,1]
+        x_shift = X_Shift*Cell[0,0]
+        for i in range(Total_Atoms, len(TwoLayer)):
+            TwoLayer[i].position[1] += y_shift
+            TwoLayer[i].position[0] += x_shift
 # At this point, either the system has been replicated (in the case of Z scanning) or the coordinates of the replicated atoms have been shifted (in the case of X and Y scanning)
     ase.io.write(f'{COF}-{Change}{Axis}-POSCAR', images=TwoLayer, format='vasp')
     print(f'{COF}-{Change}{Axis}-POSCAR')
@@ -53,11 +49,11 @@ Filename = input('Filename: ')
 COF = input('COF: ')
 Axis = input('Axis: ').upper()
 Change = input('Integer or Percent Decimal: ')
-if Axis == 'Y' or Axis == 'X':
+if Axis == 'XY':
     OptZ = input('Optimized Z: ')
-    OptX = input('Optimized X: ')
+    X_Shift = input('X Shift: ')
 else:
     OptZ = 0
-    OptX = 0
+    X_Shift = 0
 
-Generate_New_VASP(Filename, COF, Axis, Change, OptZ, OptX)
+Generate_New_VASP(Filename, COF, Axis, Change, OptZ, X_Shift)
