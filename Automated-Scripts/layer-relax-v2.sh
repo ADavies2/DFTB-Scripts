@@ -268,6 +268,44 @@ $OPTZ
   Z1=(${ZReturn[5]}) # OPTZ - 0.25
   Z2=(${ZReturn[6]}) # OPTZ + 0.25
 
+# Now, "stair step" test X and Y, with the previous Z values
+  for i in '0.1' '0.2' '0.3' '0.4' '0.5'
+  do
+    # Y-shift at OPTZ - 0.25
+    set_up_calculation $GEO $COF $AXIS $i $Z1 0
+    submit_calculation $COF $i $AXIS $PARTITION $Z1 0
+    # X and Y-shift
+    set_up_calculation $GEO $COF $AXIS $i $Z1 $i
+    submit_calculation $COF $i $AXIS $PARTITION $Z1 $i
+
+    # Y-shift at OPTZ
+    set_up_calculation $GEO $COF $AXIS $i $OPTZ 0
+    submit_calculation $COF $i $AXIS $PARTITION $OPTZ 0
+    # X and Y-shift
+    set_up_calculation $GEO $COF $AXIS $i $OPTZ $i
+    submit_calculation $COF $i $AXIS $PARTITION $OPTZ $i
+
+    # Y-shift at OPTZ + 0.25
+    set_up_calculation $GEO $COF $AXIS $i $Z2 0
+    submit_calculation $COF $i $AXIS $PARTITION $Z2 0
+    # X and Y-shift
+    set_up_calculation $GEO $COF $AXIS $i $Z2 $i
+    submit_calculation $COF $i $AXIS $PARTITION $Z2 $i
+  done
+
+  # Find the minimum energy value and corresponding X, Y and Z
+  MinReturn=($(printf "$INSTRUCT" | Find-Minimum.py))
+  OptX=(${MinReturn[5]})
+  OptY=(${MinReturn[6]})
+  OptZ=(${MinReturn[7]})
+
+  rm $COF* 
+  # Create the POSCAR file for the full optimization
+  FinalFILE=($(printf "$GEO\n$COF\n$AXIS\n$OptY\n$OptZ\n$OptX\n" | XYZ-Scanning.py))
+  FinalFILEName=(${FinalFILE[11]})
+
+  submit_relax $FinalFILEName $COF
+
 elif [[ $AXIS == 'XY' ]]; then
   OPTZ=($(sed -n 5p $INSTRUCT))
 
