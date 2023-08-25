@@ -187,8 +187,8 @@ submit_relax () {
 # $2 = COF
 
 # First, edit submit_bash to run a relax calculation
-  sed -i "s/.*layer-relax.*/#layer-relax.sh $INPUT_FILE/g" ~/bin/submit_bash
-  sed -i "s/.*relax-v4-with-energies.sh.*/relax-v4-with-energies.sh $INPUT_FILE/g" ~/bin/submit_bash
+  sed -i 's/.*layer-relax.*/#layer-relax.sh $INPUT_FILE/g' ~/bin/submit_bash
+  sed -i 's/.*relax-v4-with-energies.sh.*/relax-v4-with-energies.sh $INPUT_FILE/g' ~/bin/submit_bash
 
 # Write the relax.in instruction file
   cat >> relax.in <<!
