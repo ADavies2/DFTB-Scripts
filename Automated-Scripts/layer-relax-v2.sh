@@ -264,7 +264,7 @@ elif [[ $AXIS == 'XY' ]]; then
     submit_calculation $COF $i $AXIS $PARTITION $OPTZ 0
     # X and Y-shift
     set_up_calculation $GEO $COF $AXIS $i $OPTZ $i
-    submit_calculation $COF $vii $AXIS $PARTITION $OPTZ $i
+    submit_calculation $COF $i $AXIS $PARTITION $OPTZ $i
 
     # Y-shift at OPTZ + 0.25
     set_up_calculation $GEO $COF $AXIS $i $Z2 0
