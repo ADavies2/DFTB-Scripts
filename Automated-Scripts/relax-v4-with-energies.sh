@@ -160,11 +160,9 @@ ParserOptions {
 
 calculate_energies () {
 # $1 = $GEO
-  if [[ $1 == *"gen"* ]]; then
-    module load arcc/1.0 python/2.7.18
-    printf "$1\ntmp-POSCAR" | gen-to-POSCAR.py
-    GEO='tmp-POSCAR'
-  fi
+  printf "$1\ntmp-POSCAR" | gen-to-POSCAR.py
+  GEO='tmp-POSCAR'
+
   ATOM_TYPES=($(sed -n 6p $GEO))
   N_TYPES=($(sed -n 7p $GEO))
   N_ATOMS=0
