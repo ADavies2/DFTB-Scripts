@@ -481,11 +481,6 @@ if [[ $GEO == *"gen"* ]]; then
 else
   ATOM_TYPES=($(sed -n 6p $GEO))
   POSCAR_ATOMS=($(sed -n 7p $GEO))
-  N_ATOMS=0
-  for i in ${POSCAR_ATOMS[@]}; do
-    let N_ATOMS+=$i
-  done
-!
 fi
 
 # Read atom types into a function for angular momentum and Hubbard derivative values

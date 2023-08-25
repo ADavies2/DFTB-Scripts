@@ -182,6 +182,32 @@ set_up_calculation () {
   dftb_in $NewFILE myHUBBARD myMOMENTUM
 }
 
+submit_relax () {
+# $1 = Input-POSCAR
+# $2 = COF
+
+# First, edit submit_bash to run a relax calculation
+  sed -i "s/.*layer-relax.*/#layer-relax.sh $INPUT_FILE/g" ~/bin/submit_bash
+  sed -i "s/.*relax-v4-with-energies.sh.*/relax-v4-with-energies.sh $INPUT_FILE/g" ~/bin/submit_bash
+
+# Write the relax.in instruction file
+  cat >> relax.in <<!
+# COF Name
+$2
+# Initial SCC
+1e-1
+# Structure filename
+$1
+# Restart?
+no
+# Partition?
+inv-desousa
+!
+
+# Submit autorelax
+  submit_bash relax.in autorelax-$COF-scan
+}
+
 # Read in starting structure file, which should be an optimized monolayer
 # Set-up the dftb_in.hsd file
 # Submit the calculation and check for completion
@@ -273,4 +299,17 @@ elif [[ $AXIS == 'XY' ]]; then
     set_up_calculation $GEO $COF $AXIS $i $Z2 $i
     submit_calculation $COF $i $AXIS $PARTITION $Z2 $i
   done
+
+  # Find the minimum energy value and corresponding X, Y and Z
+  MinReturn=($(printf "$INSTRUCT" | Find-Minimum.py))
+  OptX=(${MinReturn[5]})
+  OptY=(${MinReturn[6]})
+  OptZ=(${MinReturn[7]})
+
+  rm $COF* 
+  # Create the POSCAR file for the full optimization
+  FinalFILE=($(printf "$GEO\n$COF\n$AXIS\n$OptY\n$OptZ\n$OptX\n" | XYZ-Scanning.py))
+  FinalFILEName=(${FinalFILE[11]})
+
+  submit_relax $FinalFILEName $COF
 fi
