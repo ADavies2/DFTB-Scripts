@@ -202,6 +202,8 @@ $1
 no
 # Partition?
 inv-desousa
+# Starting from Scan geometry?
+yes
 !
 
 # Submit autorelax
