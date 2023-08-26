@@ -306,7 +306,7 @@ Options {
             echo "DFTB+ Error. User trouble-shoot required."
             exit
           else
-            sleep 120s
+            sleep 180s
             log_size3=($(ls -l "$2.log"))
             size3=(${log_size3[4]})
             if [[ $size3 == $size2 ]]; then
@@ -437,7 +437,7 @@ Options {
             echo "DFTB+ Error. User trouble-shoot required."
             exit
           else
-            sleep 120s
+            sleep 180s
             log_size3=($(ls -l "$2.log"))
             size3=(${log_size3[4]})
             if [[ $size3 == $size2 ]]; then
