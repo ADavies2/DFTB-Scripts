@@ -467,6 +467,7 @@ TOL=($(sed -n 4p $INSTRUCT))
 GEO=($(sed -n 6p $INSTRUCT))
 RESTART=($(sed -n 8p $INSTRUCT))
 PARTITION=($(sed -n 10p $INSTRUCT))
+SCAN=($(sed -n 12p $INSTRUCT))
 
 STALL='none'
 TASK=16
@@ -476,10 +477,10 @@ JOBNAME="$COF-scc-$TOL"
 # Read input geometry file to get atom types and number of atoms  
 if [[ $GEO == *"gen"* ]]; then
   ATOM_TYPES=($(sed -n 2p $GEO))
-  N_ATOMS=($(sed -n 1p $GEO))
+elif [[ $SCAN == 'yes' ]]; then
+  ATOM_TYPES=($(sed -n 1p $GEO))
 else
   ATOM_TYPES=($(sed -n 6p $GEO))
-  POSCAR_ATOMS=($(sed -n 7p $GEO))
 fi
 
 # Read atom types into a function for angular momentum and Hubbard derivative values
