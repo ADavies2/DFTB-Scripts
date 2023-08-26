@@ -260,7 +260,7 @@ if [[ $AXIS == 'Z' ]]; then
   echo "Optimum Z from Z-scanning is $OPTZ"
   echo "Beginning XY-scanning..."
   AXIS='XY'
-  sed -i "3s/.*/$AXIS" $INSTRUCT # Change the testing axis in the instruction file to XY
+  sed -i "3s/.*/$AXIS/" $INSTRUCT # Change the testing axis in the instruction file to XY
   cat >> $INSTRUCT <<!
 $OPTZ
 !

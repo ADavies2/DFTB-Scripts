@@ -241,7 +241,7 @@ scc1 () {
       else
         log_size=($(ls -l "$2.log"))
         size=(${log_size[4]})
-        sleep 60s
+        sleep 120s
         log_size2=($(ls -l "$2.log"))
         size2=(${log_size2[4]})
         if [[ $size2 > $size ]]; then
@@ -306,6 +306,7 @@ Options {
             echo "DFTB+ Error. User trouble-shoot required."
             exit
           else
+            sleep 120s
             log_size3=($(ls -l "$2.log"))
             size3=(${log_size3[4]})
             if [[ $size3 == $size2 ]]; then
@@ -375,7 +376,7 @@ scc2 () {
       else
         log_size=($(ls -l "$2.log"))
         size=(${log_size[4]})
-        sleep 30s
+        sleep 120s
         log_size2=($(ls -l "$2.log"))
         size2=(${log_size2[4]})
         if [[ $size2 > $size ]]; then
@@ -436,6 +437,7 @@ Options {
             echo "DFTB+ Error. User trouble-shoot required."
             exit
           else
+            sleep 120s
             log_size3=($(ls -l "$2.log"))
             size3=(${log_size3[4]})
             if [[ $size3 == $size2 ]]; then
