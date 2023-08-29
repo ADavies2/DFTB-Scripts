@@ -253,7 +253,8 @@ scc1 () {
               if [ ! -d "1e-4-Outputs" ]; then
                 mkdir '1e-4-Outputs'
               fi
-              cp detailed* $2.log '1e-4-Out.gen' '1e-4-Out.xyz' charges.bin eigenvec.bin submit_$2 '1e-4-Outputs/'
+              calculate_energies "1e-4-Out.gen"
+              cp detailed* $2.log '1e-4-Out.gen' '1e-4-Out.xyz' charges.bin eigenvec.bin submit_$2 Energies.dat '1e-4-Outputs/'
               cp charges.dat "1e-4-Outputs/$7-charges.dat"
               rm $2.out *log *xyz *gen *bin submit_$2 *dat *xml detailed.out band.out
               RESULT='success1'
@@ -388,7 +389,8 @@ scc2 () {
               if [ ! -d "1e-4-Outputs" ]; then
                 mkdir '1e-4-Outputs'
               fi
-              cp detailed* $2.log '1e-4-Out.gen' '1e-4-Out.xyz' eigenvec.bin charges.bin submit_$2 '1e-4-Outputs/'
+              calculate_energies "1e-4-Out.gen"
+              cp detailed* $2.log '1e-4-Out.gen' '1e-4-Out.xyz' eigenvec.bin charges.bin submit_$2 Energies.dat '1e-4-Outputs/'
               cp charges.dat "1e-4-Outputs/$COF-charges.dat"
               rm $2.out *log *xyz *gen *bin submit_$2 *dat *xml detailed.out band.out
               RESULT='success1'
@@ -502,9 +504,6 @@ if [[ $STALL == 'scc1' ]]; then
   scc1 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF
 else
   if [ $RESULT == 'success1' ]; then
-    cd 1e-4-Outputs
-    calculate_energies '1e-4-Out.gen'
-    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -519,9 +518,6 @@ elif [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
-    cd 1e-4-Outputs
-    calculate_energies '1e-4-Out.gen'
-    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -545,9 +541,6 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
-    cd 1e-4-Outputs
-    calculate_energies '1e-4-Out.gen'
-    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -569,9 +562,6 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
-    cd 1e-4-Outputs
-    calculate_energies '1e-4-Out.gen'
-    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -593,9 +583,6 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
-    cd 1e-4-Outputs
-    calculate_energies '1e-4-Out.gen'
-    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -617,9 +604,6 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
-    cd 1e-4-Outputs
-    calculate_energies '1e-4-Out.gen'
-    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -641,9 +625,6 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
-    cd 1e-4-Outputs
-    calculate_energies '1e-4-Out.gen'
-    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -665,9 +646,6 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
-    cd 1e-4-Outputs
-    calculate_energies '1e-4-Out.gen'
-    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -689,9 +667,6 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
-    cd 1e-4-Outputs
-    calculate_energies '1e-4-Out.gen'
-    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -713,9 +688,6 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
-    cd 1e-4-Outputs
-    calculate_energies '1e-4-Out.gen'
-    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -737,9 +709,6 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
-    cd 1e-4-Outputs
-    calculate_energies '1e-4-Out.gen'
-    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -761,9 +730,6 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
-    cd 1e-4-Outputs
-    calculate_energies '1e-4-Out.gen'
-    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
@@ -785,9 +751,6 @@ if [ $STALL == 'scc2' ]; then
   scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
 else
   if [ $RESULT == 'success1' ]; then
-    cd 1e-4-Outputs
-    calculate_energies '1e-4-Out.gen'
-    cd ..
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
