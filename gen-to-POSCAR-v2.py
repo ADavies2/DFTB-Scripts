@@ -8,7 +8,7 @@ TotalAtoms = len(GenData)
 SkipCellRows = TotalAtoms + 2 + 1
 CellData = pd.read_csv(GenFile, header=None, delim_whitespace=True, skiprows=SkipCellRows)
 
-raw_data = open('1e-4-Out.gen','r')
+raw_data = open(GenFile,'r')
 Lines = raw_data.readlines()
 AtomTypes = Lines[1].split()
 del Lines, raw_data
