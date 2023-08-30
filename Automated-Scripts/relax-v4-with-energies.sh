@@ -256,7 +256,7 @@ scc1 () {
               calculate_energies "1e-4-Out.gen"
               cp detailed* $2.log '1e-4-Out.gen' '1e-4-Out.xyz' charges.bin eigenvec.bin submit_$2 Energies.dat '1e-4-Outputs/'
               cp charges.dat "1e-4-Outputs/$7-charges.dat"
-              rm $2.out *log *xyz *gen *bin submit_$2 *dat *xml detailed.out band.out
+              rm $2.out *log *xyz *gen *bin submit_$2 charges* *xml detailed.out band.out
               RESULT='success1'
               STALL='none'
               break
@@ -392,7 +392,7 @@ scc2 () {
               calculate_energies "1e-4-Out.gen"
               cp detailed* $2.log '1e-4-Out.gen' '1e-4-Out.xyz' eigenvec.bin charges.bin submit_$2 Energies.dat '1e-4-Outputs/'
               cp charges.dat "1e-4-Outputs/$COF-charges.dat"
-              rm $2.out *log *xyz *gen *bin submit_$2 *dat *xml detailed.out band.out
+              rm $2.out *log *xyz *gen *bin submit_$2 charges* *xml detailed.out band.out
               RESULT='success1'
               STALL='none'
               break
