@@ -301,12 +301,12 @@ $OPTZ
   OptY=(${MinReturn[6]})
   OptZ=(${MinReturn[7]})
 
-  rm $COF* 
+  #rm $COF* 
   # Create the POSCAR file for the full optimization
-  FinalFILE=($(printf "$GEO\n$COF\n$AXIS\n$OptY\n$OptZ\n$OptX\n" | XYZ-Scanning.py))
-  FinalFILEName=(${FinalFILE[11]})
+  #FinalFILE=($(printf "$GEO\n$COF\n$AXIS\n$OptY\n$OptZ\n$OptX\n" | XYZ-Scanning.py))
+  #FinalFILEName=(${FinalFILE[11]})
 
-  submit_relax $FinalFILEName $COF
+  #submit_relax $FinalFILEName $COF
 
 elif [[ $AXIS == 'XY' ]]; then
   OPTZ=($(sed -n 5p $INSTRUCT))
@@ -346,10 +346,10 @@ elif [[ $AXIS == 'XY' ]]; then
   OptY=(${MinReturn[6]})
   OptZ=(${MinReturn[7]})
 
-  rm $COF* 
+  rm $COF*log $COF*out
   # Create the POSCAR file for the full optimization
-  FinalFILE=($(printf "$GEO\n$COF\n$AXIS\n$OptY\n$OptZ\n$OptX\n" | XYZ-Scanning.py))
-  FinalFILEName=(${FinalFILE[11]})
+  #FinalFILE=($(printf "$GEO\n$COF\n$AXIS\n$OptY\n$OptZ\n$OptX\n" | XYZ-Scanning.py))
+  #FinalFILEName=(${FinalFILE[11]})
 
-  submit_relax $FinalFILEName $COF
+  #submit_relax $FinalFILEName $COF
 fi
