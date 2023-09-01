@@ -260,9 +260,11 @@ if [[ $AXIS == 'Z' ]]; then
 # After Z height for AA stacking is optimized, make a directory where the AA inclined geometry can optimized
   mkdir AA-Inclined
   cd AA-Inclined
+  cp ../$GEO ./
   OFFSET='AA'
   Inclined=($(printf "$GEO\n$COF\n$OFFSET\n$OPTZ" | Generate-Inclined.py))
   AAFilename=(${Inclined[4]})
+  rm $GEO
 
   submit_relax $COF $AAFilename
   cd ../
@@ -310,11 +312,13 @@ $OPTZ
 # Set-up the AB inclined geometry
   mkdir AB-Inclined
   cd AB-Inclined
+  cp ../$GEO ./
   OFFSET='AB'
   ABOptZ=($(printf "$INSTRUCT" | Find-Minimum.py))
   ABOptZ=(${ABOptZ[8]})
   Inclined=($(printf "$GEO\n$COF\n$OFFSET\n$ABOptZ" | Generate-Inclined.py))
   ABFilename=(${Inclined[4]})
+  rm $GEO
 
   submit_relax $COF $ABFilename
   cd ../
@@ -329,7 +333,7 @@ $OPTZ
   FinalFILE=($(printf "$GEO\n$COF\n$AXIS\n$OptY\n$OptZ\n$OptX\n" | XYZ-Scanning.py))
   #FinalFILEName=(${FinalFILE[11]})
 
-#submit_relax $COF $FinalFILEName
+  #submit_relax $COF $FinalFILEName
 
 elif [[ $AXIS == 'XY' ]]; then
   OPTZ=($(sed -n 5p $INSTRUCT))
