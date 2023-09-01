@@ -20,7 +20,7 @@ def Generate_Inclined(Filename, COF, Offset, OptZ):
         ase.io.write(f'{COF}-{Offset}-Incl-POSCAR', images=Monolayer, format='vasp')
     print(f'{COF}-{Offset}-Incl-POSCAR')
 
-Filename = inputt('Filename: ')
+Filename = input('Filename: ')
 COF = input('COF: ')
 Offset = input('Offset: ')
 OptZ = input('OptZ: ')
