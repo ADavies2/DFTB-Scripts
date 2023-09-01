@@ -24,4 +24,6 @@ if Axis == 'Z':
 elif Axis == 'XY':
     Data = pd.read_csv(f'{Axis}.dat', header=None, delim_whitespace=True, names=['X','Y','Z','Energy'])
     Sorted = Data.sort_values(by=['Energy'])
-    print(Sorted.loc[0]['X'], Sorted.loc[0]['Y'], Sorted.loc[0]['Z'])
+    print(Sorted.iloc[0]['X'], Sorted.iloc[0]['Y'], Sorted.iloc[0]['Z'])
+    OptAB = Sorted[(Sorted.X == 0.5) & (Sorted.Y == 0.5)].iloc[0]
+    print(OptAB['Z'])

@@ -183,8 +183,8 @@ set_up_calculation () {
 }
 
 submit_relax () {
-# $1 = Input-POSCAR
-# $2 = COF
+# $1 = COF
+# $2 = Input-POSCAR
 
 # First, edit submit_bash to run a relax calculation
   sed -i 's/.*layer-relax.*/#layer-relax.sh $INPUT_FILE/g' ~/bin/submit_bash
@@ -193,21 +193,21 @@ submit_relax () {
 # Write the relax.in instruction file
   cat >> relax.in <<!
 # COF Name
-$2
+$1
 # Initial SCC
 1e-1
 # Structure filename
-$1
+$2
 # Restart?
 no
 # Partition?
-inv-desousa
+teton
 # Starting from Scan geometry?
 yes
 !
 
 # Submit autorelax
-  submit_bash relax.in autorelax-$COF-scan
+#submit_bash relax.in autorelax-$COF-scan
 }
 
 # Read in starting structure file, which should be an optimized monolayer
@@ -256,9 +256,21 @@ if [[ $AXIS == 'Z' ]]; then
   elif [[ $MIN2 == $MIN1 ]]; then
     OPTZ=$MIN2
   fi
+
+# After Z height for AA stacking is optimized, make a directory where the AA inclined geometry can optimized
+  mkdir AA-Inclined
+  cd AA-Inclined
+  OFFSET='AA'
+  Inclined=($(printf "$GEO\n$COF\n$OFFSET\n$OPTZ" | Generate-Inclined.py))
+  AAFilename=(${Inclined[4]})
+
+  submit_relax $COF $AAFilename
+  cd ../
+
 # After Z height has been optimized, begin testing X offset
 # At each X offset, test the previously optimized Z height, +0.25, and +0.5
-# Each of these are appended to an X-Y.dat file, to find if there are Z heights that result in lower energie X offsets
+# Each of these are appended to an X-Y.dat file, to find if there are Z heights that result in lower energi X offsets
+
   echo "Optimum Z from Z-scanning is $OPTZ"
   echo "Beginning XY-scanning..."
   AXIS='XY'
@@ -294,19 +306,30 @@ $OPTZ
     set_up_calculation $GEO $COF $AXIS $i $Z2 $i
     submit_calculation $COF $i $AXIS $PARTITION $Z2 $i
   done
+  
+# Set-up the AB inclined geometry
+  mkdir AB-Inclined
+  cd AB-Inclined
+  OFFSET='AB'
+  ABOptZ=($(printf "$INSTRUCT" | Find-Minimum.py))
+  ABOptZ=(${ABOptZ[8]})
+  Inclined=($(printf "$GEO\n$COF\n$OFFSET\n$ABOptZ" | Generate-Inclined.py))
+  ABFilename=(${Inclined[4]})
 
-  # Find the minimum energy value and corresponding X, Y and Z
+  submit_relax $COF $ABFilename
+  cd ../
+
+# Find the minimum energy value and corresponding X, Y and Z
   MinReturn=($(printf "$INSTRUCT" | Find-Minimum.py))
   OptX=(${MinReturn[5]})
   OptY=(${MinReturn[6]})
   OptZ=(${MinReturn[7]})
 
-  #rm $COF* 
-  # Create the POSCAR file for the full optimization
-  #FinalFILE=($(printf "$GEO\n$COF\n$AXIS\n$OptY\n$OptZ\n$OptX\n" | XYZ-Scanning.py))
+# Create the POSCAR file for the full optimization
+  FinalFILE=($(printf "$GEO\n$COF\n$AXIS\n$OptY\n$OptZ\n$OptX\n" | XYZ-Scanning.py))
   #FinalFILEName=(${FinalFILE[11]})
 
-  #submit_relax $FinalFILEName $COF
+#submit_relax $COF $FinalFILEName
 
 elif [[ $AXIS == 'XY' ]]; then
   OPTZ=($(sed -n 5p $INSTRUCT))
@@ -315,7 +338,7 @@ elif [[ $AXIS == 'XY' ]]; then
   Z1=(${ZReturn[5]}) # OPTZ - 0.25
   Z2=(${ZReturn[6]}) # OPTZ + 0.25
 
-  # Now, "stair step" test X and Y, with the previous Z values
+# Now, "stair step" test X and Y, with the previous Z values
   for i in '0.1' '0.2' '0.3' '0.4' '0.5'
   do
     # Y-shift at OPTZ - 0.25
@@ -340,16 +363,15 @@ elif [[ $AXIS == 'XY' ]]; then
     submit_calculation $COF $i $AXIS $PARTITION $Z2 $i
   done
 
-  # Find the minimum energy value and corresponding X, Y and Z
+# Find the minimum energy value and corresponding X, Y and Z
   MinReturn=($(printf "$INSTRUCT" | Find-Minimum.py))
   OptX=(${MinReturn[5]})
   OptY=(${MinReturn[6]})
   OptZ=(${MinReturn[7]})
 
-  rm $COF*log $COF*out
-  # Create the POSCAR file for the full optimization
-  #FinalFILE=($(printf "$GEO\n$COF\n$AXIS\n$OptY\n$OptZ\n$OptX\n" | XYZ-Scanning.py))
+# Create the POSCAR file for the full optimization
+  FinalFILE=($(printf "$GEO\n$COF\n$AXIS\n$OptY\n$OptZ\n$OptX\n" | XYZ-Scanning.py))
   #FinalFILEName=(${FinalFILE[11]})
 
-  #submit_relax $FinalFILEName $COF
+  #submit_relax $COF $FinalFILEName
 fi
