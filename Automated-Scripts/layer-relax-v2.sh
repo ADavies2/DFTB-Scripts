@@ -330,13 +330,15 @@ $OPTZ
   OptY=(${MinReturn[6]})
   OptZ=(${MinReturn[7]})
 
-  echo "Optimized from scanning: $OPTX, $OPTY, $OPTZ"
-  sed -i "5s/.*/$OPTX $OPTY $OPTZ/" $INSTRUCT
+  echo "Optimized from scanning: $OptX, $OptY, $OptZ"
+  sed -i "5s/.*/$OptX $OptY $OptZ/" $INSTRUCT
 
 # Create the POSCAR file for the full optimization
   mkdir Opt-Scan
   cd Opt-Scan
+  cp ../$GEO ./
   FinalFILE=($(printf "$GEO\n$COF\n$AXIS\n$OptY\n$OptZ\n$OptX\n" | XYZ-Scanning.py))
   FinalFILEName=(${FinalFILE[11]})
   submit_relax $COF $FinalFILEName $PARTITION
+  rm $GEO
 fi
