@@ -313,12 +313,13 @@ $OPTZ
   mkdir AB-Inclined
   cd AB-Inclined
   cp ../$GEO ./
+  cp ../layers.in ./
   OFFSET='AB'
   ABOptZ=($(printf "$INSTRUCT" | Find-Minimum.py))
   ABOptZ=(${ABOptZ[8]})
   Inclined=($(printf "$GEO\n$COF\n$OFFSET\n$ABOptZ" | Generate-Inclined.py))
   ABFilename=(${Inclined[4]})
-  rm $GEO
+  rm $GEO layers.in
 
   submit_relax $COF $ABFilename
   cd ../
