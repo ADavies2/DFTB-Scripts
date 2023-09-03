@@ -267,7 +267,7 @@ if [[ $AXIS == 'Z' ]]; then
   AAFilename=(${Inclined[4]})
   rm $GEO
 
-  submit_relax $COF $AAFilename $PARTITION
+  submit_relax "$COF-AA" $AAFilename $PARTITION
   cd ../
 
 # After Z height has been optimized, begin testing X offset
@@ -321,7 +321,7 @@ $OPTZ
   ABFilename=(${Inclined[4]})
   rm $GEO
 
-  submit_relax $COF $ABFilename $PARTITION
+  submit_relax "$COF-AB" $ABFilename $PARTITION
   cd ../
 
 # Find the minimum energy value and corresponding X, Y and Z
@@ -339,6 +339,6 @@ $OPTZ
   cp ../$GEO ./
   FinalFILE=($(printf "$GEO\n$COF\n$AXIS\n$OptY\n$OptZ\n$OptX\n" | XYZ-Scanning.py))
   FinalFILEName=(${FinalFILE[11]})
-  submit_relax $COF $FinalFILEName $PARTITION
+  submit_relax "$COF-Scan" $FinalFILEName $PARTITION
   rm $GEO
 fi
