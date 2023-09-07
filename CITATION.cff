@@ -1,0 +1,16 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: DFTB-DMREF-Analysis
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Alathea
+    family-names: Davies
+    email: adavies2@uwyo.edu
+    affiliation: Graduate Student
+    orcid: 'https://orcid.org/0009-0009-4190-5555'
+repository-code: 'https://github.com/ADavies2/DFTB-Scripts'
