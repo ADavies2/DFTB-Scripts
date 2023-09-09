@@ -7,8 +7,10 @@ def Get_Occupancy(Filename, Iteration, No_Atoms):
     XYZ = pd.read_csv('COF139-Proton.xyz', header=None, nrows=No_Atoms, delim_whitespace=True,\
                       names=['Particle Type','X','Y','Z','Charge','Vx','Vy','Vz'], skiprows=skip)
         
-    C_Index = [46,47,95,96,117,118] # Particle index for terminal carbons in COOH groups, for acidic sim
-    # C_Index = [42,43,90,91114,116] # Particle index for second_terminal in COOH, for basic sim
+    if PH == 'acid':
+        C_Index = [46,47,95,96,117,118] # Particle index for terminal carbons in COOH groups, for acidic sim
+    else:
+        C_Index = [42,43,90,91,114,116] # Particle index for second_terminal in COOH, for basic sim
     O_Index = np.linspace(144,167,num=24) # Particle index for oxygens in COOH groups
     
     # The terminal carbons will be used as criterion for H2O being "in the pore" and we want to be sure not to\
@@ -21,14 +23,15 @@ def Get_Occupancy(Filename, Iteration, No_Atoms):
         COOH_C.append(dict)
     COOH_C = pd.DataFrame(COOH_C) # All data for COOH_C terminal atoms
     
-    Min_X = min(COOH_C['X'])+4
-    Max_X = max(COOH_C['X'])+4
+    #Min_X = min(COOH_C['X'])+4
+    #Max_X = max(COOH_C['X'])+4
 
-    Min_Y = min(COOH_C['Y'])+4
-    Max_Y = max(COOH_C['Y'])+4 # The length of the COOH group here is used, since there are "gaps" between\
+    #Min_Y = min(COOH_C['Y'])+4
+    #Max_Y = max(COOH_C['Y'])+4 # The length of the COOH group here is used, since there are "gaps" between\
     # functional groups that H2O could be going through as well, not just between the functional group\
     # terminations
 
+    # If the z-coordinate of a water molecule is within the Z maximum and minimum of the COOH groups, then it is likely within the pore as well
     Min_Z = min(COOH_C['Z'])
     Max_Z = max(COOH_C['Z'])
     

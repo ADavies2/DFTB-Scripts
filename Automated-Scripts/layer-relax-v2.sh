@@ -1,3 +1,9 @@
+# This is a bash script that automatically scans the Z-spacing of a COF and then sets up an AA inclined calculation using that Z-spacing
+# Then, it scans the X-Y layer offset to determine an AA-slip or AB offset starting geometry. From here, the bash script will set-up an AB inclined calculation
+# Finally, it will set up a third "scan optimized" calculation with the optimum starting geometry from the X-Y scanning
+
+# NOTE: This bash script ONLY takes .vasp input files
+
 #!/bin/bash
 
 # Declare an associative array for the Hubbard derivatives of each element for the 3ob parameters
@@ -105,13 +111,8 @@ submit_calculation () {
   TASK=8
   CPU=1
   JOBNAME="$1-$2$3"
-  if [[ $4 == 'teton' ]]; then
-    submit_dftb_teton $TASK $CPU $JOBNAME
+  submit_dftb_scanning $TASK $CPU $JOBNAME $4
     sleep 5s
-  elif [[ $4 == 'inv-desousa' ]]; then
-    submit_dftb_desousa $TASK $CPU $JOBNAME
-    sleep 5s
-  fi
   while :
   do
     stat=($(squeue -n $JOBNAME))
@@ -167,7 +168,7 @@ set_up_calculation () {
     NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n$6\n" | XYZ-Scanning.py))
     NewFILE=(${NewFILE[11]})
   fi
-  ATOM_TYPES=($(sed -n 6p $NewFILE))
+  ATOM_TYPES=($(sed -n 6p $1))
 
 # Read atom types into a function for angular momentum and Hubbard derivative values
   declare -A myHUBBARD
