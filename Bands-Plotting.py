@@ -17,11 +17,11 @@ sns.set_context("notebook",rc={"grid.linewidth": 0,
 
 colors = sns.color_palette("colorblind", 12)
 
-Fermi = -4.6135 # eV
-COF = 'ATFG'
+Fermi = -4.6135 # Fermi level, taken from well-converged DOS calculation
+BandGap = 0.53 # Band gap, calculated from dos-band.out using sigma = 0.001 for broadening
+COF = 'ATFG' # COF, or material, name
 
-Bands = np.array(np.loadtxt("%s_bands_tot.dat" % COF))
-print(np.shape(Bands))
+Bands = np.array(np.loadtxt('bands_tot.dat'))
 
 fig = plt.figure(figsize=(12,8))
 plt.plot(Bands-Fermi, color = 'black')
@@ -29,7 +29,7 @@ plt.ylim(-2,2) # (-5.5, 2.5), (-8,-3), (-5,-3)
 plt.xlabel('K-Point Path', labelpad = 10)
 plt.ylabel('Energy (eV)', labelpad = 3)
 plt.xlim(0,30)
-plt.text(1, 0, 'Band Gap(%s) = 0.53 eV' % COF, color='black', fontsize=18)
-plt.xticks([0,10,20,30], ['\u0393','K','M', '\u0393'])
-#plt.savefig('%s-Bands.jpeg' % COF,  bbox_inches='tight', pad_inches = 0.5, dpi=400)
+plt.text(1, 0, f'Band Gap({COF}) = {BandGap} eV', color='black', fontsize=18)
+plt.xticks([0,20,40,60], ['\u0393','K','M', '\u0393'])
+#plt.savefig(f'{COF}-Bands.jpeg',  bbox_inches='tight', pad_inches = 0.5, dpi=400)
 plt.show()
