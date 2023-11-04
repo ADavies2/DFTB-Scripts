@@ -1,3 +1,7 @@
+# Python function for importing XRD data exported from VESTA in a .xy file type
+# This imports the data as a Pandas dataframe
+# Column 1 is the 2Theta values, Column 2 is intensity, and Column 3 can be marked as N/A
+
 import pandas as pd
 
 def LoadXRD(Filename):

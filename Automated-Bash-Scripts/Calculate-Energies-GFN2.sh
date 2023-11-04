@@ -1,4 +1,9 @@
 #!/bin/bash
+# # This bash script calculated enthalpy of formation and cohesive energy from a DFTB+ simulation 
+# Specifically, the simulation must have used the GFN2-xTB Hamiltonian rather than the base DFTB
+
+# To run this script, give the name of the .gen file as input on the same line. For example...
+# Calculate-Energies-GFN2.sh 1e-4-Out.gen
 
 # Declare an associative array for the atomic/gaseous phase energy for each element (calculated so far)
 declare -A ATOMIC_ENERGY

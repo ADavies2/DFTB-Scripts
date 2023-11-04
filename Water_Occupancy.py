@@ -1,3 +1,7 @@
+# This is a Python function for calculation the water occupancy of the pore in a COF
+# This Python script must be edited for the COF in question, specifically how the pore is defined
+# This script was developed for COF-139 which contains COOH functional groups. The pore was defined as water within the Z range of these functional groups
+
 def Get_Occupancy(Filename, Iteration, No_Atoms):
 # Filename: XYZ file from MD calculations
 # Iteration: Which MD iteration to grab water occupancy from
@@ -22,14 +26,6 @@ def Get_Occupancy(Filename, Iteration, No_Atoms):
         dict.update(XYZ.iloc[i])
         COOH_C.append(dict)
     COOH_C = pd.DataFrame(COOH_C) # All data for COOH_C terminal atoms
-    
-    #Min_X = min(COOH_C['X'])+4
-    #Max_X = max(COOH_C['X'])+4
-
-    #Min_Y = min(COOH_C['Y'])+4
-    #Max_Y = max(COOH_C['Y'])+4 # The length of the COOH group here is used, since there are "gaps" between\
-    # functional groups that H2O could be going through as well, not just between the functional group\
-    # terminations
 
     # If the z-coordinate of a water molecule is within the Z maximum and minimum of the COOH groups, then it is likely within the pore as well
     Min_Z = min(COOH_C['Z'])

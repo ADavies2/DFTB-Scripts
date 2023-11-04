@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# This Python script generates the AA-Inclined and AB-Inclined geometry files from a COF monolayer
+# It will output them as .vasp file types
 
 import ase.io
 

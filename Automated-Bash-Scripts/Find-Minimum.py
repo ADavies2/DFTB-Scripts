@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+# This is a Python script generated with the layer-relax-v2.sh script. 
+# This Python script finds the minimum energy X, Y, Z offsets written to a .dat file by DFTB+ 
+# This script must read the layers.in input script as an instruction file. For example...
+# python Find-Minimum.py layers.in
 
 import pandas as pd
 

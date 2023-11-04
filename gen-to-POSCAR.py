@@ -1,3 +1,7 @@
+# This Python script convert DFTB+ .gen files into POSCAR (.vasp) file types
+# This can be run in command-line
+# Two prompts will display; the first asking for the name of the .gen file to be converted and the second asking for the name of the output POSCAR file
+
 import pandas as pd
 
 GenFile = input('What is the name of your .gen file? ')

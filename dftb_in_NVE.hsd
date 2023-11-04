@@ -1,12 +1,14 @@
+# The following dftb_in.hsd is an example dftb_in script for a microcanonical MD simulation
+
 Geometry = GenFormat {
-  <<< NVE6-Input.gen
+  <<< NVE6-Input.gen # Be sure to chang the format and input file name to reflect your own calculation
 }
 
 Driver = VelocityVerlet {
   TimeStep [fs] = 1.0
   MovedAtoms = 1:-1
-  Steps = 1500
-  MDRestartFrequency = 20
+  Steps = 1500 # This is the number of simulation steps. Multiply this by the TimeStep to determine the length of the simulation in seconds
+  MDRestartFrequency = 20 # How frequently data is dumped to the .log and md.out files
   OutputPrefix = NVE6
   Thermostat = None {
     InitialTemperature [Kelvin] = 600 }
@@ -15,7 +17,7 @@ Driver = VelocityVerlet {
 Hamiltonian = DFTB {
   SCC = Yes
   MaxSCCIterations = 2000
-  ReadInitialCharges = Yes
+  ReadInitialCharges = Yes # Only set this to Yes if you have a previously converged charge distribution (charges.bin)
   Dispersion = LennardJones {
     Parameters = UFFParameters {}
   }
@@ -24,15 +26,15 @@ Hamiltonian = DFTB {
     Exponent = 4.05
   }
   HubbardDerivs {
-  H = -0.07
-  C = -0.1492
+  H = -0.07 # Hubbard Derivs can be found online with the 3ob-3-1 parameter set. Be sure to include all atom types within your simulation
+  C = -0.1492 
   N = -0.1535
   Br = -0.0573
   O = -0.1575
   F = -0.1623
 }
   SlaterKosterFiles = Type2FileNames {
-    Prefix = "/project/designlab/Shared/Codes/dftb+sk/3ob-3-1/"
+    Prefix = "/project/designlab/Shared/Codes/dftb+sk/3ob-3-1/" # This can stay the same if you have access to the ARCC designlab
     Separator = "-"
     Suffix = ".skf"
   }
@@ -40,7 +42,7 @@ Hamiltonian = DFTB {
     0.0 0.0 0.0 1.0
   }
   MaxAngularMomentum = {
-    H = "s"
+    H = "s" # Be sure to include all atom types in simulation
     C = "p"
     N = "p"
     Br = "d"
@@ -59,5 +61,5 @@ ParserOptions {
 }
 
 Options {
-  RandomSeed = 169704737
+  RandomSeed = 169704737 # If this is the first simulation for an MD series, set this to 0 to generate a random number. If this is a restart calculation, change the seed number to be equal to the previous simulations.
 }

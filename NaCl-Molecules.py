@@ -1,3 +1,6 @@
+# This Python script calculates the number of Na Cl molecules required to reach a user-defined concentration within a user-provided volume
+# The volume is provided in lengths of X, Y, and Z
+
 import numpy as np
 import math
 
