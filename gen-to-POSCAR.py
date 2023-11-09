@@ -23,7 +23,7 @@ with open(PoscarFile, 'w') as file: # Create a file to write to
     file.write(Header)
     file.write(Scaling)
     for i in range(0,len(CellData)):
-        cell = cell = f'{CellData.iloc[i][0]} {CellData.iloc[i][1]} {CellData.iloc[i][2]}\n'
+        cell = f'{CellData.iloc[i][0]} {CellData.iloc[i][1]} {CellData.iloc[i][2]}\n'
         file.write(cell)
     for i in range(0,len(AtomTypes)):
         file.write(f'{AtomTypes[i]} ')
