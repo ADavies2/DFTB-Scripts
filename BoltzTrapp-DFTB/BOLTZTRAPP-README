@@ -16,7 +16,8 @@ This can be done using the gen-to-POSCAR.py script within this GitHub repo.
 <JOBNAME>.log, band.out, detailed.out, and geo_end.xyz (DFTB+ .xyz output file)
 
 3. Run the following command:
-dftb2vasp.py <JOBNAME>.log
+dftb2vasp.py 
+There will be a user prompted input to which you should respond with <JOBNAME>.log
 
 4. Copy energies.boltztrap into COF.energy
 Delete the first line of COF.energy and replace it with the following:
