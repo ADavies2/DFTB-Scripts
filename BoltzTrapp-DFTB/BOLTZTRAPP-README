@@ -44,4 +44,4 @@ There will be two user-prompted inputs: the first is the number of bands and the
 Generate-Bt2.py
 
 7. For the final step, run the following command. 
-btp2 -vv integrate COF_BLTZTRP.bt2 300:310:10
+btp2 -vv integrate COF_BLZTRP.bt2 300:310:10
