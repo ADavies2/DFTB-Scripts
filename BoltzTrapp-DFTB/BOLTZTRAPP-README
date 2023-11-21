@@ -21,11 +21,11 @@ There will be a user prompted input to which you should respond with <JOBNAME>.l
 
 4. Copy energies.boltztrap into COF.energy
 Edit the second line to read the following after the number corresponding to the number of k-points:
-    <NUMBER>      1   0     ! nk, nspin, Fermi level(Ry) : energies below in R
+    <NUMBER>
 
 5. Copy hte.struct into COF.structure
 cat the DFTB+ .xyz output file into COF.structure. For example...
-cat geo_end.xyz >> COF.structuret
+cat geo_end.xyz >> COF.structure
 
 6. Within COF.structure, delete the last four lines from hte.structure. They may look something like this:
 1
