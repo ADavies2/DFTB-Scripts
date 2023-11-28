@@ -1,5 +1,7 @@
 def sigma(conduction_band, valence_band, fermi, trace):
 # This function finds the maximum electrical conductivity value from a BoltzTrapp trace file, given the maximum conduction band and the minimum valence band values
+    import pandas as pd
+    
     Ry2eV = 13.6057039763
     converted_Ef = []
     for i in range(0,len(trace)):
