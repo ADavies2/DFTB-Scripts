@@ -1,0 +1,6 @@
+This file is an standard operating procedure for the coordinate driving method to get the single-molecule barrier energy of water through a stacked COF procedure
+
+1. Use the Place-H2O.py script to place the H2O molecule at the top of the pore of the COF. The file water.vasp is a relaxed H2O molecule. 
+This file is required by Place-H2O.py. 
+
+2. 

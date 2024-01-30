@@ -1,0 +1,53 @@
+Geometry = GenFormat {
+  <<< Input.gen
+}
+
+Driver = ConjugateGradient {
+  MovedAtoms = 61 62 75
+  MaxSteps = 100000
+  LatticeOpt = No
+  AppendGeometries = No
+  OutputPrefix = CD-Out
+  Constraints = {
+    61 0.0 0.0 1.0
+    62 0.0 0.0 1.0
+    75 0.0 0.0 1.0 } }
+
+Hamiltonian = DFTB {
+SCC = Yes
+ReadInitialCharges = Yes
+MaxSCCIterations = 5000
+ThirdOrderFull = Yes
+Dispersion = LennardJones {
+  Parameters = UFFParameters{} }
+HCorrection = Damping {
+  Exponent = 4.05 }
+HubbardDerivs {
+C = -0.1492
+H = -0.1857
+O = -0.1575
+N = -0.1535 }
+SlaterKosterFiles = Type2FileNames {
+  Prefix = "/project/designlab/Shared/Codes/dftb+sk/3ob-3-1/"
+  Separator = "-"
+  Suffix = ".skf" }
+KPointsAndWeights = SupercellFolding {
+  4 0 0
+  0 4 0
+  0 0 4
+  0.5 0.5 0.5 }
+MaxAngularMomentum {
+C = p
+H = s
+O = "p"
+N = p }
+Filling = Fermi {
+  Temperature [Kelvin] = 0 } }
+Parallel = {
+  Groups = 1
+  UseOmpThreads = Yes }
+
+ParserOptions {
+  ParserVersion = 10 }
+Analysis = {
+  MullikenAnalysis = Yes }
