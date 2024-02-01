@@ -148,8 +148,6 @@ cat > $SCRIPT_NAME<<!
 #SBATCH --output=$JOBNAME.out
 #SBATCH --partition=$3
 #SBATCH --mem=$MEM
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=adavies2@uwyo.edu
 
 cd \$SLURM_SUBMIT_DIR
 
@@ -173,14 +171,15 @@ $JOBID
       echo "$JOBNAME is pending..."
       sleep 5s
     else
+      sleep 10s
       if grep -q "SCC converged" detailed.out; then
-        echo "Job complete."
+  	echo "Job complete."
         DETAILED=($(grep "Total energy" detailed.out))
         TOTAL_ENERGY=${DETAILED[4]}
         cat >> $1-CD.dat <<!
 $TOTAL_ENERGY
 !
-        rm submit_$JOBNAME $JOBNAME.log $JOBNAME.out *bin dftb* band.out detailed.out
+        rm submit_$JOBNAME $JOBNAME.log $JOBNAME.out *bin dftb* band.out detailed.out *xyz
         break
       elif grep -q "SCC is NOT converged" $JOBNAME.log; then
         echo "SCC did not converge.\nDouble-check structure."
@@ -210,7 +209,7 @@ DIST=($(sed -n 5p $INSTRUCT)) # distance the molecule of H2O will move. Move thr
 if [[ $GEO == *"gen"* ]]; then
   ATOM_TYPES=($(sed -n 2p $GEO))
 else
-  ATOM_TYPES=($(sed -n 6p $GEO))
+  ATOM_TYPES=($(sed -n 1p $GEO))
 fi
 
 # Read atom types into a function for angular momentum and Hubbard derivative values
@@ -222,7 +221,12 @@ for element in ${ATOM_TYPES[@]}; do
   myMOMENTUM[$element]="$element = ${MOMENTUM[$element]}"
 done
 
-for i in $(seq 1 2); do
+# Determine the number of steps based on the distance travelled, which is provided as user input
+# Distance travelled should be through at least one layer. Take the layer spacing and round up to the nearest integer
+STEP=0.25
+N_STEPS=$(echo $DIST / $STEP | bc)
+
+for i in $(seq 1 $N_STEPS); do
   if [[ $i == 1 ]]; then # If this is the first iteration, use the geo provided by the instruction file
     GEO=($(sed -n 2p $INSTRUCT))
   else # Otherwise, use the modified geo file made with Move-H2O.py
@@ -236,5 +240,16 @@ for i in $(seq 1 2); do
   submit $COFNAME $i $PARTITION
 
   # Generate the next input file based on the positions of the H2O molecule in the output file
-  NewInput=($(printf "CD-Out$i.gen\n$COFNAME" | Move-H2O.py))
+  printf "CD-Out$i.gen\n$COFNAME\n${MOVED_ATOMS[0]} ${MOVED_ATOMS[1]} ${MOVED_ATOMS[2]}" | Move-H2O.py
 done
+
+MIN=$(sort -n "$COFNAME-CD.dat" | head -1)
+MAX=$(sort -n "$COFNAME-CD.dat" | tail -1)
+
+EBARRIER=$(echo $MAX - $MIN | bc)
+
+cat >> $COFNAME-CD.dat <<!
+Maximum = $MAX eV
+Minimum = $MIN eV
+Barrier energy = $EBARRIER eV
+!
