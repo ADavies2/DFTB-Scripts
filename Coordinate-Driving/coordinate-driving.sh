@@ -126,7 +126,7 @@ submit () {
   # Time for the job:
   TIME=48:00:00
   # Number of tasks per node:
-  TASK=16
+  TASK=8
   # Number of CPUs per task:
   CPUS=1
   # Jobname:
@@ -173,12 +173,7 @@ $JOBID
     else
       sleep 10s
       if grep -q "SCC converged" detailed.out; then
-  	echo "Job complete."
-        DETAILED=($(grep "Total energy" detailed.out))
-        TOTAL_ENERGY=${DETAILED[4]}
-        cat >> $1-CD.dat <<!
-$TOTAL_ENERGY
-!
+  	    echo "Job complete."
         rm submit_$JOBNAME $JOBNAME.log $JOBNAME.out *bin dftb* band.out *xyz
         mv detailed.out detailed$2.out
         break
@@ -227,6 +222,8 @@ done
 STEP=0.25
 N_STEPS=$(echo $DIST / $STEP | bc)
 
+echo "$N_STEPS of 0.25 Ang each"
+
 for i in $(seq 1 $N_STEPS); do
   if [[ $i == 1 ]]; then # If this is the first iteration, use the geo provided by the instruction file
     GEO=($(sed -n 2p $INSTRUCT))
@@ -243,6 +240,14 @@ for i in $(seq 1 $N_STEPS); do
   # Generate the next input file based on the positions of the H2O molecule in the output file
   printf "CD-Out$i.gen\n$COFNAME\n${MOVED_ATOMS[0]} ${MOVED_ATOMS[1]} ${MOVED_ATOMS[2]}" | Move-H2O.py
   echo "\n"
+done
+
+for i in $(seq 1 $N_STEPS); do
+  DETAILED=($(grep "Total energy" detailed$i.out))
+  TOTAL_ENERGY=${DETAILED[4]}
+  cat >> $COFNAME-CD.dat <<!
+$TOTAL_ENERGY
+!
 done
 
 MIN=$(sort -n "$COFNAME-CD.dat" | head -1)
