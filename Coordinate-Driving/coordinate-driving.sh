@@ -172,7 +172,7 @@ $JOBID
       sleep 10s
     else
       sleep 10s
-      if grep -q "SCC converged" detailed.out; then
+      if grep -q "Geometry converged" detailed.out; then
   	    echo "Job complete."
         rm submit_$JOBNAME $JOBNAME.log $JOBNAME.out *bin dftb* band.out *xyz
         mv detailed.out detailed$2.out
@@ -222,7 +222,7 @@ done
 STEP=0.25
 N_STEPS=$(echo $DIST / $STEP | bc)
 
-echo "$N_STEPS of 0.25 Ang each"
+echo "$N_STEPS steps of 0.25 Ang each"
 
 for i in $(seq 1 $N_STEPS); do
   if [[ $i == 1 ]]; then # If this is the first iteration, use the geo provided by the instruction file
