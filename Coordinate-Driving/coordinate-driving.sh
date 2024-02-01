@@ -169,7 +169,7 @@ $JOBID
     jobstat=(${stat[12]})
     if [ "$jobstat" == "PD" ]; then
       echo "$JOBNAME is pending..."
-      sleep 5s
+      sleep 10s
     else
       sleep 10s
       if grep -q "SCC converged" detailed.out; then
@@ -179,7 +179,8 @@ $JOBID
         cat >> $1-CD.dat <<!
 $TOTAL_ENERGY
 !
-        rm submit_$JOBNAME $JOBNAME.log $JOBNAME.out *bin dftb* band.out detailed.out *xyz
+        rm submit_$JOBNAME $JOBNAME.log $JOBNAME.out *bin dftb* band.out *xyz
+        mv detailed.out detailed$2.out
         break
       elif grep -q "SCC is NOT converged" $JOBNAME.log; then
         echo "SCC did not converge.\nDouble-check structure."
@@ -241,6 +242,7 @@ for i in $(seq 1 $N_STEPS); do
 
   # Generate the next input file based on the positions of the H2O molecule in the output file
   printf "CD-Out$i.gen\n$COFNAME\n${MOVED_ATOMS[0]} ${MOVED_ATOMS[1]} ${MOVED_ATOMS[2]}" | Move-H2O.py
+  echo "\n"
 done
 
 MIN=$(sort -n "$COFNAME-CD.dat" | head -1)
