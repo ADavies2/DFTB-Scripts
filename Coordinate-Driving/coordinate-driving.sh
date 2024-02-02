@@ -119,6 +119,7 @@ submit () {
 # 1 = COF_NAME
 # 2 = ITER
 # 3 = PARTITION
+# 4 = STALL
   # Number of nodes intended:
   NODE=1
   # memory per core:
@@ -126,7 +127,13 @@ submit () {
   # Time for the job:
   TIME=48:00:00
   # Number of tasks per node:
-  TASK=8
+  if [[ $4 == 'STALL1' ]]; then
+    TASK=8
+  elif [[ $4 == 'STALL2' ]]; then
+    TASK=4
+  else
+    TASK=16
+  fi
   # Number of CPUs per task:
   CPUS=1
   # Jobname:
@@ -163,6 +170,7 @@ mpirun -n $PROC dftb+ > $JOBNAME.log
   cat >> $SCRIPT_NAME<<!
 $JOBID
 !
+echo "$JOBID has been submitted."
   while :
   do
     stat=($(squeue -n $JOBNAME))
@@ -171,21 +179,42 @@ $JOBID
       echo "$JOBNAME is pending..."
       sleep 10s
     else
-      sleep 10s
-      if grep -q "Geometry converged" detailed.out; then
-  	    echo "Job complete."
-        rm submit_$JOBNAME $JOBNAME.log $JOBNAME.out *bin dftb* band.out *xyz
-        mv detailed.out detailed$2.out
-        break
-      elif grep -q "SCC is NOT converged" $JOBNAME.log; then
-        echo "SCC did not converge.\nDouble-check structure."
-        exit
-      elif grep -q "ERROR!" $JOBNAME.log; then
-        echo "DFTB+ Error. User trouble-shoot required."
-        exit
-      else
+      log_size=($(ls -l "$JOBNAME.log"))
+      size0=(${log_size[4]})
+      sleep 30s
+      log_size=($(ls -l "$JOBNAME.log"))
+      size1=(${log_size[4]})
+      if [[ $size1 > $size0 ]]; then
         echo "$JOBNAME is running..."
+      elif [[ $size1 == $size0 ]]; then
         sleep 10s
+        if grep -q "Geometry converged" detailed.out; then
+  	      echo "Job complete."
+          rm submit_$JOBNAME $JOBNAME.log $JOBNAME.out *bin dftb* band.out *xyz
+          mv detailed.out detailed$2.out
+          STALL='none'
+          break
+        elif grep -q "SCC is NOT converged" $JOBNAME.log; then
+          echo "SCC did not converge.\nDouble-check structure."
+          exit
+        elif grep -q "ERROR!" $JOBNAME.log; then
+          echo "DFTB+ Error. User trouble-shoot required."
+          exit
+        else
+          echo "$JOBID has stalled. Restarting..."
+          qdel $JOBID
+          sleep 5s
+          if [[ $TASK == 16 ]]; then
+            STALL='STALL1'
+            break
+          elif [[ $TASK == 8 ]]; then
+            STALL='STALL2'
+            break
+          else
+            STALL='final'
+            break
+          fi
+        fi  
       fi
     fi
   done
@@ -236,6 +265,10 @@ for i in $(seq 1 $N_STEPS); do
 
   # Submit the calculation
   submit $COFNAME $i $PARTITION
+  if [[ $STALL != 'none' ]]; then
+    scc_dftb_in CD-Out$i.gen MOVED_ATOMS $i myHUBBARD myMOMENTUM
+    submit $COFNAME $i $PARTITION $STALL
+  fi 
 
   # Generate the next input file based on the positions of the H2O molecule in the output file
   printf "CD-Out$i.gen\n$COFNAME\n${MOVED_ATOMS[0]} ${MOVED_ATOMS[1]} ${MOVED_ATOMS[2]}" | Move-H2O.py
