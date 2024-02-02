@@ -189,7 +189,6 @@ echo "$JOBID has been submitted."
       elif [[ $size1 == $size0 ]]; then
         sleep 10s
         if grep -q "Geometry converged" detailed.out; then
-  	      echo "Job complete."
           rm submit_$JOBNAME $JOBNAME.log $JOBNAME.out *bin dftb* band.out *xyz
           mv detailed.out detailed$2.out
           STALL='none'
@@ -209,9 +208,6 @@ echo "$JOBID has been submitted."
             break
           elif [[ $TASK == 8 ]]; then
             STALL='STALL2'
-            break
-          else
-            STALL='final'
             break
           fi
         fi  
@@ -265,9 +261,23 @@ for i in $(seq 1 $N_STEPS); do
 
   # Submit the calculation
   submit $COFNAME $i $PARTITION
-  if [[ $STALL != 'none' ]]; then
-    scc_dftb_in CD-Out$i.gen MOVED_ATOMS $i myHUBBARD myMOMENTUM
+  
+  if (( $STALL == 'STALL1' )); then
     submit $COFNAME $i $PARTITION $STALL
+    if (( $STALL == 'STALL2' )); then
+      submit $COFNAME $i $PARTITION $STALL
+      echo "Job complete."
+      printf "CD-Out$i.gen\n$COFNAME\n${MOVED_ATOMS[0]} ${MOVED_ATOMS[1]} ${MOVED_ATOMS[2]}" | Move-H2O.py
+      echo "\n"
+    elif (( $STALL == 'none' )); then
+      echo "Job complete."
+      printf "CD-Out$i.gen\n$COFNAME\n${MOVED_ATOMS[0]} ${MOVED_ATOMS[1]} ${MOVED_ATOMS[2]}" | Move-H2O.py
+      echo "\n"
+    fi 
+  elif (( $STALL = 'none' )); then
+    echo "Job complete."
+    printf "CD-Out$i.gen\n$COFNAME\n${MOVED_ATOMS[0]} ${MOVED_ATOMS[1]} ${MOVED_ATOMS[2]}" | Move-H2O.py
+    echo "\n"
   fi 
 
   # Generate the next input file based on the positions of the H2O molecule in the output file
@@ -293,3 +303,5 @@ Maximum = $MAX eV
 Minimum = $MIN eV
 Barrier energy = $EBARRIER eV
 !
+
+echo "Coordinate driving for $COFNAME is complete."
