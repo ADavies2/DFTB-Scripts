@@ -119,21 +119,13 @@ submit () {
 # 1 = COF_NAME
 # 2 = ITER
 # 3 = PARTITION
-# 4 = STALL
+# 4 = TASKS
   # Number of nodes intended:
   NODE=1
   # memory per core:
   MEM=20GB
   # Time for the job:
   TIME=48:00:00
-  # Number of tasks per node:
-  if [[ $4 == 'STALL1' ]]; then
-    TASK=8
-  elif [[ $4 == 'STALL2' ]]; then
-    TASK=4
-  else
-    TASK=16
-  fi
   # Number of CPUs per task:
   CPUS=1
   # Jobname:
@@ -147,7 +139,7 @@ submit () {
 cat > $SCRIPT_NAME<<!
 #!/bin/bash
 #SBATCH --nodes=$NODE
-#SBATCH --ntasks-per-node=$TASK
+#SBATCH --ntasks-per-node=$4
 #SBATCH --cpus-per-task=$CPUS
 #SBATCH --account=designlab
 #SBATCH --time=$TIME
@@ -179,6 +171,7 @@ echo "$JOBID has been submitted."
       echo "$JOBNAME is pending..."
       sleep 10s
     else
+      sleep 2s
       log_size=($(ls -l "$JOBNAME.log"))
       size0=(${log_size[4]})
       sleep 30s
@@ -191,7 +184,7 @@ echo "$JOBID has been submitted."
         if grep -q "Geometry converged" detailed.out; then
           rm submit_$JOBNAME $JOBNAME.log $JOBNAME.out *bin dftb* band.out *xyz
           mv detailed.out detailed$2.out
-          STALL='none'
+          echo "$JOBID complete."
           break
         elif grep -q "SCC is NOT converged" $JOBNAME.log; then
           echo "SCC did not converge.\nDouble-check structure."
@@ -199,17 +192,17 @@ echo "$JOBID has been submitted."
         elif grep -q "ERROR!" $JOBNAME.log; then
           echo "DFTB+ Error. User trouble-shoot required."
           exit
-        else
-          echo "$JOBID has stalled. Restarting..."
-          qdel $JOBID
-          sleep 5s
-          if [[ $TASK == 16 ]]; then
-            STALL='STALL1'
-            break
-          elif [[ $TASK == 8 ]]; then
-            STALL='STALL2'
-            break
-          fi
+        #else
+          #echo "$JOBID has stalled. Restarting..."
+          #qdel $JOBID
+          #sleep 5s
+          #if [[ $4 == 16 ]]; then
+            #TASK=8
+            #submit $1 $2 $3 $TASK
+          #elif [[ $4 == 8 ]]; then
+            #TASK=4
+            #submit $1 $2 $3 $TASK
+          #fi
         fi  
       fi
     fi
@@ -260,25 +253,7 @@ for i in $(seq 1 $N_STEPS); do
   scc_dftb_in $GEO MOVED_ATOMS $i myHUBBARD myMOMENTUM
 
   # Submit the calculation
-  submit $COFNAME $i $PARTITION
-  
-  if (( $STALL == 'STALL1' )); then
-    submit $COFNAME $i $PARTITION $STALL
-    if (( $STALL == 'STALL2' )); then
-      submit $COFNAME $i $PARTITION $STALL
-      echo "Job complete."
-      printf "CD-Out$i.gen\n$COFNAME\n${MOVED_ATOMS[0]} ${MOVED_ATOMS[1]} ${MOVED_ATOMS[2]}" | Move-H2O.py
-      echo "\n"
-    elif (( $STALL == 'none' )); then
-      echo "Job complete."
-      printf "CD-Out$i.gen\n$COFNAME\n${MOVED_ATOMS[0]} ${MOVED_ATOMS[1]} ${MOVED_ATOMS[2]}" | Move-H2O.py
-      echo "\n"
-    fi 
-  elif (( $STALL = 'none' )); then
-    echo "Job complete."
-    printf "CD-Out$i.gen\n$COFNAME\n${MOVED_ATOMS[0]} ${MOVED_ATOMS[1]} ${MOVED_ATOMS[2]}" | Move-H2O.py
-    echo "\n"
-  fi 
+  submit $COFNAME $i $PARTITION 4
 
   # Generate the next input file based on the positions of the H2O molecule in the output file
   printf "CD-Out$i.gen\n$COFNAME\n${MOVED_ATOMS[0]} ${MOVED_ATOMS[1]} ${MOVED_ATOMS[2]}" | Move-H2O.py

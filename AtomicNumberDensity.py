@@ -7,10 +7,10 @@ COFName = input('What is the COF name? ')
 Filetype = input('What is the file type? ')
 Filename = input('What is the filename? ')
 
-if Filetype == 'vasp' or 'POSCAR':
-    COF = ase.io.read(Filename, format='vasp')
-elif Filetype == 'gen':
+if 'gen' in Filetype:
     COF = ase.io.read(Filename, format='gen')
+elif 'vasp' or 'POSCAR' in Filetype:
+    COF = ase.io.read(Filename, format='vasp')
 
 c_counter = 0; o_counter = 0; h_counter = 0; n_counter = 0; f_counter = 0; s_counter = 0
 for i in COF.get_chemical_symbols():
