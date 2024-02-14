@@ -241,11 +241,11 @@ scc1 () {
     TASK=16
     gen_submit $TASK 1 $2 $1
   fi
+  submit=($(sbatch submit_$2))
+  JOBID=(${submit[3]})
+  echo "$JOBID submitted"
   while :
   do
-    submit=($(sbatch submit_$2))
-    JOBID=(${submit[3]})
-    echo "$JOBID submitted"
     stat=($(squeue -n $2))
     jobstat=(${stat[12]})
     if [ "$jobstat" == "PD" ]; then
@@ -325,6 +325,7 @@ Options {
             if [[ $size3 == $size2 ]]; then
               echo "$JOBID has stalled. Restarting..."
               qdel $JOBID
+              sleep 5s
               STALL='scc1'
               RESULT='none'
               if [[ $6 == '1e-5' ]]; then
@@ -340,118 +341,6 @@ Options {
   done
 }
 
-scc2 () {
-# $1 = $PARTITION
-# $2 = $JOBNAME
-# $3 = $STALL
-# $4 = $TASK
-# $5 = $CPUS
-# $6 = $TOL
-# $7 = $COF
-# $8 = $RESULT
-  if [[ $3 != 'none' ]]; then
-    if (($4 == 16)) && (($5 == 1)); then
-      TASK=8
-      gen_submit $TASK $5 $2 $1
-    elif (($4 == 8)) && (($5 == 1)); then
-      TASK=4
-      gen_submit $TASK $5 $2 $1
-    fi
-  else
-    TASK=16
-    CPUS=1
-    gen_submit $TASK $CPUS $2 $1
-  fi
-  while :
-  do 
-    submit=($(sbatch submit_$2))
-    JOBID=(${submit[3]})
-    echo "$JOBID submitted"
-    sleep 5s
-    log_size=($(ls -l "$2.log"))
-    size=(${log_size[4]})
-    sleep 120s
-    log_size2=($(ls -l "$2.log"))
-    size2=(${log_size2[4]})
-    if [[ $size2 > $size ]]; then
-      echo "$2 is running..."
-    elif [[ $size2 == $size ]]; then 
-    sleep 15s      
-    if grep -q "Geometry converged" detailed.out && grep -q "Geometry converged" $2.log; then
-      if [[ $6 == '1e-5' ]]; then
-        if [ ! -d "1e-4-Outputs" ]; then
-          mkdir '1e-4-Outputs'
-        fi
-        calculate_energies "1e-4-Out.gen"
-        cp detailed* $2.log '1e-4-Out.gen' '1e-4-Out.xyz' eigenvec.bin charges.bin submit_$2 Energies.dat '1e-4-Outputs/'
-        cp charges.dat "1e-4-Outputs/$COF-charges.dat"
-        rm $2.out *log *xyz *gen *bin submit_$2 *dat *xml detailed.out band.out
-        RESULT='success1'
-        STALL='none'
-        break
-      elif [[ $6 = '1e-2' || $6 = '1e-3' ]]; then
-        if [ ! -d "$6-Outputs" ]; then
-          mkdir $6-Outputs
-        fi
-     	cp detailed.out $2.log $6-Out.gen $6-Out.xyz charges.bin submit_$2 $6-Outputs/
-        rm $2.out *xyz submit_$2
-        sed -i 's/.*Geometry.*/Geometry = GenFormat {/g' dftb_in.hsd
-        sed -i "s/.*<<<.*/  <<< ""$6-Out.gen""/g" dftb_in.hsd
-        sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd
-        if [ $6 == '1e-2' ]; then
-          TOL='1e-3'
-          sed -i "s/.*MaxForceComponent.*/  MaxForceComponent = $TOL/g" dftb_in.hsd
-          sed -i "s/.*OutputPrefix.*/  OutputPrefix = "$TOL-Out" }/g" dftb_in.hsd
-        elif [ $6 == '1e-3' ]; then
-          TOL='1e-5'
-          sed -i 's/.*MaxForceComponent.*/  MaxForceComponent = 1e-4/g' dftb_in.hsd
-          sed -i 's/.*OutputPrefix.*/  OutputPrefix = 1e-4-Out }/g' dftb_in.hsd
-          sed -i '/.*Analysis.*/d' dftb_in.hsd
-          cat >> dftb_in.hsd <<!
-Analysis = {
-  MullikenAnalysis = Yes
-  AtomResolvedEnergies = Yes
-  WriteEigenvectors = Yes
-  CalculateForces = Yes }
-Options {
-  WriteChargesAsText = Yes
-  WriteDetailedXML = Yes }
-!
-        fi
-        sed -i "s/.*SCCTolerance.*/SCCTolerance = $TOL/g" dftb_in.hsd           
-        echo "$2 has completed."
-        JOBNAME="$7-scc-$TOL"
-        RESULT='success2'
-        STALL='none'
-        break
-      fi
-      elif grep -q "SCC is NOT converged" $2.log; then
-        echo "$2 did NOT converge. User trouble-shoot required to check atoms."
-        exit
-      elif grep -q "ERROR!" $2.log; then
-        echo "DFTB+ Error. User trouble-shoot required."
-        exit
-      else
-        sleep 180s
-        log_size3=($(ls -l "$2.log"))
-        size3=(${log_size3[4]})
-        if [[ $size3 == $size2 ]]; then
-          echo "$JOBID has stalled. Restarting..."
-          qdel $JOBID
-          STALL='scc2'
-          RESULT='none'
-          if [[ $6 == '1e-5' ]]; then
-            sed -i "s/.*<<<.*/   <<< '1e-4-Out.gen'/g" dftb_in.hsd
-          else
-            sed -i "s/.*<<<.*/   <<< '$6-Out.gen'/g" dftb_in.hsd
-          fi
-          break
-        fi
-      fi
-    fi
-  done  
-}
-
 # The instruction file is passed as an arguement when the job is submitted
 INSTRUCT=$1
 
@@ -465,7 +354,6 @@ SCAN=($(sed -n 12p $INSTRUCT))
 
 STALL='none'
 TASK=16
-CPUS=1
 JOBNAME="$COF-scc-$TOL"
 
 # Read input geometry file to get atom types and number of atoms  
@@ -491,270 +379,106 @@ scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
 
 # LOOP 1 (LIGHTBLUE) RESULTS, SUBMITTING LOOP 2 (LIGHTGREEN) CALCULATIONS
 # submit the first calculation
-scc1 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF
-if [[ $STALL == 'scc1' ]]; then
-  scc1 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF
-else
-  if [ $RESULT == 'success1' ]; then
+scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF #16 tasks
+if [[ $STALL == 'scc1' ]]; then 
+  scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF #8 tasks
+  if [[ $STALL == 'scc1' ]]; then 
+    scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF #4 tasks
+      if [ $RESULT == 'success1' ]; then
+        echo "$COF is fully relaxed!"
+        exit
+      elif [ $RESULT == 'success2' ]; then
+        scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF $RESULT
+      fi
+  elif [ $RESULT == 'success1' ]; then
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
+    scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF $RESULT
   fi
+elif [ $RESULT == 'success1' ]; then
+  echo "$COF is fully relaxed!"
+  exit
+elif [ $RESULT == 'success2' ]; then
+  scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF $RESULT
 fi
 
-#LOOP 2 (LIGHTGREEN) RESULTS, SUBMITTING LOOP 3 (LIGHTYELLOW) CALCULATIONS 
-if [ $STALL == 'scc1' ]; then
-  scc1 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF
-elif [ $STALL == 'scc2' ]; then
-  scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-else
-  if [ $RESULT == 'success1' ]; then
+# LOOP 2 (LIGHTBLUE) RESULTS, SUBMITTING LOOP 2 (LIGHTGREEN) CALCULATIONS
+# submit the first calculation
+scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF #16 tasks
+if [[ $STALL == 'scc1' ]]; then 
+  scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF #8 tasks
+  if [[ $STALL == 'scc1' ]]; then 
+    scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF #4 tasks
+      if [ $RESULT == 'success1' ]; then
+        echo "$COF is fully relaxed!"
+        exit
+      elif [ $RESULT == 'success2' ]; then
+        scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF $RESULT
+      fi
+  elif [ $RESULT == 'success1' ]; then
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'success3' ]; then
-    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'fail2' ]; then
-    echo "User trouble-shoot required."
-    exit
-  elif [ $RESULT == 'fail3' ]; then
-    echo "User trouble-shoot required."
-    exit
+    scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF $RESULT
   fi
+elif [ $RESULT == 'success1' ]; then
+  echo "$COF is fully relaxed!"
+  exit
+elif [ $RESULT == 'success2' ]; then
+  scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF $RESULT
 fi
 
-# Repeat these if statements until all loops on the flowchart are accounted for
-
-# LOOP 3 (LIGHTYELLOW) RESULTS, SUBMITTING LOOP 4 (LIGHTRED)
-if [ $STALL == 'scc2' ]; then
-  scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-else
-  if [ $RESULT == 'success1' ]; then
+# LOOP 3 (LIGHTBLUE) RESULTS, SUBMITTING LOOP 2 (LIGHTGREEN) CALCULATIONS
+# submit the first calculation
+scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF #16 tasks
+if [[ $STALL == 'scc1' ]]; then 
+  scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF #8 tasks
+  if [[ $STALL == 'scc1' ]]; then 
+    scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF #4 tasks
+      if [ $RESULT == 'success1' ]; then
+        echo "$COF is fully relaxed!"
+        exit
+      elif [ $RESULT == 'success2' ]; then
+        scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF $RESULT
+      fi
+  elif [ $RESULT == 'success1' ]; then
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'success3' ]; then
-    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'fail2' ]; then
-    echo "User trouble-shoot required."
-    exit
-  elif [ $RESULT == 'fail3' ]; then
-    echo "User trouble-shoot required."
-    exit
+    scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF $RESULT
   fi
+elif [ $RESULT == 'success1' ]; then
+  echo "$COF is fully relaxed!"
+  exit
+elif [ $RESULT == 'success2' ]; then
+  scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF $RESULT
 fi
 
-# LOOP 4 (LIGHTRED) RESULTS, SUBMITTING LOOP 5 (LIGHTPURPLE)
-if [ $STALL == 'scc2' ]; then
-  scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-else
-  if [ $RESULT == 'success1' ]; then
+# LOOP 4 (LIGHTBLUE) RESULTS, SUBMITTING LOOP 2 (LIGHTGREEN) CALCULATIONS
+# submit the first calculation
+scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF #16 tasks
+if [[ $STALL == 'scc1' ]]; then 
+  scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF #8 tasks
+  if [[ $STALL == 'scc1' ]]; then 
+    scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF #4 tasks
+      if [ $RESULT == 'success1' ]; then
+        echo "$COF is fully relaxed!"
+        exit
+      elif [ $RESULT == 'success2' ]; then
+        scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF $RESULT
+      fi
+  elif [ $RESULT == 'success1' ]; then
     echo "$COF is fully relaxed!"
     exit
   elif [ $RESULT == 'success2' ]; then
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'success3' ]; then
-    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'fail2' ]; then
-    echo "User trouble-shoot required."
-    exit
-  elif [ $RESULT == 'fail3' ]; then
-    echo "User trouble-shoot required."
-    exit
+    scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF $RESULT
   fi
+elif [ $RESULT == 'success1' ]; then
+  echo "$COF is fully relaxed!"
+  exit
+elif [ $RESULT == 'success2' ]; then
+  scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF $RESULT
 fi
 
-# LOOP 5 (LIGHTPURPLE) RESULTS, SUBMITTING LOOP 6 (KELLYGREEN)
-if [ $STALL == 'scc2' ]; then
-  scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-else
-  if [ $RESULT == 'success1' ]; then
-    echo "$COF is fully relaxed!"
-    exit
-  elif [ $RESULT == 'success2' ]; then
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'success3' ]; then
-    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'fail2' ]; then
-    echo "User trouble-shoot required."
-    exit
-  elif [ $RESULT == 'fail3' ]; then
-    echo "User trouble-shoot required."
-    exit
-  fi
-fi
 
-# LOOP 6 (KELLYGREEN) RESULTS, SUBMITTING LOOP 7 (SKYBLUE)
-if [ $STALL == 'scc2' ]; then
-  scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-else
-  if [ $RESULT == 'success1' ]; then
-    echo "$COF is fully relaxed!"
-    exit
-  elif [ $RESULT == 'success2' ]; then
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'success3' ]; then
-    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'fail2' ]; then
-    echo "User trouble-shoot required."
-    exit
-  elif [ $RESULT == 'fail3' ]; then
-    echo "User trouble-shoot required."
-    exit
-  fi
-fi
-
-# LOOP 7 (SKYBLUE) RESULTS, SUBMITTING LOOP 8 (BRIGHTPURPLE)
-if [ $STALL == 'scc2' ]; then
-  scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-else
-  if [ $RESULT == 'success1' ]; then
-    echo "$COF is fully relaxed!"
-    exit
-  elif [ $RESULT == 'success2' ]; then
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'success3' ]; then
-    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'fail2' ]; then
-    echo "User trouble-shoot required."
-    exit
-  elif [ $RESULT == 'fail3' ]; then
-    echo "User trouble-shoot required."
-    exit
-  fi
-fi
-
-# LOOP 8 (BRIGHTPURPLE) RESULTS, SUBMITTING LOOP 9 (FUSCHIA)
-if [ $STALL == 'scc2' ]; then
-  scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-else
-  if [ $RESULT == 'success1' ]; then
-    echo "$COF is fully relaxed!"
-    exit
-  elif [ $RESULT == 'success2' ]; then
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'success3' ]; then
-    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'fail2' ]; then
-    echo "User trouble-shoot required."
-    exit
-  elif [ $RESULT == 'fail3' ]; then
-    echo "User trouble-shoot required."
-    exit
-  fi
-fi
-
-# LOOP 9 (FUSCHIA) RESULTS, SUBMITTING LOOP 10 (ORANGE)
-if [ $STALL == 'scc2' ]; then
-  scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-else
-  if [ $RESULT == 'success1' ]; then
-    echo "$COF is fully relaxed!"
-    exit
-  elif [ $RESULT == 'success2' ]; then
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'success3' ]; then
-    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'fail2' ]; then
-    echo "User trouble-shoot required."
-    exit
-  elif [ $RESULT == 'fail3' ]; then
-    echo "User trouble-shoot required."
-    exit
-  fi
-fi
-
-# LOOP 10 (ORANGE) RESULTS, SUBMITTING LOOP 11 (MUSTARD YELLOW)
-if [ $STALL == 'scc2' ]; then
-  scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-else
-  if [ $RESULT == 'success1' ]; then
-    echo "$COF is fully relaxed!"
-    exit
-  elif [ $RESULT == 'success2' ]; then
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'success3' ]; then
-    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'fail2' ]; then
-    echo "User trouble-shoot required."
-    exit
-  elif [ $RESULT == 'fail3' ]; then
-    echo "User trouble-shoot required."
-    exit
-  fi
-fi
-
-# LOOP 11 (MUSTARD YELLOW) RESULTS, SUBMITTING LOOP 12 (EGGPLANT)
-if [ $STALL == 'scc2' ]; then
-  scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-else
-  if [ $RESULT == 'success1' ]; then
-    echo "$COF is fully relaxed!"
-    exit
-  elif [ $RESULT == 'success2' ]; then
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'success3' ]; then
-    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'fail2' ]; then
-    echo "User trouble-shoot required."
-    exit
-  elif [ $RESULT == 'fail3' ]; then
-    echo "User trouble-shoot required."
-    exit
-  fi
-fi
-
-# LOOP 12 (EGGPLANT) RESULTS, SUBMITTING LOOP 13 (PERIWINKLE)
-if [ $STALL == 'scc2' ]; then
-  scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-else
-  if [ $RESULT == 'success1' ]; then
-    echo "$COF is fully relaxed!"
-    exit
-  elif [ $RESULT == 'success2' ]; then
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'success3' ]; then
-    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'fail2' ]; then
-    echo "User trouble-shoot required."
-    exit
-  elif [ $RESULT == 'fail3' ]; then
-    echo "User trouble-shoot required."
-    exit
-  fi
-fi
-
-# LOOP 13 (PERIWINKLE) RESULTS
-if [ $STALL == 'scc2' ]; then
-  scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-else
-  if [ $RESULT == 'success1' ]; then
-    echo "$COF is fully relaxed!"
-    exit
-  elif [ $RESULT == 'success2' ]; then
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'success3' ]; then
-    scc_dftb_in $GEO $TOL $RESTART myHUBBARD myMOMENTUM
-    scc2 $PARTITION $JOBNAME $STALL $TASK $CPUS $TOL $COF $RESULT
-  elif [ $RESULT == 'fail2' ]; then
-    echo "User trouble-shoot required."
-    exit
-  elif [ $RESULT == 'fail3' ]; then
-    echo "User trouble-shoot required."
-    exit
-  fi
-fi
