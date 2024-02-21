@@ -158,41 +158,6 @@ ParserOptions {
   fi 
 }
 
-calculate_energies () {
-# $1 = $GEO
-  printf "$1\ntmp-POSCAR" | gen-to-POSCAR.py
-  GEO='tmp-POSCAR'
-
-  ATOM_TYPES=($(sed -n 6p $GEO))
-  N_TYPES=($(sed -n 7p $GEO))
-  N_ATOMS=0
-  for i in ${N_TYPES[@]}; do
-    let N_ATOMS+=$i
-    done
-
-  E_atom=0
-  E_ref=0
-  count=0
-  for element in ${ATOM_TYPES[@]}; do
-    E_atom=$(echo $E_atom+${ATOMIC_ENERGY[$element]}*${N_TYPES[$count]} | bc)
-    E_ref=$(echo $E_ref+${REFERENCE_ENERGY[$element]}*${N_TYPES[$count]} | bc)
-    ((count++))
-  done
-
-  DETAILED=($(grep "Total energy" detailed.out))
-  TOTAL_ENERGY=${DETAILED[4]}
-
-  COHESIVE=$(echo "scale=3; ($E_atom - $TOTAL_ENERGY) / $N_ATOMS" | bc)
-  ENTHALPY=$(echo "scale=3; ($TOTAL_ENERGY - $E_ref) / $N_ATOMS" | bc)
-
-  cat > Energies.dat <<!
-E(COH) $COHESIVE eV
-H(f) $ENTHALPY eV
-!
-
-  rm tmp-POSCAR
-}
-
 gen_submit () {
 # 1= Task
 # 2 = CPUS
@@ -266,8 +231,7 @@ scc1 () {
               if [ ! -d "1e-4-Outputs" ]; then
                 mkdir '1e-4-Outputs'
               fi
-              calculate_energies "1e-4-Out.gen"
-              mv detailed* $2.log '1e-4-Out.gen' '1e-4-Out.xyz' charges.* eigenvec.bin submit_$2 Energies.dat '1e-4-Outputs/'
+              mv detailed* $2.log '1e-4-Out.*' charges.* eigenvec.bin submit_$2 '1e-4-Outputs/'
               RESULT='success1'
               STALL='none'
               break
@@ -277,7 +241,6 @@ scc1 () {
               fi
               cp $5-Out.gen charges.bin $5-Outputs/
               mv detailed.out $2.log $5-Out.xyz submit_$2 $5-Outputs/
-              rm $2.out *xyz submit_$2
               sed -i 's/.*Geometry.*/Geometry = GenFormat {/g' dftb_in.hsd
               sed -i "s/.*<<<.*/  <<< ""$5-Out.gen""/g" dftb_in.hsd
               sed -i 's/.*ReadInitialCharges.*/ReadInitialCharges = Yes/g' dftb_in.hsd           
@@ -405,7 +368,6 @@ fi
 
 # LOOP 2 (LIGHTBLUE) RESULTS, SUBMITTING LOOP 2 (LIGHTGREEN) CALCULATIONS
 # submit the first calculation
-scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF #16 tasks
 if [[ $STALL == 'scc1' ]]; then 
   scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF #8 tasks
   if [[ $STALL == 'scc1' ]]; then 
@@ -431,7 +393,6 @@ fi
 
 # LOOP 3 (LIGHTBLUE) RESULTS, SUBMITTING LOOP 2 (LIGHTGREEN) CALCULATIONS
 # submit the first calculation
-scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF #16 tasks
 if [[ $STALL == 'scc1' ]]; then 
   scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF #8 tasks
   if [[ $STALL == 'scc1' ]]; then 
@@ -457,7 +418,6 @@ fi
 
 # LOOP 4 (LIGHTBLUE) RESULTS, SUBMITTING LOOP 2 (LIGHTGREEN) CALCULATIONS
 # submit the first calculation
-scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF #16 tasks
 if [[ $STALL == 'scc1' ]]; then 
   scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF #8 tasks
   if [[ $STALL == 'scc1' ]]; then 
