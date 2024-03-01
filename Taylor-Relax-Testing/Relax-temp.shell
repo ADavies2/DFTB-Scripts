@@ -231,7 +231,8 @@ scc1 () {
               if [ ! -d "1e-4-Outputs" ]; then
                 mkdir '1e-4-Outputs'
               fi
-              mv detailed* $2.log '1e-4-Out.*' charges.* eigenvec.bin submit_$2 '1e-4-Outputs/'
+              mv detailed* $2.log 1e-4-Out.* charges.* eigenvec.bin submit_$2 1e-4-Outputs/
+              rm *.gen *.xyz $6*.out band.out
               RESULT='success1'
               STALL='none'
               break

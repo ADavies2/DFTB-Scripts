@@ -1,0 +1,367 @@
+#!/bin/bash
+
+# Declare an associative array for the Hubbard derivatives of each element for the 3ob parameters
+declare -A HUBBARD
+HUBBARD[Br]=-0.0573
+HUBBARD[C]=-0.1492
+HUBBBARD[Ca]=-0.034
+HUBBARD[Cl]=-0.0697
+HUBBARD[F]=-0.1623
+HUBBARD[H]=-0.1857
+HUBBARD[I]=-0.0433
+HUBBARD[K]=-0.0339
+HUBBARD[Mg]=-0.02
+HUBBARD[N]=-0.1535
+HUBBARD[Na]=-0.0454
+HUBBARD[O]=-0.1575
+HUBBARD[P]=-0.14
+HUBBARD[S]=-0.11
+HUBBARD[Zn]=-0.03
+
+# Declare an associative array for the max angular momentum orbitals for each element for the 3ob parameters
+declare -A MOMENTUM
+MOMENTUM[Br]=d
+MOMENTUM[C]=p
+MOMENTUM[Ca]=p
+MOMENTUM[Cl]=d
+MOMENTUM[F]=p
+MOMENTUM[H]=s
+MOMENTUM[I]=d
+MOMENTUM[K]=p
+MOMENTUM[Mg]=p
+MOMENTUM[N]=p
+MOMENTUM[Na]=p
+MOMENTUM[O]=p
+MOMENTUM[P]=d
+MOMENTUM[S]=d
+MOMENTUM[Zn]=d
+
+# Write a dftb_in.hsd file for a single-point calculation
+dftb_in () {
+# 1 = $GEO
+# 2 = myHUBBARD
+# 3 = myMOMENTUM
+    cat > dftb_in.hsd <<!
+Geometry = VASPFormat {
+  <<< "$1"
+}
+
+Driver = { }
+
+Hamiltonian = DFTB {
+SCC = Yes
+ReadInitialCharges = No
+MaxSCCIterations = 50
+ThirdOrderFull = Yes
+Dispersion = LennardJones {
+  Parameters = UFFParameters{} }
+HCorrection = Damping {
+  Exponent = 4.05 }
+HubbardDerivs {
+!
+  hubbard=$2[@]
+  sccHUBBARD=("${!hubbard}")
+  printf "%s\n" "${sccHUBBARD[@]} }" >> dftb_in.hsd
+  cat >> dftb_in.hsd <<!
+SlaterKosterFiles = Type2FileNames {
+  Prefix = "/project/designlab/Shared/Codes/dftb+sk/3ob-3-1/"
+  Separator = "-"
+  Suffix = ".skf" }
+KPointsAndWeights = SupercellFolding {
+  4 0 0
+  0 4 0
+  0 0 4
+  0.5 0.5 0.5 }
+MaxAngularMomentum {
+!
+  momentum=$3[@]
+  sccMOMENTUM=("${!momentum}")
+  printf "%s\n" "${sccMOMENTUM[@]} }" >> dftb_in.hsd
+  cat >> dftb_in.hsd <<!
+Filling = Fermi {
+  Temperature [Kelvin] = 0 } }
+
+Analysis = {
+    MullikenAnalysis = Yes }
+
+Parallel = {
+  Groups = 1
+  UseOmpThreads = Yes }
+
+ParserOptions {
+  ParserVersion = 12 }
+!
+}
+
+gen_submit () {
+# 1 = JOBNAME
+# 2 = Partition
+        NODE=1
+        MEM=30gb
+        TASK=4
+        CPU=1
+        TIME=72:00:00
+        SCRIPT_NAME=submit_$1
+        PROC=$((NODE * TASK))
+
+        cat > $SCRIPT_NAME<<!
+#!/bin/bash
+#SBATCH --nodes=$NODE
+#SBATCH --ntasks-per-node=$TASK
+#SBATCH --cpus-per-task=$CPU
+#SBATCH --account=designlab
+#SBATCH --time=$TIME
+#SBATCH --job-name=$1
+#SBATCH --output=$1.out
+#SBATCH --partition=$2
+#SBATCH --mem=$MEM
+cd \$SLURM_SUBMIT_DIR
+export OMP_NUM_THREADS=$CPU
+module load arcc/1.0 dftb/22.2
+mpirun -n $PROC dftb+ > $1.log
+!
+}
+
+submit_calculation () {
+# 1 = $COF
+# 2 = $CHANGE
+# 3 = $AXIS
+# 4 = $PARTITION
+# 5 = $Z
+# 6 = $X
+
+# Submit calculation
+  JOBNAME="$1-$2$3"
+  gen_submit $JOBNAME $4
+  submit=($(sbatch submit_$JOBNAME))
+  JOBID=(${submit[3]})
+  sleep 5s
+  while :
+  do
+    stat=($(squeue -n $JOBNAME))
+    jobstat=(${stat[12]})
+    if [ "$jobstat" == "PD" ]; then
+      echo "$JOBNAME is pending..."
+      sleep 5s
+    else
+      if grep -q "SCC converged" detailed.out; then
+        echo "Job complete."
+        DETAILED=($(grep "Total energy" detailed.out))
+        TOTAL_ENERGY=${DETAILED[4]}
+        if [[ $3 == 'Z' ]]; then
+          cat >> $3.dat <<!
+$2 $TOTAL_ENERGY
+!
+        elif [[ $3 == 'XY' ]]; then
+          cat >> $3.dat <<!
+$6 $2 $5 $TOTAL_ENERGY
+!
+        fi
+        rm submit_$JOBNAME $JOBNAME.log $JOBNAME.out *bin dftb* band.out detailed.out
+        break
+      elif grep -q "SCC is NOT converged" $JOBNAME.log; then
+        echo "At $3 = $2 SCC did not converge."
+        rm submit_$JOBNAME $JOBNAME.log $JOBNAME.out *bin dftb* band.out detailed.out
+        break
+      elif grep -q "ERROR!" $JOBNAME.log; then
+        echo "DFTB+ Error. User trouble-shoot required."
+        exit
+      else
+        echo "$JOBNAME is running..."
+        sleep 10s
+      fi
+    fi
+  done
+}
+
+set_up_calculation () {
+# 1 = $GEO 
+# 2 = $COF
+# 3 = $AXIS
+# 4 = $CHANGE 
+# 5 = $OPTZ
+# 6 = $X-SHIFT
+
+# Generate geometry from XYZ-Scanning
+  if [[ $3 == 'Z' ]]; then
+    NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n$6\n" | XYZ-Scanning.py))
+    NewFILE=(${NewFILE[7]})
+  else
+    NewFILE=($(printf "$1\n$2\n$3\n$4\n$5\n$6\n" | XYZ-Scanning.py))
+    NewFILE=(${NewFILE[11]})
+  fi
+  ATOM_TYPES=($(sed -n 6p $1))
+
+# Read atom types into a function for angular momentum and Hubbard derivative values
+  declare -A myHUBBARD
+  declare -A myMOMENTUM
+  nl=$'\n'
+  for element in ${ATOM_TYPES[@]}; do
+    myHUBBARD[$element]="$element = ${HUBBARD[$element]}"
+    myMOMENTUM[$element]="$element = ${MOMENTUM[$element]}"
+  done
+
+# Write dftb_in.hsd reading in NewFILE
+  dftb_in $NewFILE myHUBBARD myMOMENTUM
+}
+
+submit_relax () {
+# $1 = COF
+# $2 = Input-POSCAR
+# $3 = Partition
+
+# First, edit submit_bash to run a relax calculation
+  #sed -i 's/.*layer-relax.*/#layer-relax.sh $INPUT_FILE/g' ~/bin/submit_bash
+  #sed -i 's/.*relax-v4-with-energies.sh.*/relax-v4-with-energies.sh $INPUT_FILE/g' ~/bin/submit_bash
+
+# Write the relax.in instruction file
+  cat >> relax.in <<!
+# COF Name
+$1
+# Initial SCC
+1e-1
+# Structure filename
+$2
+# Restart?
+no
+# Partition?
+$3
+# Starting from Scan geometry?
+yes
+!
+
+# Submit autorelax
+#submit_bash relax.in autorelax-$COF-scan
+}
+
+# Read in starting structure file, which should be an optimized monolayer
+# Set-up the dftb_in.hsd file
+# Submit the calculation and check for completion
+# Grep the total energy value from detailed.out and save to a .dat file
+
+# Repeat this process for varying values of Z, X%, and Y%
+
+module load gcc/11.2.0 python/3.10.8
+
+# Instruction file containing the name of the initial structure file and COF name
+INSTRUCT=$1
+
+COF=($(sed -n 1p $INSTRUCT))
+GEO=($(sed -n 2p $INSTRUCT))
+AXIS=($(sed -n 3p $INSTRUCT))
+AXIS=${AXIS^^}
+PARTITION=($(sed -n 4p $INSTRUCT))
+
+if [[ $AXIS == 'Z' ]]; then
+# First, run an optimization for Z height
+  for i in 1 2 3 4 5 # Where i = CHANGE
+  do
+    set_up_calculation $GEO $COF $AXIS $i
+    submit_calculation $COF $i $AXIS $PARTITION
+  done
+
+  MinReturn=($(printf "$INSTRUCT" | Find-Minimum.py))
+  MIN1=(${MinReturn[5]}) # Minimum Z value from tested values
+  Z1=(${MinReturn[6]}) # New Z value that is halfway between two lowest values
+  set_up_calculation $GEO $COF $AXIS $Z1
+  submit_calculation $COF $Z1 $AXIS $PARTITION
+
+  MinReturn=($(printf "$INSTRUCT" | Find-Minimum.py))
+  MIN2=(${MinReturn[5]}) # Minimum Z value, including new test
+  Z2=(${MinReturn[6]})
+
+  if [[ $MIN2 != $MIN1 ]]; then
+    set_up_calculation $GEO $COF $AXIS $Z2
+    submit_calculation $COF $Z2 $AXIS $PARTITION
+
+    MinReturn=($(printf "$INSTRUCT" | Find-Minimum.py))
+    OPTZ=(${MinReturn[5]}) # Close enough to finding minimum, take this as the final "optimized Z"
+
+  elif [[ $MIN2 == $MIN1 ]]; then
+    OPTZ=$MIN2
+  fi
+
+# After Z height for AA stacking is optimized, make a directory where the AA inclined geometry can optimized
+  mkdir AA-Inclined
+  cd AA-Inclined
+  cp ../$GEO ./
+  OFFSET='AA'
+  Inclined=($(printf "$GEO\n$COF\n$OFFSET\n$OPTZ" | Generate-Inclined.py))
+  AAFilename=(${Inclined[4]})
+  rm $GEO
+
+  submit_relax "$COF-AA" $AAFilename $PARTITION
+  cd ../
+
+# After Z height has been optimized, begin testing X offset
+# At each X offset, test the previously optimized Z height, +0.25, and +0.5
+# Each of these are appended to an X-Y.dat file, to find if there are Z heights that result in lower energi X offsets
+
+  echo "Optimum Z from Z-scanning is $OPTZ"
+  echo "Beginning XY-scanning..."
+  AXIS='XY'
+  sed -i "3s/.*/$AXIS/" $INSTRUCT # Change the testing axis in the instruction file to XY
+  cat >> $INSTRUCT <<!
+$OPTZ
+!
+  ZReturn=($(printf "$OPTZ" | Return-NewZ.py))
+  Z1=(${ZReturn[5]}) # OPTZ - 0.25
+  Z2=(${ZReturn[6]}) # OPTZ + 0.25
+
+# Now, "stair step" test X and Y, with the previous Z values
+  for i in '0.1' '0.2' '0.3' '0.4' '0.5'
+  do
+    # Y-shift at OPTZ - 0.25
+    set_up_calculation $GEO $COF $AXIS $i $Z1 0
+    submit_calculation $COF $i $AXIS $PARTITION $Z1 0
+    # X and Y-shift
+    set_up_calculation $GEO $COF $AXIS $i $Z1 $i
+    submit_calculation $COF $i $AXIS $PARTITION $Z1 $i
+
+    # Y-shift at OPTZ
+    set_up_calculation $GEO $COF $AXIS $i $OPTZ 0
+    submit_calculation $COF $i $AXIS $PARTITION $OPTZ 0
+    # X and Y-shift
+    set_up_calculation $GEO $COF $AXIS $i $OPTZ $i
+    submit_calculation $COF $i $AXIS $PARTITION $OPTZ $i
+
+    # Y-shift at OPTZ + 0.25
+    set_up_calculation $GEO $COF $AXIS $i $Z2 0
+    submit_calculation $COF $i $AXIS $PARTITION $Z2 0
+    # X and Y-shift
+    set_up_calculation $GEO $COF $AXIS $i $Z2 $i
+    submit_calculation $COF $i $AXIS $PARTITION $Z2 $i
+  done
+  
+# Set-up the AB inclined geometry
+  mkdir AB-Inclined
+  OFFSET='AB'
+  ABOptZ=($(printf "$INSTRUCT" | Find-Minimum.py))
+  ABOptZ=(${ABOptZ[8]})
+  cp $GEO AB-Inclined
+  cd AB-Inclined
+  Inclined=($(printf "$GEO\n$COF\n$OFFSET\n$ABOptZ" | Generate-Inclined.py))
+  ABFilename=(${Inclined[4]})
+  rm $GEO
+
+  submit_relax "$COF-AB" $ABFilename $PARTITION
+  cd ../
+
+# Find the minimum energy value and corresponding X, Y and Z
+  MinReturn=($(printf "$INSTRUCT" | Find-Minimum.py))
+  OptX=(${MinReturn[5]})
+  OptY=(${MinReturn[6]})
+  OptZ=(${MinReturn[7]})
+
+  echo "Optimized from scanning: $OptX, $OptY, $OptZ"
+  sed -i "5s/.*/$OptX $OptY $OptZ/" $INSTRUCT
+
+# Create the POSCAR file for the full optimization
+  mkdir Opt-Scan
+  cd Opt-Scan
+  cp ../$GEO ./
+  FinalFILE=($(printf "$GEO\n$COF\n$AXIS\n$OptY\n$OptZ\n$OptX\n" | XYZ-Scanning.py))
+  FinalFILEName=(${FinalFILE[11]})
+  submit_relax "$COF-Scan" $FinalFILEName $PARTITION
+  rm $GEO
+fi
