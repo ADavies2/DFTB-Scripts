@@ -1,0 +1,30 @@
+# This is an example VASP script for a non-self-consistent field calculation
+# The purpose of this calculation is to take an already optimized geometry and calculate the electronic distribution, possibly at a different k-point mesh. This is done prior to a band structure, DOS, or partial charge calculation. This is why LWAVE = .TRUE. to run a PARCHG calculation. 
+
+DFT-D3 Correction
+IVDW   =  11           (DFT-D3 method of method with no damping)
+
+Global Parameters
+ISTART =  1            (Read existing wavefunction, if there)
+ISPIN  =  1            (Non-Spin polarised DFT)
+ICHARG =  2         (Non-self-consistent: GGA/LDA band structures)
+LREAL  = .FALSE.       (Projection operators: automatic)
+ENCUT  =  680        (Cut-off energy for plane wave basis set, in eV)
+PREC   =  Accurate   (Precision level: Normal or Accurate, set Accurate when perform structure lattice relaxation calculation)
+LWAVE  = .TRUE.        (Write WAVECAR or not)
+LCHARG = .TRUE.        (Write CHGCAR or not)
+ADDGRID= .TRUE.        (Increase grid, helps GGA convergence)
+NPAR = 4
+
+Electronic Relaxation
+ISMEAR =  0            (Gaussian smearing, metals:1)
+SIGMA  =  0.05         (Smearing value in eV, metals:0.2)
+EDIFF  =  1E-05        (SCF energy convergence, in eV)
+
+Ionic Relaxation
+IBRION =  -1            (Algorithm: 0-MD, 1-Quasi-New, 2-CG)
+NSW = 0
+
+ALGO = Fast
+POTIM = 0.01
+LORBIT = 11

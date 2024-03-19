@@ -1,0 +1,27 @@
+# This is an example VASP INCAR for a partial charge density calculation at specific energy levels. 
+# This would be used, for instance, when calculating the charge density at the band edges. This can be specified
+# the tag, IBAND, and give the HOMO LUMO equivalent band levels. Or any levels that you desire to see a partial
+# charge density for. LSEPB specifies separate partial charge files. 
+
+DFT-D3 Correction
+IVDW   =  11           (DFT-D3 method of method with no damping)
+
+Global Parameters
+ISTART =  1            (Read existing wavefunction, if there)
+ISPIN  =  1            (Non-Spin polarised DFT)
+ICHARG =  11         (Non-self-consistent: GGA/LDA band structures)
+LREAL  = .FALSE.       (Projection operators: automatic)
+ENCUT  =  680        (Cut-off energy for plane wave basis set, in eV)
+PREC   =  Accurate   (Precision level: Normal or Accurate, set Accurate when perform structure lattice relaxation calculation)
+LPARD = .TRUE.
+LWAVE  = .FALSE.        (Write WAVECAR or not)
+LCHARG = .FALSE.        (Write CHGCAR or not)
+ADDGRID= .TRUE.        (Increase grid, helps GGA convergence)
+NPAR = 4
+
+ALGO = Fast
+POTIM = 0.01
+
+IBAND = 165 166
+LSEPB = .TRUE.
+LSPEBK = .FALSE.

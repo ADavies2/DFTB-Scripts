@@ -1,0 +1,31 @@
+# The following is an example VASP script for a self-consistent field geometry optimization
+# ISIF is currently set to 4, which is only optimizing the forces and the length of the cell vectors, but not the volume of the cell. This is for a monolayer calculation. For stacked calculations, change ISIF to 3. 
+
+DFT-D3 Correction
+IVDW   =  11           (DFT-D3 method of method with no damping)
+
+Global Parameters
+ISTART =  1            (Read existing wavefunction, if there)
+ISPIN  =  1            (Non-Spin polarised DFT)
+ICHARG =  2         (Non-self-consistent: GGA/LDA band structures)
+LREAL  = .FALSE.       (Projection operators: automatic)
+ENCUT  =  680          (Cut-off energy for plane wave basis set, in eV)
+PREC   =  Accurate   (Precision level: Normal or Accurate, set Accurate when perform structure lattice relaxation calculation)
+LWAVE  = .FALSE.        (Write WAVECAR or not)
+LCHARG = .TRUE.        (Write CHGCAR or not)
+ADDGRID= .TRUE.        (Increase grid, helps GGA convergence)
+NPAR = 4
+
+Electronic Relaxation
+ISMEAR =  0            (Gaussian smearing, metals:1)
+SIGMA  =  0.05         (Smearing value in eV, metals:0.2)
+EDIFF  =  1E-05        (SCF energy convergence, in eV)
+
+Ionic Relaxation
+NSW    =  800          (Max ionic steps)
+IBRION =  2            (Algorithm: 0-MD, 1-Quasi-New, 2-CG)
+ISIF   =  4            (Stress/relaxation: 2-Ions, 3-Shape/Ions/V, 4-Shape/Ions)
+EDIFFG = -0.01         (Ionic convergence, eV/AA)
+
+ALGO = Fast
+POTIM = 0.01

@@ -1,0 +1,31 @@
+# This is an example VASP INCAR file for a band structure calculation. You will want to read in a well converged
+# CHGCAR file. No ionic relaxation is needed. Be sure to specific LORBIT and NBANDS. NBANDS can be found in the OUTCAR file for the well converged system. 
+
+DFT-D3 Correction
+IVDW   =  11           (DFT-D3 method of method with no damping)
+
+Global Parameters
+ISTART =  1            (Read existing wavefunction, if there)
+ISPIN  =  1            (Non-Spin polarised DFT)
+ICHARG =  11         (Non-self-consistent: GGA/LDA band structures)
+LREAL  = .FALSE.       (Projection operators: automatic)
+ENCUT  =  680        (Cut-off energy for plane wave basis set, in eV)
+PREC   =  Accurate   (Precision level: Normal or Accurate, set Accurate when perform structure lattice relaxation calculation)
+LWAVE  = .FALSE.        (Write WAVECAR or not)
+LCHARG = .FALSE.        (Write CHGCAR or not)
+ADDGRID= .TRUE.        (Increase grid, helps GGA convergence)
+NPAR = 4
+
+Electronic Relaxation
+ISMEAR =  -5            (Gaussian smearing, metals:1)
+SIGMA  =  0.05         (Smearing value in eV, metals:0.2)
+EDIFF  =  1E-05        (SCF energy convergence, in eV)
+
+Ionic Relaxation
+IBRION =  -1            (Algorithm: 0-MD, 1-Quasi-New, 2-CG)
+NSW = 0
+
+ALGO = Fast
+POTIM = 0.01
+LORBIT = 11
+NBANDS = 76
