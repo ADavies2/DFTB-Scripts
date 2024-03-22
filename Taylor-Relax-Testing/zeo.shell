@@ -1,0 +1,16 @@
+#!/bin/bash
+
+args=("$@")
+
+# Input variables
+# COF Name
+COF=${args[0]}
+
+# Pore diameters
+~/zeo++-0.3/network -ha -res $COF.res $COF.cif > OUTPUT
+
+# Surface area
+~/zeo++-0.3/network -ha -sa 1.8 1.8 10000 $COF.sa $COF.cif >> OUTPUT
+
+# Accessible volume
+~/zeo++-0.3/network -ha -vol 1.8 1.8 10000 $COF.vol $COF.cif >> OUTPUT
