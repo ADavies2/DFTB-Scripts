@@ -25,9 +25,10 @@ REFERENCE_ENERGY[Cl]=-86.2041
 REFERENCE_ENERGY[K]=-3.4933
 
 calculate_energies () {
-# $1 = $GEO
-  printf "$1\ntmp-POSCAR" | gen-to-POSCAR.py
-  GEO='tmp-POSCAR'
+# $1 = $GEN
+# $2 = $cof
+  printf "$1\n$2-POSCAR" | gen-to-POSCAR.py
+  GEO="$2-POSCAR"
   ATOM_TYPES=($(sed -n 6p $GEO))
   N_TYPES=($(sed -n 7p $GEO))
   N_ATOMS=0
@@ -55,9 +56,12 @@ E(COH) $COHESIVE eV
 H(f) $ENTHALPY eV
 !
 
-  rm tmp-POSCAR
 }
 
-GEN=$1
+module load gcc/11.2.0 python/3.10.8
 
-calculate_energies $GEN
+args=("$@")
+GEN=${args[0]}
+cof=${args[1]}
+
+calculate_energies $GEN $cof
