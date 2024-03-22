@@ -441,5 +441,3 @@ elif [ $RESULT == 'success1' ]; then
 elif [ $RESULT == 'success2' ]; then
   scc1 $PARTITION $JOBNAME $STALL $TASK $TOL $COF $RESULT
 fi
-
-
