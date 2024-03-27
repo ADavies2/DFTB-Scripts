@@ -187,6 +187,39 @@ mpirun -n $PROC dftb+ > $3.log
 !
 }
 
+calculate_energies () {
+# $1 = $GEN
+# $2 = $cof
+  printf "$1\n$2-POSCAR" | gen-to-POSCAR.py
+  GEO="$2-POSCAR"
+  ATOM_TYPES=($(sed -n 6p $GEO))
+  N_TYPES=($(sed -n 7p $GEO))
+  N_ATOMS=0
+  for i in ${N_TYPES[@]}; do
+    let N_ATOMS+=$i
+    done
+
+  E_atom=0
+  E_ref=0
+  count=0
+  for element in ${ATOM_TYPES[@]}; do
+    E_atom=$(echo $E_atom+${ATOMIC_ENERGY[$element]}*${N_TYPES[$count]} | bc)
+    E_ref=$(echo $E_ref+${REFERENCE_ENERGY[$element]}*${N_TYPES[$count]} | bc)
+    ((count++))
+  done
+
+  DETAILED=($(grep "Total energy" detailed.out))
+  TOTAL_ENERGY=${DETAILED[4]}
+
+  COHESIVE=$(echo "scale=3; ($E_atom - $TOTAL_ENERGY) / $N_ATOMS" | bc)
+  ENTHALPY=$(echo "scale=3; ($TOTAL_ENERGY - $E_ref) / $N_ATOMS" | bc)
+
+  cat > Energies.dat <<!
+E(COH) $COHESIVE eV
+H(f) $ENTHALPY eV
+!
+}
+
 scc1 () {
 # $1 = $PARTITION
 # $2 = $JOBNAME
@@ -231,7 +264,9 @@ scc1 () {
               if [ ! -d "1e-4-Outputs" ]; then
                 mkdir '1e-4-Outputs'
               fi
-              mv detailed* $2.log 1e-4-Out.* charges.* eigenvec.bin submit_$2 1e-4-Outputs/
+              densities=($(printf "$6\ngen\n1e-4-Out.gen" | atomdensities.py))
+              calculate_energies '1e-4-Out.gen' $6
+              mv detailed* $2.log 1e-4-Out.* charges.* eigenvec.bin submit_$2 Energies.dat *.densities 1e-4-Outputs/
               rm *.gen *.xyz $6*.out band.out
               RESULT='success1'
               STALL='none'
@@ -303,39 +338,6 @@ Options {
         fi
       fi
   done
-}
-
-calculate_energies () {
-# $1 = $GEN
-# $2 = $cof
-  printf "$1\n$2-POSCAR" | gen-to-POSCAR.py
-  GEO="$2-POSCAR"
-  ATOM_TYPES=($(sed -n 6p $GEO))
-  N_TYPES=($(sed -n 7p $GEO))
-  N_ATOMS=0
-  for i in ${N_TYPES[@]}; do
-    let N_ATOMS+=$i
-    done
-
-  E_atom=0
-  E_ref=0
-  count=0
-  for element in ${ATOM_TYPES[@]}; do
-    E_atom=$(echo $E_atom+${ATOMIC_ENERGY[$element]}*${N_TYPES[$count]} | bc)
-    E_ref=$(echo $E_ref+${REFERENCE_ENERGY[$element]}*${N_TYPES[$count]} | bc)
-    ((count++))
-  done
-
-  DETAILED=($(grep "Total energy" detailed.out))
-  TOTAL_ENERGY=${DETAILED[4]}
-
-  COHESIVE=$(echo "scale=3; ($E_atom - $TOTAL_ENERGY) / $N_ATOMS" | bc)
-  ENTHALPY=$(echo "scale=3; ($TOTAL_ENERGY - $E_ref) / $N_ATOMS" | bc)
-
-  cat > Energies.dat <<!
-E(COH) $COHESIVE eV
-H(f) $ENTHALPY eV
-!
 }
 
 module load gcc/11.2.0 python/3.10.8
