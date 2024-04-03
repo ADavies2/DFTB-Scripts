@@ -219,6 +219,15 @@ E(COH) $COHESIVE eV
 H(f) $ENTHALPY eV
 !
 }
+zeo () {
+# $1 = $COFNAME
+  # Pore diameters
+  ~/zeo++-0.3/network -ha -res $1.res $1.cif > OUTPUT
+  # Surface area
+  ~/zeo++-0.3/network -ha -sa 1.8 1.8 10000 $1.sa $1.cif >> OUTPUT
+  # Accessible volume
+  ~/zeo++-0.3/network -ha -vol 1.8 1.8 10000 $1.vol $1.cif >> OUTPUT
+}
 
 scc1 () {
 # $1 = $PARTITION
