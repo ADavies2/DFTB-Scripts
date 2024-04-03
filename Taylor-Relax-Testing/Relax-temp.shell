@@ -221,6 +221,7 @@ H(f) $ENTHALPY eV
 }
 zeo () {
 # $1 = $COFNAME
+  convert=($(printf "1e-4-Out.gen\n$1.cif" | aseconvert.py))
   # Pore diameters
   ~/zeo++-0.3/network -ha -res $1.res $1.cif > OUTPUT
   # Surface area
@@ -275,7 +276,8 @@ scc1 () {
               fi
               densities=($(printf "$6\ngen\n1e-4-Out.gen" | atomdensities.py))
               calculate_energies '1e-4-Out.gen' $6
-              mv detailed* $2.log 1e-4-Out.* charges.* eigenvec.bin submit_$2 Energies.dat *.densities 1e-4-Outputs/
+              zeo $6
+              mv detailed* $2.log 1e-4-Out.* charges.* eigenvec.bin submit_$2 Energies.dat *.densities *.res *.sa *.vol 1e-4-Outputs/
               rm *.gen *.xyz $6*.out band.out
               RESULT='success1'
               STALL='none'
