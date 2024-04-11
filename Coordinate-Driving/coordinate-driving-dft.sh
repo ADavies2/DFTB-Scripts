@@ -56,7 +56,7 @@ echo "$JOBID has been submitted."
       sleep 10s
     elif [ "$jobstat" == "R" ]; then
       echo "$JOBNAME is running..."
-      sleep 20s
+      sleep 60s
     else
       if grep -q "reached required accuracy - stopping" OUTCAR; then
         rm submit_$JOBNAME $JOBNAME.out CHGCAR WAVECAR 
