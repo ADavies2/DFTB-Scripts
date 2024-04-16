@@ -66,8 +66,8 @@ Driver = ConjugateGradient {
   OutputPrefix = CD-Out$3
   MovedAtoms = ${ATOMIDS[@]}
   Constraints = {
-    ${ATOMIDS[0]} 0.0 0.0 1.0
-    ${ATOMIDS[1]} 0.0 0.0 1.0
+    #${ATOMIDS[0]} 0.0 0.0 1.0
+    #${ATOMIDS[1]} 0.0 0.0 1.0
     ${ATOMIDS[2]} 0.0 0.0 1.0 } } 
 
 Hamiltonian = DFTB {
@@ -268,15 +268,15 @@ $TOTAL_ENERGY
 !
 done
 
-MIN=$(sort -n "$COFNAME-CD.dat" | head -1)
-MAX=$(sort -n "$COFNAME-CD.dat" | tail -1)
+#MIN=$(sort -n "$COFNAME-CD.dat" | head -1)
+#MAX=$(sort -n "$COFNAME-CD.dat" | tail -1)
 
-EBARRIER=$(echo $MAX - $MIN | bc)
+#EBARRIER=$(echo $MAX - $MIN | bc)
 
-cat >> $COFNAME-CD.dat <<!
-Maximum = $MAX eV
-Minimum = $MIN eV
-Barrier energy = $EBARRIER eV
-!
+#cat >> $COFNAME-CD.dat <<!
+#Maximum = $MAX eV
+#Minimum = $MIN eV
+#Barrier energy = $EBARRIER eV
+#!
 
 echo "Coordinate driving for $COFNAME is complete."
