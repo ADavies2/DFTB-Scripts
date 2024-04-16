@@ -66,8 +66,6 @@ Driver = ConjugateGradient {
   OutputPrefix = CD-Out$3
   MovedAtoms = ${ATOMIDS[@]}
   Constraints = {
-    #${ATOMIDS[0]} 0.0 0.0 1.0
-    #${ATOMIDS[1]} 0.0 0.0 1.0
     ${ATOMIDS[2]} 0.0 0.0 1.0 } } 
 
 Hamiltonian = DFTB {

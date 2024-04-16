@@ -7,15 +7,19 @@ Filename = input('What is the COF filename? ')
 COF_Name = input('What is the COF name? ')
 Input_IDs = input('What are the IDs of the H2O atoms? ')
 
-OutputGenFile = ase.io.read(Filename, format='gen')
+if '.gen' in Filename:
+    OutputFile = ase.io.read(Filename, format='gen')
+elif 'POSCAR' in Filename:
+    OutputFile = ase.io.read(Filename, format='vasp')
 
 MovedAtoms = []
 for i in range(0,len(Input_IDs.split())):
     MovedAtoms.append(int(Input_IDs.split()[i]))
 
 for i in (MovedAtoms):
-    #print(OutputGenFile.positions[i-1][2])
-    OutputGenFile.positions[i-1][2] = OutputGenFile.positions[i-1][2]-0.25
-    #print(OutputGenFile.positions[i-1][2])
+    OutputFile.positions[i-1][2] = OutputFile.positions[i-1][2]-0.25
 
-ase.io.write(f'{COF_Name}-CD-Input.gen', images=OutputGenFile, format='gen')
+if '.gen' in Filename:
+    ase.io.write(f'{COF_Name}-CD-Input.gen', images=OutputFile, format='gen')
+elif 'POSCAR' in Filename:
+    ase.io.write(f'POSCAR', images=OutputFile, format='vasp')
