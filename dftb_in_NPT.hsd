@@ -1,20 +1,20 @@
 # The following dftb_in.hsd script is an example script for an isothermal-isobaric ensemble molecular dynamics
 
 Geometry = VASPFormat {
-  <<< Input-POSCAR # Be sure to chang the format and input file name to reflect your own calculation
+  <<< Input-POSCAR
 }
 
 Driver = VelocityVerlet {
   TimeStep [fs] = 1.0
   MovedAtoms = 1:-1
-  Steps = 1000 # This is the number of simulation steps. Multiply this by the TimeStep to determine the length of the simulation in seconds
-  MDRestartFrequency = 20 # How frequently data is dumped to the .log and md.out files
+  Steps = 1000 
+  MDRestartFrequency = 20 
   OutputPrefix = NPT1
   Thermostat = NoseHoover {
-    Temperature [Kelvin] = 600 # Change the temperature value. Coupling strength can stay 3200
+    Temperature [Kelvin] = 600 
     CouplingStrength [cm^-1] = 3200 }
   Barostat = {
-    Pressure [Pa] = 101325 # Change pressure if needed. Timescale and Isotropic can stay the same.
+    Pressure [Pa] = 101325 
     Timescale [fs] = 50
     Isotropic = No
   }
@@ -23,7 +23,7 @@ Driver = VelocityVerlet {
 Hamiltonian = DFTB {
   SCC = Yes
   MaxSCCIterations = 2000
-  ReadInitialCharges = No # Change this to Yes if you have a starting charge distribution (charges.bin)
+  ReadInitialCharges = No 
   Dispersion = LennardJones {
     Parameters = UFFParameters {}
   }
@@ -32,7 +32,7 @@ Hamiltonian = DFTB {
     Exponent = 4.05
   }
   HubbardDerivs {
-  H = -0.07 # Hubbard Derivs can be found online with the 3ob-3-1 parameter set. Be sure to include all atom types within your simulation
+  H = -0.07
   C = -0.1492
   N = -0.1535
   Br = -0.0573
@@ -40,7 +40,7 @@ Hamiltonian = DFTB {
   F = -0.1623
 }
   SlaterKosterFiles = Type2FileNames {
-    Prefix = "/project/designlab/Shared/Codes/dftb+sk/3ob-3-1/" # This can stay the same if you have access to the ARCC designlab
+    Prefix = "/project/designlab/Shared/Codes/dftb+sk/3ob-3-1/" 
     Separator = "-"
     Suffix = ".skf"
   }
