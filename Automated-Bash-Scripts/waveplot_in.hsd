@@ -1,0 +1,24 @@
+# This is an example in.hsd file for DFTB+ for calculating charge distribution using the Waveplot function within DFTB+.
+
+Options {
+  TotalChargeDensity = Yes
+  TotalChargeDifference = Yes
+  ChargeDensity = Yes
+  RealComponent = Yes
+  PlottedKPoints = 1
+  PlottedSpins = 1 -1
+  PlottedLevels = 156
+  PlottedRegion = UnitCell {
+    MinEdgeLength [Angstrom] = 23
+  }
+  NrOfPoints = 30 30 30
+  NrOfCachedGrids = -1
+  Verbose = Yes
+  FillBoxWithAtoms = Yes
+}
+DetailedXML = './detailed.xml'
+EigenvecBin = './eigenvec.bin'
+Basis {
+  Resolution = 0.01
+  <<+ '/project/designlab/Shared/Codes/dftb+sk/3ob-3-1/wfc.3ob-3-1.hsd'
+}
