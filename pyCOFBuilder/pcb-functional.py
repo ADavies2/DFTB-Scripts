@@ -1,4 +1,5 @@
-
+# This Python script is meant to edit a .gjp file from GaussView to generate a compatible building block file for the package, pyCOFBuilder.
+# This script is specifically for functional group building blocks.
 
 import pycofbuilder as pcb
 import os
@@ -7,10 +8,8 @@ from pycofbuilder.building_block import BuildingBlock
 from pycofbuilder.tools import smiles_to_xsmiles
 from pycofbuilder.cjson import ChemJSON
 
-#pcb.io_tools.convert_gjf_2_xyz(os.getcwd(), 'Phenyl.gjf')
-
-compound_name = 'cyanide-test'
-code = 'CN'
+compound_name = 'cyanide-test' ### CHANGE THIS
+code = 'CN' ### CHANGE THIS
 
 # Define object as a BuildingBlock
 newBB = BuildingBlock()
@@ -19,12 +18,14 @@ newBB = BuildingBlock()
 newBB.from_file(os.getcwd(), f'{compound_name}.gjf')
 #print(newBB.print_structure())
 
-newBB.smiles = 'N#C[R]'
+newBB.smiles = 'N#C[R]' ### CHANGE THIS
 newBB.xsmiles, newBB.xsmiles_label, newBB.composition = smiles_to_xsmiles(newBB.smiles)
 
 R = newBB.get_R_points(newBB.atom_types, newBB.atom_pos)
-newBB.shift([-1*R['R'][0][0], -1*R['R'][0][1], -1*R['R'][0][2]])
+newBB.shift([-1*R['R'][0][0], -1*R['R'][0][1], -1*R['R'][0][2]]) # Shifts the R atom to coordinates 0,0,0
+# Shifts the rest of the atoms respectively
 
+### If you know that your functional group will be rotated 90 degrees relative the COF plane, uncomment these lines
 #print(newBB.print_structure())
 #newBB.rotate_around([1,0,0], 90)
 
