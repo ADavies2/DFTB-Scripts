@@ -7,8 +7,8 @@ from pycofbuilder.building_block import BuildingBlock
 from pycofbuilder.tools import smiles_to_xsmiles
 from pycofbuilder.cjson import ChemJSON
 
-compound_name = 'HXTR2' # CHANGE THIS
-code = 'HXTR2' # CHANGE THIS
+compound_name = 'HXTR2' ### CHANGE THIS
+code = 'HXTR2' ### CHANGE THIS
 
 # Define object as a BuildingBlock
 newBB = BuildingBlock()
@@ -17,7 +17,8 @@ newBB = BuildingBlock()
 newBB.from_file(os.getcwd(), f'{compound_name}.gjf')
 #print(newBB.print_structure())
 
-newBB.smiles = 'Nc4c([R1])c3c1c([R2])c(N)c(N=[Q])c([R1])c1c2c([R2])c(N=[Q])c(N)c([R1])c2c3c([R2])c4N=[Q]' # CHANGE THIS
+# The following link can be used to generate a SMILES string: https://www.cheminfo.org/flavor/malaria/Utilities/SMILES_generator___checker/index.html
+newBB.smiles = 'Nc4c([R1])c3c1c([R2])c(N)c(N=[Q])c([R1])c1c2c([R2])c(N=[Q])c(N)c([R1])c2c3c([R2])c4N=[Q]' ### CHANGE THIS
 newBB.xsmiles, newBB.xsmiles_label, newBB.composition = smiles_to_xsmiles(newBB.smiles)
 
 #print(newBB.print_structure())
