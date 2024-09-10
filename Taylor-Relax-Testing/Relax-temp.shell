@@ -284,8 +284,8 @@ scc1 () {
               densities=($(printf "$6\ngen\n1e-4-Out.gen" | atomdensities.py))
               calculate_energies '1e-4-Out.gen' $6
               zeo $6
-              mv detailed* $2.log 1e-4-Out.* charges.* eigenvec.bin submit_$2 Energies.dat *.densities *.res *.sa *.vol *.zeo band.out 1e-4-Outputs/
-              rm *.gen *.xyz $6*.out
+              mv detailed* $2.log 1e-4-Out.* charges.* eigenvec.bin submit_$2 Energies.dat *.densities *.res *.sa *.vol *.zeo band.out $6-Out-POSCAR 1e-4-Outputs/
+              rm *.gen *.xyz $6*.out *cif
               RESULT='success1'
               STALL='none'
               break
