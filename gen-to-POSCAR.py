@@ -1,16 +1,15 @@
-# This Python script convert DFTB+ .gen files into POSCAR (.vasp) file types
-# This can be run in command-line
-# Two prompts will display; the first asking for the name of the .gen file to be converted and the second asking for the name of the output POSCAR file
+#!/usr/bin/env python3.12
+# Author: Alathea Davies
 
 import pandas as pd
 
 GenFile = input('What is the name of your .gen file? ')
 PoscarFile = input('What would you like your POSCAR file to be called? ')
 
-GenData = pd.read_csv(GenFile, header=None, skiprows=2, skipfooter=4, delim_whitespace=True, names=['Index','Type','X','Y','Z'], engine='python')
+GenData = pd.read_csv(GenFile, header=None, skiprows=2, skipfooter=4, sep='\\s+', names=['Index','Type','X','Y','Z'], engine='python')
 TotalAtoms = len(GenData)
 SkipCellRows = TotalAtoms + 2 + 1
-CellData = pd.read_csv(GenFile, header=None, delim_whitespace=True, skiprows=SkipCellRows)
+CellData = pd.read_csv(GenFile, header=None, sep='\\s+', skiprows=SkipCellRows)
 
 raw_data = open(GenFile,'r')
 Lines = raw_data.readlines()
@@ -23,7 +22,7 @@ with open(PoscarFile, 'w') as file: # Create a file to write to
     file.write(Header)
     file.write(Scaling)
     for i in range(0,len(CellData)):
-        cell = f'{CellData.iloc[i][0]} {CellData.iloc[i][1]} {CellData.iloc[i][2]}\n'
+        cell = f"{CellData.iloc[i][0]} {CellData.iloc[i][1]} {CellData.iloc[i][2]}\n"
         file.write(cell)
     for i in range(0,len(AtomTypes)):
         file.write(f'{AtomTypes[i]} ')
