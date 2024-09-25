@@ -1,3 +1,5 @@
+#!/usr/bin/env python3.12
+# Author: Alathea Davies
 # This Python script is meant to edit a .gjp file from GaussView to generate a compatible building block file for the package, pyCOFBuilder.
 # This script is meant specifically for core (node and linker) building blocks.
 

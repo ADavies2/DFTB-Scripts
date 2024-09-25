@@ -1,3 +1,5 @@
+#!/usr/bin/env python3.12
+# Author: Alathea Davies
 # This Python script is meant to build COF structures using pyCOFBuilder.
 
 import pycofbuilder as pcb
